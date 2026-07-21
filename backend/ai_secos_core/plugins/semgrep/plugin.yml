@@ -1,0 +1,66 @@
+# Semgrep Plugin Manifest
+id: scanner/semgrep
+version: "1.0.0"
+name: "Semgrep SAST Scanner"
+description: |
+  Static Application Security Testing (SAST) tool.
+  Analyzes source code for security vulnerabilities and code quality issues.
+  Maps to the Application Code Audit Capability.
+
+author: AstraIX Engineering
+runtime: python3
+entrypoint: main.py
+
+capabilities:
+  - capability_id: code/audit
+    role: primary
+  - capability_id: sast/security
+    role: primary
+
+input_schema:
+  type: object
+  required: [target]
+  properties:
+    target:
+      type: string
+      description: Target directory, file, or repository path
+    config:
+      type: array
+      description: Semgrep rules to use (auto, p/security, p/ci, or custom rule IDs)
+      default: ["p/security-audit"]
+    lang:
+      type: array
+      description: Restrict to specific languages
+    max_memory:
+      type: integer
+      description: Max memory per rule in MB
+      default: 0 (unlimited)
+    timeout:
+      type: integer
+      description: Timeout per rule in seconds
+      default: 30
+    no_git_ignore:
+      type: boolean
+      description: Disable gitignore file reading
+      default: false
+    baseline_commit:
+      type: string
+      description: Baseline commit forCI that sets a baseline
+
+limits:
+  cpu_cores: 2.0
+  memory_mb: 1024
+  timeout_seconds: 600
+  max_output_bytes: 33554432  # 32 MiB
+
+sandbox:
+  network: none
+  filesystem: ephemeral
+  allowed_executables:
+    - semgrep
+    - python3
+  allow_command_substitution: false
+
+requirements:
+  system:
+    - semgrep >= 1.70

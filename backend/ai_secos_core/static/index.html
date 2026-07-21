@@ -1,0 +1,170 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>AI-SecOS Core | Security Assessment</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        .severity-critical { color: #ef4444; font-weight: bold; }
+        .severity-high { color: #f97316; font-weight: bold; }
+        .severity-medium { color: #eab308; font-weight: bold; }
+        .severity-low { color: #22c55e; font-weight: bold; }
+        .severity-info { color: #3b82f6; font-weight: bold; }
+    </style>
+</head>
+<body class="bg-slate-900 text-slate-100 min-h-screen font-sans">
+    <div class="max-w-5xl mx-auto py-12 px-4">
+        <!-- Header -->
+        <div class="flex items-center justify-between mb-12">
+            <div>
+                <h1 class="text-4xl font-extrabold tracking-tight text-white">AI-SecOS <span class="text-blue-500">Core</span></h1>
+                <p class="text-slate-400 mt-2">Autonomous Security Engineering Platform • Milestone 2</p>
+            </div>
+            <div class="bg-slate-800 px-4 py-2 rounded-full text-xs font-mono text-slate-400 border border-slate-700">
+                Status: <span class="text-green-400">Online</span>
+            </div>
+        </div>
+
+        <!-- Control Panel -->
+        <div class="bg-slate-800 p-6 rounded-2xl border border-slate-700 shadow-xl mb-8">
+            <div class="grid grid-cols-1 md:grid-cols-4 gap-4">
+                <div class="md:col-span-2">
+                    <label class="block text-xs font-semibold text-slate-400 uppercase mb-1">Target URL / Hostname</label>
+                    <input type="text" id="target" placeholder="example.com" 
+                           class="w-full bg-slate-900 border border-slate-600 rounded-lg px-4 py-2 text-white focus:ring-2 focus:ring-blue-500 outline-none transition-all">
+                </div>
+                <div>
+                    <label class="block text-xs font-semibold text-slate-400 uppercase mb-1">Ports</label>
+                    <input type="text" id="ports" value="80, 443" 
+                           class="w-full bg-slate-900 border border-slate-600 rounded-lg px-4 py-2 text-white focus:ring-2 focus:ring-blue-500 outline-none transition-all">
+                </div>
+                <div class="flex items-end">
+                    <button id="runBtn" onclick="runAssessment()" 
+                            class="w-full bg-blue-600 hover:bg-blue-500 text-white font-bold py-2 px-4 rounded-lg transition-all transform active:scale-95 shadow-lg shadow-blue-900/20">
+                        Run Assessment
+                    </button>
+                </div>
+            </div>
+        </div>
+
+        <!-- Loading State -->
+        <div id="loading" class="hidden flex flex-col items-center justify-center py-20">
+            <div class="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-500 mb-4"></div>
+            <p class="text-slate-400 animate-pulse">Executing plugins and calculating risk scores...</p>
+        </div>
+
+        <!-- Results Section -->
+        <div id="results" class="hidden space-y-6">
+            <!-- Summary Cards -->
+            <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+                <div class="bg-slate-800 p-4 rounded-xl border border-slate-700">
+                    <p class="text-slate-400 text-xs uppercase font-bold">Findings</p>
+                    <p id="count" class="text-3xl font-bold text-white">0</p>
+                </div>
+                <div class="bg-slate-800 p-4 rounded-xl border border-slate-700">
+                    <p class="text-slate-400 text-xs uppercase font-bold">Avg Risk Score</p>
+                    <p id="avgRisk" class="text-3xl font-bold text-white">0.0</p>
+                </div>
+                <div class="bg-slate-800 p-4 rounded-xl border border-slate-700">
+                    <p class="text-slate-400 text-xs uppercase font-bold">Max Risk</p>
+                    <p id="maxRisk" class="text-3xl font-bold text-red-400">0.0</p>
+                </div>
+            </div>
+
+            <!-- Findings Table -->
+            <div class="bg-slate-800 rounded-2xl border border-slate-700 overflow-hidden shadow-xl">
+                <table class="w-full text-left border-collapse">
+                    <thead class="bg-slate-700/50 text-slate-300 text-xs uppercase font-bold">
+                        <tr>
+                            <th class="px-6 py-3">Finding</th>
+                            <th class="px-6 py-3">Severity</th>
+                            <th class="px-6 py-3">Risk</th>
+                            <th class="px-6 py-3">Asset</th>
+                        </tr>
+                    </thead>
+                    <tbody id="findingsBody" class="divide-y divide-slate-700">
+                        <!-- Rows injected here -->
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        async function runAssessment() {
+            const target = document.getElementById('target').value;
+            const portsInput = document.getElementById('ports').value;
+            const runBtn = document.getElementById('runBtn');
+            const loading = document.getElementById('loading');
+            const results = document.getElementById('results');
+
+            if (!target) {
+                alert('Please enter a target URL');
+                return;
+            }
+
+            const ports = portsInput.split(',').map(p => parseInt(p.trim())).filter(p => !isNaN(p));
+
+            // UI State
+            runBtn.disabled = true;
+            runBtn.classList.add('opacity-50');
+            loading.classList.remove('hidden');
+            results.classList.add('hidden');
+
+            try {
+                const response = await fetch('/assess', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ target, ports })
+                });
+
+                if (!response.ok) {
+                    const err = await response.json();
+                    throw new Error(err.detail || 'Assessment failed');
+                }
+
+                const data = await response.json();
+                renderResults(data);
+            } catch (e) {
+                alert('Error: ' + e.message);
+            } finally {
+                runBtn.disabled = false;
+                runBtn.classList.remove('opacity-50');
+                loading.classList.add('hidden');
+            }
+        }
+
+        function renderResults(data) {
+            document.getElementById('results').classList.remove('hidden');
+            document.getElementById('count').innerText = data.finding_count;
+            document.getElementById('avgRisk').innerText = data.risk_score_avg.toFixed(1);
+            document.getElementById('maxRisk').innerText = data.risk_score_max.toFixed(1);
+
+            const body = document.getElementById('findingsBody');
+            body.innerHTML = '';
+
+            data.findings.forEach(f => {
+                const row = document.createElement('tr');
+                row.className = 'hover:bg-slate-700/30 transition-colors';
+                row.innerHTML = `
+                    <td class="px-6 py-4">
+                        <div class="text-sm font-medium text-white">${f.title}</div>
+                        <div class="text-xs text-slate-400">${f.description}</div>
+                    </td>
+                    <td class="px-6 py-4">
+                        <span class="text-xs uppercase px-2 py-1 rounded bg-slate-900 border border-slate-700 severity-${f.severity.toLowerCase()}">
+                            ${f.severity}
+                        </span>
+                    </td>
+                    <td class="px-6 py-4">
+                        <span class="text-sm font-mono text-slate-300">${f.risk_score || 'N/A'}</span>
+                    </td>
+                    <td class="px-6 py-4 text-xs font-mono text-slate-500">${f.asset}</td>
+                `;
+                body.appendChild(row);
+            });
+        }
+    </script>
+</body>
+</html>

@@ -1,0 +1,46 @@
+# Web Discovery Capability Manifest (M2)
+id: web/discovery
+version: "1.0.0"
+display_name: "Web Discovery"
+description: |
+  Probes a target URL/host to determine liveness, identify
+  exposed services, and detect the technology stack.
+
+inputs:
+  type: object
+  required: [target]
+  properties:
+    target:
+      type: string
+      description: URL host or CIDR range
+    ports:
+      type: array
+      description: Optional port list (default ["80","443"])
+
+outputs:
+  finding_kinds:
+    - open_endpoint
+    - technology_detected
+    - http_error
+  asset_types: [url, host, domain]
+
+supported_assets:
+  - category: url
+  - category: host
+  - category: domain
+
+workflows:
+  - workflow/web_discovery
+
+required_plugins:
+  - plugin_id: scanner/httpx
+    min_version: "0.1.0"
+    role: primary
+
+compliance:
+  - framework: owasp_asvs
+    control: V1.4
+    rationale: "Cover basic access control discovery on public surfaces."
+  - framework: cis
+    control: "1.12"
+    rationale: "Identify public-facing services for hardening."

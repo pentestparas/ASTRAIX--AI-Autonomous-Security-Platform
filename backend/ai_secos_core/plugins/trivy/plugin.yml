@@ -1,0 +1,79 @@
+# Trivy Plugin Manifest
+id: scanner/trivy
+version: "1.0.0"
+name: "Trivy Security Scanner"
+description: |
+  Comprehensive security scanner for containers and IaC.
+  Detects vulnerabilities, misconfigurations, secrets, and SBOMs.
+  Maps to the Cloud Posture Assessment Capability.
+
+author: AstraIX Engineering
+runtime: python3
+entrypoint: main.py
+
+capabilities:
+  - capability_id: cloud/posture
+    role: primary
+  - capability_id: container/security
+    role: primary
+  - capability_id: iac/security
+    role: supporting
+
+input_schema:
+  type: object
+  required: [target]
+  properties:
+    target:
+      type: string
+      description: Container image, Docker config, IaC directory, or filesystem path
+    scan_type:
+      type: string
+      enum: [image, fs, repo, config, sbom, kubernetes]
+      description: Type of scan to perform
+      default: image
+    scanners:
+      type: array
+      description: Scanners to enable (vuln, misconfig, secret, sbom)
+      default: [vuln, misconfig, secret]
+    severity:
+      type: array
+      description: Filter by severity (UNKNOWN, LOW, MEDIUM, HIGH, CRITICAL)
+      default: [UNKNOWN, LOW, MEDIUM, HIGH, CRITICAL]
+    vuln_type:
+      type: array
+      description: Filter by vulnerability type (os, library)
+      default: [os, library]
+    security_checks:
+      type: array
+      description: Security checks for IaC (CUSTOM, AWS, GCP, Azure, K8s)
+      default: []
+    image_ref:
+      type: string
+      description: Specific image reference for registry auth
+    format:
+      type: string
+      enum: [json, sarif, table, cyclonedx]
+      description: Output format
+      default: json
+    timeout:
+      type: integer
+      description: Scan timeout in seconds
+      default: 300
+
+limits:
+  cpu_cores: 2.0
+  memory_mb: 1024
+  timeout_seconds: 600
+  max_output_bytes: 33554432  # 32 MiB
+
+sandbox:
+  network: outbound
+  filesystem: ephemeral
+  allowed_executables:
+    - trivy
+    - python3
+  allow_command_substitution: false
+
+requirements:
+  system:
+    - trivy >= 0.50

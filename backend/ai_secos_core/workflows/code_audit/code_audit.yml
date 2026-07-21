@@ -1,0 +1,49 @@
+# Code Security Audit Workflow
+id: workflow/code_audit
+description: |
+  Static Application Security Testing (SAST) workflow:
+  1. Semgrep code analysis across multiple languages
+  2. Security rule enforcement (OWASP Top 10, CWE)
+  3. Code quality and best practice checks
+  4. Finding deduplication and prioritization
+  5. Detailed code-level report with remediation
+
+steps:
+  - name: semgrep_scan
+    kind: scan
+    target: scanner/semgrep
+    params:
+      runtime: python3
+      input: "{{ inputs.target }}"
+      config: "{{ inputs.config | default(['p/security-audit', 'p/ci']) }}"
+      timeout: "{{ inputs.timeout | default(30) }}"
+      no_git_ignore: false
+
+  - name: normalize_semgrep
+    kind: normalize
+    target: scanner/semgrep
+    depends_on: [semgrep_scan]
+    params:
+      capability_id: code/audit
+
+  - name: risk_score
+    kind: risk
+    target: finding_engine
+    depends_on: [normalize_semgrep]
+    params:
+      weights:
+        likelihood: 0.35
+        impact: 0.30
+        exploitability: 0.20
+        business_context: 0.15
+
+  - name: report
+    kind: report
+    target: report_engine
+    depends_on: [risk_score]
+    params:
+      template: code-audit
+      format: "{{ inputs.format | default('json') }}"
+      compliance_mappings:
+        - owasp_asvs
+        - masvs

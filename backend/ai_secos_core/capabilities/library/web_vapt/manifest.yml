@@ -1,0 +1,69 @@
+# Web Application VAPT Capability Manifest
+id: web/vapt
+version: "1.0.0"
+display_name: "Web Application Security Assessment"
+description: |
+  Comprehensive black-box web application security testing.
+  Discovers endpoints, identifies technologies, and tests for
+  OWASP Top 10 vulnerabilities using nuclei templates.
+
+inputs:
+  type: object
+  required: [target]
+  properties:
+    target:
+      type: string
+      description: Target URL or hostname
+    follow_redirects:
+      type: boolean
+      description: Follow HTTP redirects
+      default: false
+    severity:
+      type: array
+      description: Filter by severity (info, low, medium, high, critical)
+      default: [info, low, medium, high, critical]
+    templates:
+      type: array
+      description: Specific nuclei template categories to run
+      default: [vulnerabilities, exposures]
+
+outputs:
+  finding_kinds:
+    - web_vulnerability
+    - xss
+    - sql_injection
+    - rce
+    - auth_bypass
+    - misconfiguration
+    - cve
+  asset_types: [url, domain, api]
+
+supported_assets:
+  - category: url
+  - category: domain
+  - category: api
+
+workflows:
+  - workflow/web_vapt
+
+required_plugins:
+  - plugin_id: scanner/httpx
+    min_version: "1.0.0"
+    role: primary
+  - plugin_id: scanner/nuclei
+    min_version: "1.0.0"
+    role: primary
+
+compliance:
+  - framework: owasp_asvs
+    control: V4.1
+    rationale: "Verify application authentication and session management security."
+  - framework: owasp_asvs
+    control: V5.3
+    rationale: "Test for injection vulnerabilities including SQLi, XSS, and command injection."
+  - framework: owasp_asvs
+    control: V8.3
+    rationale: "Identify sensitive data exposure and security misconfigurations."
+  - framework: masvs
+    control: "ARCH-M"
+    rationale: "Validate application architecture and security controls."

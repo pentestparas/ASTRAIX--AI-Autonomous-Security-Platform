@@ -1,0 +1,70 @@
+# Network VAPT Workflow
+id: workflow/network_vapt
+description: |
+  Multi-stage network vulnerability assessment combining:
+  1. Nmap port/service discovery
+  2. Optional vulnerability script scanning
+  3. Nuclei vulnerability detection on discovered services
+  4. Finding normalization and risk scoring
+  5. Executive report generation
+
+steps:
+  - name: port_scan
+    kind: scan
+    target: scanner/nmap
+    params:
+      runtime: python3
+      input: "{{ inputs.target }}"
+      ports: "{{ inputs.ports | default('1-1000') }}"
+      scan_type: "{{ inputs.scan_type | default('standard') }}"
+      service_detection: true
+      os_detection: true
+      script_scan: "{{ inputs.vuln_scripts | default(false) }}"
+      timing: 4
+
+  - name: vulnerability_scan
+    kind: scan
+    target: scanner/nuclei
+    depends_on: [port_scan]
+    params:
+      runtime: python3
+      input: "{{ inputs.target }}"
+      template_dirs:
+        - vulnerabilities
+        - technologies
+      rate_limit: 100
+      bulk_size: 25
+      timeout: 10
+
+  - name: normalize_ports
+    kind: normalize
+    target: scanner/nmap
+    depends_on: [port_scan]
+    params:
+      capability_id: network/vapt
+
+  - name: normalize_vulns
+    kind: normalize
+    target: scanner/nuclei
+    depends_on: [vulnerability_scan]
+    params:
+      capability_id: network/vapt
+
+  - name: risk_score
+    kind: risk
+    target: finding_engine
+    depends_on: [normalize_ports, normalize_vulns]
+    params:
+      weights:
+        likelihood: 0.25
+        impact: 0.30
+        exploitability: 0.25
+        business_context: 0.20
+
+  - name: report
+    kind: report
+    target: report_engine
+    depends_on: [risk_score]
+    params:
+      template: network-vapt
+      format: "{{ inputs.format | default('json') }}"

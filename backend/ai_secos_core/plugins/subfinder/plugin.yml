@@ -1,0 +1,63 @@
+# Subfinder Plugin Manifest
+id: scanner/subfinder
+version: "1.0.0"
+name: "Subfinder - Subdomain Enumeration"
+description: |
+  Fast passive subdomain enumeration tool.
+  Discovers subdomains from multiple passive sources.
+  Maps to the External Reconnaissance Capability.
+
+author: AstraIX Engineering
+runtime: python3
+entrypoint: main.py
+
+capabilities:
+  - capability_id: network/recon
+    role: primary
+  - capability_id: osint/asset-discovery
+    role: supporting
+
+input_schema:
+  type: object
+  required: [target]
+  properties:
+    target:
+      type: string
+      description: Domain to enumerate subdomains for
+    sources:
+      type: array
+      description: Specific passive sources to use (or empty for all)
+    threads:
+      type: integer
+      description: Number of concurrent threads
+      default: 10
+    max_time:
+      type: integer
+      description: Maximum time in seconds to spend
+      default: 300
+    silent:
+      type: boolean
+      description: Silent mode (only results)
+      default: true
+    verify:
+      type: boolean
+      description: Verify resolved domains with HTTP check
+      default: false
+
+limits:
+  cpu_cores: 1.0
+  memory_mb: 256
+  timeout_seconds: 300
+  max_output_bytes: 16777216  # 16 MiB
+
+sandbox:
+  network: outbound
+  filesystem: ephemeral
+  allowed_executables:
+    - subfinder
+    - python3
+  allow_command_substitution: false
+
+requirements:
+  system:
+    - subfinder >= 2.6

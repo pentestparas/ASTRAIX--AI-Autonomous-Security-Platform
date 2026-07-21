@@ -1,0 +1,66 @@
+# Cloud Posture Assessment Capability Manifest
+id: cloud/posture
+version: "1.0.0"
+display_name: "Cloud Security Posture Assessment"
+description: |
+  Evaluates cloud infrastructure configurations and container security.
+  Scans for misconfigurations, exposed workloads, and compliance violations
+  across AWS, GCP, Azure, and Kubernetes environments.
+
+inputs:
+  type: object
+  required: [target]
+  properties:
+    target:
+      type: string
+      description: Container image, IaC directory, or cloud provider scope
+    scan_type:
+      type: string
+      enum: [image, fs, repo, config, k8s]
+      description: Type of cloud scan
+      default: image
+    scanners:
+      type: array
+      description: Scanners to enable (vuln, misconfig, secret)
+      default: [vuln, misconfig, secret]
+    cloud_provider:
+      type: string
+      enum: [aws, gcp, azure, k8s, all]
+      description: Cloud provider to assess
+      default: all
+
+outputs:
+  finding_kinds:
+    - container_vulnerability
+    - iac_misconfiguration
+    - secret_exposure
+    - compliance_violation
+    - sbom
+  asset_types: [container_image, iac_directory, cloud_account]
+
+supported_assets:
+  - category: container_image
+  - category: iac_directory
+  - category: cloud_account
+
+workflows:
+  - workflow/cloud_posture
+
+required_plugins:
+  - plugin_id: scanner/trivy
+    min_version: "1.0.0"
+    role: primary
+
+compliance:
+  - framework: cis
+    control: "1.1"
+    rationale: "Ensure cloud resources are provisioned securely."
+  - framework: cis
+    control: "2.1"
+    rationale: "Maintain secure identity and access management."
+  - framework: soc2
+    control: "CC6"
+    rationale: "Validate security of system components and data access."
+  - framework: pci_dss
+    control: "2.2"
+    rationale: "Maintain secure configuration of cloud workloads."

@@ -1,0 +1,74 @@
+# plugin.yml
+# Schema for AstraIX plugin manifest.
+
+# Unique plugin ID - DNS-style reverse notation.
+# --
+# scanners/nmap-ipv4
+# analyzers/vuln-correlator
+id: ""
+
+# Human-readable name.
+name: ""
+
+# Human-readable description.
+# Markdown supported.
+description: |
+
+
+# Plugin version. Follows semver.
+version: "0.1.0"
+
+# Plugin author(s).
+author: "AstraIX"
+
+# Plugin category:
+# scanner = external discovery
+# analyzer = findings → risk/impact
+# reporter = audience-specific reports
+# integrator = ticketing, SIEM
+# enricher = add context to findings
+type: "scanner"
+
+# Supported runtime.
+# python3.12, node18, go1.21, ruby3.2, etc.
+runtime: "python3.12"
+
+# Entrypoint: relative to plugin dir.
+# Module: `plugin:main`
+# Script: `script.py`
+# CLI: `["python", "script.py"]
+entrypoint: "plugin:main"
+
+# Runtime limits.
+limits:
+  cpu: 1.0      # core-seconds
+  memory: 500   # MiB
+  timeout: 300  # seconds
+
+# Schema: YAML/JSON object.
+# Validation using Pydantic schemas.
+schema:
+  input:
+    # key: type
+  output:
+    findings:
+      # List[FindingOut]
+    stats:
+      # dict
+
+# Requirements:
+# plugin: plugin-id@version_number
+# system: dpkg/rpm/brew/apt
+# backend: langchain>=12.0
+requirements:
+  plugin: []
+  system: []
+  backend: []
+
+# Capabilities: permissions.
+# orchestrator: cap_run, cap_store
+capabilities:
+  - "cap_run"
+
+# Icon: filepath (SVG, PNG).
+icon: "./icon.png"

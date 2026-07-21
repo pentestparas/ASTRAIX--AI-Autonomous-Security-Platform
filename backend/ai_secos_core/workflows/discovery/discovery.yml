@@ -1,0 +1,42 @@
+# Web Discovery Workflow (M2)
+id: workflow/web_discovery
+description: |
+  Runs the httpx plugin and emits canonical findings describing
+  the target's liveness and detected technology.
+
+steps:
+  - name: probe
+    kind: scan
+    target: scanner/httpx
+    params:
+      runtime: python3
+      input: "{{ inputs.target }}"
+      ports:
+        - "80"
+        - "443"
+
+  - name: normalize
+    kind: normalize
+    target: scanner/httpx
+    depends_on: [probe]
+    params:
+      capability_id: web/discovery
+
+  - name: risk_score
+    kind: risk
+    target: finding_engine
+    depends_on: [normalize]
+    params:
+      weights:
+        likelihood: 0.25
+        impact: 0.30
+        exploitability: 0.25
+        business_context: 0.20
+
+  - name: report
+    kind: report
+    target: report_engine
+    depends_on: [risk_score]
+    params:
+      template: m2-web-discovery
+      format: json

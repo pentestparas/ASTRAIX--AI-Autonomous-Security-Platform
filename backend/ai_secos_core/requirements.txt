@@ -1,0 +1,29 @@
+# AI-SecOS Core dependencies (Milestone 1)
+
+# Core
+fastapi>=0.110
+uvicorn[standard]>=0.29
+pydantic>=2.7
+pydantic-settings>=2.2
+python-dateutil>=2.9
+
+# Async
+async-timeout>=4.0
+anyio>=4.3
+
+# Serialization
+orjson>=3.9
+pyyaml>=6.0
+
+# Logging / Observability
+structlog>=24.4
+python-json-logger>=2.0
+
+# Task runner
+tenacity>=8.3
+
+# Testing
+pytest>=8.1
+pytest-asyncio>=0.23
+ruff>=0.5
+mypy>=1.9

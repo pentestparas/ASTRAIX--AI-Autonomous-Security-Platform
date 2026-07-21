@@ -1,0 +1,74 @@
+# Nmap Plugin Manifest
+id: scanner/nmap
+version: "1.0.0"
+name: "Nmap Port Scanner"
+description: |
+  Network exploration and security auditing tool.
+  Performs port discovery, service detection, and OS fingerprinting.
+  Maps to the Network Reconnaissance Capability.
+
+author: AstraIX Engineering
+runtime: python3
+entrypoint: main.py
+
+capabilities:
+  - capability_id: network/recon
+    role: primary
+  - capability_id: network/vuln-scan
+    role: supporting
+
+input_schema:
+  type: object
+  required: [target]
+  properties:
+    target:
+      type: string
+      description: Target IP address, hostname, or CIDR range
+    ports:
+      type: string
+      description: Port list (default "1-1000" for quick scan, use "1-65535" for full)
+      default: "1-1000"
+    scan_type:
+      type: string
+      description: Scan type - SYN (stealth), connect, UDP, or all
+      default: "SYN"
+    timing:
+      type: integer
+      minimum: 0
+      maximum: 5
+      description: Timing template (0=paranoid, 5=insane)
+      default: 4
+    service_detection:
+      type: boolean
+      description: Detect service versions
+      default: true
+    os_detection:
+      type: boolean
+      description: Enable OS detection
+      default: true
+    script_scan:
+      type: boolean
+      description: Run default NSE scripts
+      default: true
+    vuln_scripts:
+      type: boolean
+      description: Run vulnerability detection scripts (slow)
+      default: false
+
+limits:
+  cpu_cores: 2.0
+  memory_mb: 512
+  timeout_seconds: 300
+  max_output_bytes: 16777216  # 16 MiB
+
+sandbox:
+  network: outbound
+  filesystem: ephemeral
+  allowed_executables:
+    - nmap
+    - python3
+  allow_command_substitution: false
+
+requirements:
+  system:
+    - nmap >= 7.90

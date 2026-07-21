@@ -1,0 +1,64 @@
+# External Asset Discovery Workflow
+id: workflow/asset_discovery
+description: |
+  External reconnaissance and asset discovery workflow:
+  1. Passive subdomain enumeration (Subfinder)
+  2. Optional subdomain verification (httpx)
+  3. Asset deduplication and classification
+  4. Attack surface mapping
+  5. Asset inventory report
+
+steps:
+  - name: subdomain_enum
+    kind: scan
+    target: scanner/subfinder
+    params:
+      runtime: python3
+      input: "{{ inputs.target }}"
+      sources: "{{ inputs.sources | default([]) }}"
+      threads: 10
+      silent: true
+      verify: "{{ inputs.verify | default(false) }}"
+
+  - name: verify_subdomains
+    kind: scan
+    target: scanner/httpx
+    depends_on: [subdomain_enum]
+    params:
+      runtime: python3
+      input: "{{ inputs.target }}"
+      ports: ["80", "443"]
+      follow_redirects: true
+
+  - name: normalize_subdomains
+    kind: normalize
+    target: scanner/subfinder
+    depends_on: [subdomain_enum]
+    params:
+      capability_id: osint/asset-discovery
+
+  - name: normalize_tech
+    kind: normalize
+    target: scanner/httpx
+    depends_on: [verify_subdomains]
+    params:
+      capability_id: osint/asset-discovery
+
+  - name: risk_score
+    kind: risk
+    target: finding_engine
+    depends_on: [normalize_subdomains, normalize_tech]
+    params:
+      weights:
+        likelihood: 0.20
+        impact: 0.25
+        exploitability: 0.30
+        business_context: 0.25
+
+  - name: report
+    kind: report
+    target: report_engine
+    depends_on: [risk_score]
+    params:
+      template: asset-discovery
+      format: "{{ inputs.format | default('json') }}"

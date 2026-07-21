@@ -1,0 +1,67 @@
+# Web Application VAPT Workflow
+id: workflow/web_vapt
+description: |
+  Comprehensive web application security testing workflow:
+  1. HTTP probe and technology fingerprinting (httpx)
+  2. Vulnerability scanning with nuclei templates
+  3. Finding normalization with OWASP categorization
+  4. Risk scoring and remediation prioritization
+  5. Detailed report with evidence
+
+steps:
+  - name: tech_detection
+    kind: scan
+    target: scanner/httpx
+    params:
+      runtime: python3
+      input: "{{ inputs.target }}"
+      ports: ["80", "443"]
+      follow_redirects: "{{ inputs.follow_redirects | default(false) }}"
+
+  - name: vuln_scan
+    kind: scan
+    target: scanner/nuclei
+    depends_on: [tech_detection]
+    params:
+      runtime: python3
+      input: "{{ inputs.target }}"
+      template_dirs: "{{ inputs.templates | default(['vulnerabilities', 'exposures']) }}"
+      severity: "{{ inputs.severity | default(['info', 'low', 'medium', 'high', 'critical']) }}"
+      rate_limit: 150
+      follow_redirects: "{{ inputs.follow_redirects | default(false) }}"
+
+  - name: normalize_tech
+    kind: normalize
+    target: scanner/httpx
+    depends_on: [tech_detection]
+    params:
+      capability_id: web/vapt
+
+  - name: normalize_vulns
+    kind: normalize
+    target: scanner/nuclei
+    depends_on: [vuln_scan]
+    params:
+      capability_id: web/vapt
+
+  - name: risk_score
+    kind: risk
+    target: finding_engine
+    depends_on: [normalize_tech, normalize_vulns]
+    params:
+      weights:
+        likelihood: 0.30
+        impact: 0.30
+        exploitability: 0.25
+        business_context: 0.15
+
+  - name: report
+    kind: report
+    target: report_engine
+    depends_on: [risk_score]
+    params:
+      template: web-vapt
+      format: "{{ inputs.format | default('json') }}"
+      compliance_mappings:
+        - owasp_asvs
+        - masvs

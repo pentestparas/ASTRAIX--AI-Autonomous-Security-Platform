@@ -1,0 +1,83 @@
+# Nuclei Plugin Manifest
+id: scanner/nuclei
+version: "1.0.0"
+name: "Nuclei Vulnerability Scanner"
+description: |
+  Fast and customizable vulnerability scanner based on YAML templates.
+  Supports DNS, HTTP, TCP, WebSocket, and headless scanning.
+  Maps to the Vulnerability Assessment Capability.
+
+author: AstraIX Engineering
+runtime: python3
+entrypoint: main.py
+
+capabilities:
+  - capability_id: web/vuln-scan
+    role: primary
+  - capability_id: network/vuln-scan
+    role: supporting
+  - capability_id: api/security
+    role: supporting
+
+input_schema:
+  type: object
+  required: [target]
+  properties:
+    target:
+      type: string
+      description: Target URL, host, or file with target list
+    templates:
+      type: array
+      description: Specific template IDs or paths to run
+    template_dirs:
+      type: array
+      description: Template directories to use (e.g., vulnerabilities, exposures)
+      default: ["vulnerabilities"]
+    severity:
+      type: array
+      description: Filter by severity (info, low, medium, high, critical)
+    tags:
+      type: array
+      description: Filter templates by tags (e.g., ["cve","sql-injection"])
+    rate_limit:
+      type: integer
+      description: Maximum requests per second
+      default: 150
+    bulk_size:
+      type: integer
+      description: Parallel hosts to scan
+      default: 25
+    timeout:
+      type: integer
+      description: Request timeout in seconds
+      default: 10
+    retries:
+      type: integer
+      description: Number of retries
+      default: 1
+    follow_redirects:
+      type: boolean
+      description: Follow HTTP redirects
+      default: false
+    max_redirects:
+      type: integer
+      description: Maximum number of redirects
+      default: 5
+
+limits:
+  cpu_cores: 2.0
+  memory_mb: 512
+  timeout_seconds: 600
+  max_output_bytes: 33554432  # 32 MiB
+
+sandbox:
+  network: outbound
+  filesystem: ephemeral
+  allowed_executables:
+    - nuclei
+    - python3
+  allow_command_substitution: false
+
+requirements:
+  system:
+    - nuclei >= 3.0

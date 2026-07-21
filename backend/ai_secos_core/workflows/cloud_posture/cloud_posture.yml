@@ -1,0 +1,51 @@
+# Cloud Posture Assessment Workflow
+id: workflow/cloud_posture
+description: |
+  Cloud security posture assessment using Trivy:
+  1. Container image or IaC directory scanning
+  2. Vulnerability detection (OS packages, dependencies)
+  3. Misconfiguration detection
+  4. Secret scanning
+  5. SBOM generation and compliance mapping
+
+steps:
+  - name: container_scan
+    kind: scan
+    target: scanner/trivy
+    params:
+      runtime: python3
+      input: "{{ inputs.target }}"
+      scan_type: "{{ inputs.scan_type | default('image') }}"
+      scanners: "{{ inputs.scanners | default(['vuln', 'misconfig', 'secret']) }}"
+      severity: ["UNKNOWN", "LOW", "MEDIUM", "HIGH", "CRITICAL"]
+      timeout: 300
+
+  - name: normalize_trivy
+    kind: normalize
+    target: scanner/trivy
+    depends_on: [container_scan]
+    params:
+      capability_id: cloud/posture
+
+  - name: risk_score
+    kind: risk
+    target: finding_engine
+    depends_on: [normalize_trivy]
+    params:
+      weights:
+        likelihood: 0.20
+        impact: 0.35
+        exploitability: 0.20
+        business_context: 0.25
+
+  - name: report
+    kind: report
+    target: report_engine
+    depends_on: [risk_score]
+    params:
+      template: cloud-posture
+      format: "{{ inputs.format | default('json') }}"
+      compliance_mappings:
+        - cis
+        - soc2
+        - pci_dss

@@ -1,0 +1,59 @@
+# Subdomain Enumeration Capability Manifest
+id: osint/asset-discovery
+version: "1.0.0"
+display_name: "External Asset Discovery"
+description: |
+  Discovers external-facing assets through passive reconnaissance.
+  Enumerates subdomains, identifies live hosts, and maps the
+  external attack surface using multiple intelligence sources.
+
+inputs:
+  type: object
+  required: [target]
+  properties:
+    target:
+      type: string
+      description: Domain name to enumerate
+    sources:
+      type: array
+      description: Specific passive sources to query
+    verify:
+      type: boolean
+      description: Verify subdomains with HTTP probe
+      default: false
+    brute_force:
+      type: boolean
+      description: Include DNS brute forcing
+      default: false
+
+outputs:
+  finding_kinds:
+    - subdomain
+    - live_host
+    - service_fingerprint
+  asset_types: [domain]
+
+supported_assets:
+  - category: domain
+
+workflows:
+  - workflow/asset_discovery
+
+required_plugins:
+  - plugin_id: scanner/subfinder
+    min_version: "1.0.0"
+    role: primary
+  - plugin_id: scanner/httpx
+    min_version: "1.0.0"
+    role: supporting
+
+compliance:
+  - framework: owasp_asvs
+    control: V1.4
+    rationale: "Discover and document public-facing assets and attack surface."
+  - framework: NIST_CSF
+    control: "ID.RA"
+    rationale: "Identify and catalog organizational assets and external attack vectors."
+  - framework: cis
+    control: "1.12"
+    rationale: "Maintain comprehensive inventory of public-facing services."

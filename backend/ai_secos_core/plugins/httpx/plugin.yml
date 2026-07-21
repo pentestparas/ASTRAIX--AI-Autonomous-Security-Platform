@@ -1,0 +1,48 @@
+# httpx Plugin Manifest (M2 demo)
+id: scanner/httpx
+version: "1.0.0"
+name: "HTTP Probe (httpx)"
+description: |
+  Live HTTP/HTTPS probing, fingerprinting, and stack detection.
+  Maps to the Web Discovery Capability.
+
+author: AstraIX Engineering
+runtime: python3
+entrypoint: main.py
+
+capabilities:
+  - capability_id: web/discovery
+    role: primary
+
+input_schema:
+  type: object
+  required: [target]
+  properties:
+    target:
+      type: string
+      description: Target URL, host, or CIDR-range
+    ports:
+      type: array
+      description: Optional comma-separated port list (default ["80","443"])
+    follow_redirects:
+      type: boolean
+      default: true
+    no_color:
+      type: boolean
+      default: true
+
+limits:
+  cpu_cores: 1.0
+  memory_mb: 256
+  timeout_seconds: 60
+  max_output_bytes: 8388608  # 8 MiB
+
+sandbox:
+  network: outbound
+  filesystem: ephemeral
+  allowed_executables: []
+  allow_command_substitution: false
+
+requirements:
+  system:
+    - httpx-binary OR python-httpx fallback

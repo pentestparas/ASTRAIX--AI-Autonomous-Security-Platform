@@ -1,0 +1,26 @@
+# Community 78
+
+> 2 nodes · cohesion 1.00
+
+## Key Concepts
+
+- **__init__.py** (1 connections) — `backend/ai_secos_core/ai_gateway/__init__.py`
+- **AI Gateway — typed contract + stub implementations.  Six sub-modules per Archite** (1 connections) — `backend/ai_secos_core/ai_gateway/__init__.py`
+
+## Relationships
+
+- No strong cross-community connections detected
+
+## Source Files
+
+- `backend/ai_secos_core/ai_gateway/__init__.py`
+
+## Audit Trail
+
+- EXTRACTED: 2 (100%)
+- INFERRED: 0 (0%)
+- AMBIGUOUS: 0 (0%)
+
+---
+
+*Part of the graphify knowledge wiki. See [[index]] to navigate.*

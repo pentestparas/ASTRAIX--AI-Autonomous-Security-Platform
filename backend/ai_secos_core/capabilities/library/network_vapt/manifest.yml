@@ -1,0 +1,65 @@
+# Network VAPT Capability Manifest
+id: network/vapt
+version: "1.0.0"
+display_name: "Network Vulnerability Assessment"
+description: |
+  Comprehensive network reconnaissance and vulnerability assessment.
+  Discovers live hosts, open ports, running services, OS fingerprints,
+  and detects known vulnerabilities. Maps to full network pentest workflow.
+
+inputs:
+  type: object
+  required: [target]
+  properties:
+    target:
+      type: string
+      description: Target IP address, hostname, or CIDR range
+    ports:
+      type: string
+      description: Port range to scan (default "1-1000")
+      default: "1-1000"
+    scan_type:
+      type: string
+      enum: [quick, standard, deep]
+      description: Scan depth
+      default: standard
+    vuln_scripts:
+      type: boolean
+      description: Run vulnerability detection scripts (slower)
+      default: false
+
+outputs:
+  finding_kinds:
+    - open_port
+    - os_detection
+    - service_detection
+    - network_vulnerability
+    - cve
+  asset_types: [ip, hostname, cidr]
+
+supported_assets:
+  - category: ip
+  - category: hostname
+  - category: cidr
+
+workflows:
+  - workflow/network_vapt
+
+required_plugins:
+  - plugin_id: scanner/nmap
+    min_version: "1.0.0"
+    role: primary
+  - plugin_id: scanner/nuclei
+    min_version: "1.0.0"
+    role: supporting
+
+compliance:
+  - framework: owasp_asvs
+    control: V1.4
+    rationale: "Identify exposed network services and attack surfaces."
+  - framework: cis
+    control: "1.12"
+    rationale: "Harden network perimeter and identify unauthorized services."
+  - framework: NIST_CSF
+    control: "ID.AM"
+    rationale: "Maintain asset inventory of network-accessible resources."

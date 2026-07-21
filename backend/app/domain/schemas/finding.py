@@ -1,0 +1,33 @@
+from datetime import datetime
+from typing import Optional, Dict, Any, List
+from uuid import UUID
+from pydantic import BaseModel
+
+from app.schemas.base import BaseSchema
+
+
+class FindingBase(BaseModel):
+    severity: str
+    title: str
+    description: Optional[str] = None
+    details: Dict[str, Any] = {}
+    remediation: Optional[str] = None
+    reference: Optional[str] = None
+
+
+class FindingRead(FindingBase, BaseSchema):
+    id: UUID
+    asset_id: UUID
+    assessment_id: UUID
+    plugin_id: str
+    cvss_score: Optional[float] = None
+    status: str = "open"
+    fingerprint: str
+    created_at: datetime
+    updated_at: datetime
+
+
+class FindingUpdate(BaseModel):
+    status: Optional[str] = None
+    remediation: Optional[str] = None
+    severity: Optional[str] = None

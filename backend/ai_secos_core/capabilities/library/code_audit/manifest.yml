@@ -1,0 +1,61 @@
+# Code Security Audit Capability Manifest
+id: code/audit
+version: "1.0.0"
+display_name: "Static Application Security Testing (SAST)"
+description: |
+  Analyzes source code for security vulnerabilities and code quality issues.
+  Supports multiple languages and detects OWASP Top 10, CWE, and
+  language-specific security bugs using Semgrep rules.
+
+inputs:
+  type: object
+  required: [target]
+  properties:
+    target:
+      type: string
+      description: Path to source code directory or repository
+    languages:
+      type: array
+      description: Restrict to specific programming languages
+    config:
+      type: array
+      description: Semgrep rule sets to use
+      default: ["p/security-audit", "p/ci"]
+    timeout:
+      type: integer
+      description: Timeout per rule in seconds
+      default: 30
+
+outputs:
+  finding_kinds:
+    - code_vulnerability
+    - code_quality
+    - security_hotspot
+    - injection
+    - weak_crypto
+  asset_types: [source_code]
+
+supported_assets:
+  - category: source_code
+
+workflows:
+  - workflow/code_audit
+
+required_plugins:
+  - plugin_id: scanner/semgrep
+    min_version: "1.0.0"
+    role: primary
+
+compliance:
+  - framework: owasp_asvs
+    control: V1.2
+    rationale: "Verify secure code review processes and tool integration."
+  - framework: owasp_asvs
+    control: V14.2
+    rationale: "Ensure all input is validated, sanitized, and safe."
+  - framework: masvs
+    control: "CODE-ST"
+    rationale: "Static code analysis for security vulnerabilities."
+  - framework: cis
+    control: "16.10"
+    rationale: "Ensure secure coding practices are followed."

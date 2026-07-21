@@ -1,0 +1,2151 @@
+{
+  "nodes": [
+    {
+      "id": "project_manifest",
+      "label": "AstraIX Platform Constitution",
+      "file_type": "document",
+      "source_file": "engineering/PROJECT_MANIFEST.md",
+      "source_location": null
+    },
+    {
+      "id": "project_manifest_ai_secos_core",
+      "label": "AI-SecOS Core Runtime",
+      "file_type": "concept",
+      "source_file": "engineering/PROJECT_MANIFEST.md",
+      "source_location": null
+    },
+    {
+      "id": "project_manifest_security_analyst",
+      "label": "Security Analyst Application",
+      "file_type": "concept",
+      "source_file": "engineering/PROJECT_MANIFEST.md",
+      "source_location": null
+    },
+    {
+      "id": "project_manifest_plugins",
+      "label": "Plugin System",
+      "file_type": "concept",
+      "source_file": "engineering/PROJECT_MANIFEST.md",
+      "source_location": null
+    },
+    {
+      "id": "project_manifest_security_finding",
+      "label": "Canonical Security Finding Schema",
+      "file_type": "concept",
+      "source_file": "engineering/PROJECT_MANIFEST.md",
+      "source_location": null
+    },
+    {
+      "id": "project_manifest_capability",
+      "label": "Capability Abstraction",
+      "file_type": "concept",
+      "source_file": "engineering/PROJECT_MANIFEST.md",
+      "source_location": null
+    },
+    {
+      "id": "project_manifest_workflow",
+      "label": "Workflow Abstraction",
+      "file_type": "concept",
+      "source_file": "engineering/PROJECT_MANIFEST.md",
+      "source_location": null
+    },
+    {
+      "id": "project_manifest_finding_engine",
+      "label": "Finding Engine",
+      "file_type": "concept",
+      "source_file": "engineering/PROJECT_MANIFEST.md",
+      "source_location": null
+    },
+    {
+      "id": "project_manifest_risk_engine",
+      "label": "Risk Engine",
+      "file_type": "concept",
+      "source_file": "engineering/PROJECT_MANIFEST.md",
+      "source_location": null
+    },
+    {
+      "id": "project_manifest_ai_gateway",
+      "label": "AI Gateway",
+      "file_type": "concept",
+      "source_file": "engineering/PROJECT_MANIFEST.md",
+      "source_location": null
+    },
+    {
+      "id": "architecture",
+      "label": "System Architecture",
+      "file_type": "document",
+      "source_file": "engineering/ARCHITECTURE.md",
+      "source_location": null
+    },
+    {
+      "id": "architecture_ai_secos_core",
+      "label": "AI-SecOS Core",
+      "file_type": "concept",
+      "source_file": "engineering/ARCHITECTURE.md",
+      "source_location": null
+    },
+    {
+      "id": "architecture_applications",
+      "label": "Applications Layer",
+      "file_type": "concept",
+      "source_file": "engineering/ARCHITECTURE.md",
+      "source_location": null
+    },
+    {
+      "id": "architecture_plugins",
+      "label": "Plugins Layer",
+      "file_type": "concept",
+      "source_file": "engineering/ARCHITECTURE.md",
+      "source_location": null
+    },
+    {
+      "id": "architecture_platform",
+      "label": "Platform Bootstrap Module",
+      "file_type": "code",
+      "source_file": "engineering/ARCHITECTURE.md",
+      "source_location": null
+    },
+    {
+      "id": "architecture_runtime",
+      "label": "Runtime Module",
+      "file_type": "code",
+      "source_file": "engineering/ARCHITECTURE.md",
+      "source_location": null
+    },
+    {
+      "id": "architecture_plugin_system",
+      "label": "Plugin System Module",
+      "file_type": "code",
+      "source_file": "engineering/ARCHITECTURE.md",
+      "source_location": null
+    },
+    {
+      "id": "architecture_ai_gateway",
+      "label": "AI Gateway Module",
+      "file_type": "code",
+      "source_file": "engineering/ARCHITECTURE.md",
+      "source_location": null
+    },
+    {
+      "id": "architecture_normalizer",
+      "label": "Normalizer Module",
+      "file_type": "code",
+      "source_file": "engineering/ARCHITECTURE.md",
+      "source_location": null
+    },
+    {
+      "id": "architecture_risk_engine",
+      "label": "Risk Engine Module",
+      "file_type": "code",
+      "source_file": "engineering/ARCHITECTURE.md",
+      "source_location": null
+    },
+    {
+      "id": "architecture_report_engine",
+      "label": "Report Engine Module",
+      "file_type": "code",
+      "source_file": "engineering/ARCHITECTURE.md",
+      "source_location": null
+    },
+    {
+      "id": "architecture_shared",
+      "label": "Shared Utilities Module",
+      "file_type": "code",
+      "source_file": "engineering/ARCHITECTURE.md",
+      "source_location": null
+    },
+    {
+      "id": "architecture_infrastructure",
+      "label": "Infrastructure Module",
+      "file_type": "code",
+      "source_file": "engineering/ARCHITECTURE.md",
+      "source_location": null
+    },
+    {
+      "id": "architecture_models",
+      "label": "Domain Models Module",
+      "file_type": "code",
+      "source_file": "engineering/ARCHITECTURE.md",
+      "source_location": null
+    },
+    {
+      "id": "architecture_security_finding",
+      "label": "Canonical Security Finding",
+      "file_type": "concept",
+      "source_file": "engineering/ARCHITECTURE.md",
+      "source_location": null
+    },
+    {
+      "id": "architecture_security_plugin",
+      "label": "SecurityPlugin PDK",
+      "file_type": "code",
+      "source_file": "engineering/ARCHITECTURE.md",
+      "source_location": null
+    },
+    {
+      "id": "architecture_task_planner",
+      "label": "Task Planner",
+      "file_type": "concept",
+      "source_file": "engineering/ARCHITECTURE.md",
+      "source_location": null
+    },
+    {
+      "id": "architecture_plugin_manager",
+      "label": "Plugin Manager",
+      "file_type": "concept",
+      "source_file": "engineering/ARCHITECTURE.md",
+      "source_location": null
+    },
+    {
+      "id": "architecture_plugin_executor",
+      "label": "Plugin Executor",
+      "file_type": "concept",
+      "source_file": "engineering/ARCHITECTURE.md",
+      "source_location": null
+    },
+    {
+      "id": "architecture_plugin_sandbox",
+      "label": "Plugin Sandbox",
+      "file_type": "concept",
+      "source_file": "engineering/ARCHITECTURE.md",
+      "source_location": null
+    },
+    {
+      "id": "architecture_plugin_validator",
+      "label": "Plugin Validator",
+      "file_type": "concept",
+      "source_file": "engineering/ARCHITECTURE.md",
+      "source_location": null
+    },
+    {
+      "id": "architecture_capability",
+      "label": "Capability Abstraction",
+      "file_type": "concept",
+      "source_file": "engineering/ARCHITECTURE.md",
+      "source_location": null
+    },
+    {
+      "id": "architecture_workflow",
+      "label": "Workflow Abstraction",
+      "file_type": "concept",
+      "source_file": "engineering/ARCHITECTURE.md",
+      "source_location": null
+    },
+    {
+      "id": "coding_standards",
+      "label": "Coding Standards",
+      "file_type": "document",
+      "source_file": "engineering/CODING_STANDARDS.md",
+      "source_location": null
+    },
+    {
+      "id": "coding_standards_python",
+      "label": "Python Standards",
+      "file_type": "concept",
+      "source_file": "engineering/CODING_STANDARDS.md",
+      "source_location": null
+    },
+    {
+      "id": "coding_standards_typescript",
+      "label": "TypeScript Standards",
+      "file_type": "concept",
+      "source_file": "engineering/CODING_STANDARDS.md",
+      "source_location": null
+    },
+    {
+      "id": "coding_standards_platform",
+      "label": "Platform Error Hierarchy",
+      "file_type": "concept",
+      "source_file": "engineering/CODING_STANDARDS.md",
+      "source_location": null
+    },
+    {
+      "id": "mvp_scope",
+      "label": "MVP Scope Definition",
+      "file_type": "document",
+      "source_file": "engineering/MVP_SCOPE.md",
+      "source_location": null
+    },
+    {
+      "id": "mvp_scope_build_now",
+      "label": "Build Now Items",
+      "file_type": "concept",
+      "source_file": "engineering/MVP_SCOPE.md",
+      "source_location": null
+    },
+    {
+      "id": "mvp_scope_build_later",
+      "label": "Build Later Items",
+      "file_type": "concept",
+      "source_file": "engineering/MVP_SCOPE.md",
+      "source_location": null
+    },
+    {
+      "id": "mvp_scope_never",
+      "label": "Never Build Items",
+      "file_type": "concept",
+      "source_file": "engineering/MVP_SCOPE.md",
+      "source_location": null
+    },
+    {
+      "id": "roadmap",
+      "label": "Project Roadmap",
+      "file_type": "document",
+      "source_file": "engineering/ROADMAP.md",
+      "source_location": null
+    },
+    {
+      "id": "roadmap_milestone_1",
+      "label": "Milestone 1 - AI-SecOS Core",
+      "file_type": "concept",
+      "source_file": "engineering/ROADMAP.md",
+      "source_location": null
+    },
+    {
+      "id": "roadmap_milestone_2",
+      "label": "Milestone 2 - First Plugin httpx",
+      "file_type": "concept",
+      "source_file": "engineering/ROADMAP.md",
+      "source_location": null
+    },
+    {
+      "id": "roadmap_milestone_3",
+      "label": "Milestone 3 - Discovery Capability",
+      "file_type": "concept",
+      "source_file": "engineering/ROADMAP.md",
+      "source_location": null
+    },
+    {
+      "id": "roadmap_milestone_4",
+      "label": "Milestone 4 - Web Security Assessment",
+      "file_type": "concept",
+      "source_file": "engineering/ROADMAP.md",
+      "source_location": null
+    },
+    {
+      "id": "roadmap_milestone_5",
+      "label": "Milestone 5 - Security Analyst UI",
+      "file_type": "concept",
+      "source_file": "engineering/ROADMAP.md",
+      "source_location": null
+    },
+    {
+      "id": "tech_stack",
+      "label": "Technology Stack",
+      "file_type": "document",
+      "source_file": "engineering/TECH_STACK.md",
+      "source_location": null
+    },
+    {
+      "id": "tech_stack_backend",
+      "label": "Backend Tech Stack",
+      "file_type": "concept",
+      "source_file": "engineering/TECH_STACK.md",
+      "source_location": null
+    },
+    {
+      "id": "tech_stack_frontend",
+      "label": "Frontend Tech Stack",
+      "file_type": "concept",
+      "source_file": "engineering/TECH_STACK.md",
+      "source_location": null
+    },
+    {
+      "id": "tech_stack_ai",
+      "label": "AI Tech Stack",
+      "file_type": "concept",
+      "source_file": "engineering/TECH_STACK.md",
+      "source_location": null
+    },
+    {
+      "id": "tech_stack_devops",
+      "label": "DevOps Tech Stack",
+      "file_type": "concept",
+      "source_file": "engineering/TECH_STACK.md",
+      "source_location": null
+    },
+    {
+      "id": "vision",
+      "label": "Product Vision",
+      "file_type": "document",
+      "source_file": "engineering/VISION.md",
+      "source_location": null
+    },
+    {
+      "id": "master_rules",
+      "label": "Master AI Engineer Rules",
+      "file_type": "document",
+      "source_file": "engineering/rules/00_MASTER_RULES.md",
+      "source_location": null
+    },
+    {
+      "id": "rules_concept",
+      "label": "Operational Rules",
+      "file_type": "document",
+      "source_file": "engineering/rules/README.md",
+      "source_location": null
+    },
+    {
+      "id": "prompts_concept",
+      "label": "Prompt Templates",
+      "file_type": "document",
+      "source_file": "engineering/prompts/README.md",
+      "source_location": null
+    },
+    {
+      "id": "capability_cloud_posture",
+      "label": "Cloud Security Posture Assessment",
+      "file_type": "concept",
+      "source_file": "backend/ai_secos_core/capabilities/library/cloud_posture/manifest.yml",
+      "source_location": null
+    },
+    {
+      "id": "capability_code_audit",
+      "label": "Static Application Security Testing",
+      "file_type": "concept",
+      "source_file": "backend/ai_secos_core/capabilities/library/code_audit/manifest.yml",
+      "source_location": null
+    },
+    {
+      "id": "capability_network_vapt",
+      "label": "Network Vulnerability Assessment",
+      "file_type": "concept",
+      "source_file": "backend/ai_secos_core/capabilities/library/network_vapt/manifest.yml",
+      "source_location": null
+    },
+    {
+      "id": "capability_subdomain_enum",
+      "label": "External Asset Discovery",
+      "file_type": "concept",
+      "source_file": "backend/ai_secos_core/capabilities/library/subdomain_enum/manifest.yml",
+      "source_location": null
+    },
+    {
+      "id": "capability_web_discovery",
+      "label": "Web Discovery",
+      "file_type": "concept",
+      "source_file": "backend/ai_secos_core/capabilities/library/web_discovery/manifest.yml",
+      "source_location": null
+    },
+    {
+      "id": "capability_web_vapt",
+      "label": "Web Application Security Assessment",
+      "file_type": "concept",
+      "source_file": "backend/ai_secos_core/capabilities/library/web_vapt/manifest.yml",
+      "source_location": null
+    },
+    {
+      "id": "plugin_trivy",
+      "label": "Trivy Scanner Plugin",
+      "file_type": "concept",
+      "source_file": "backend/ai_secos_core/capabilities/library/cloud_posture/manifest.yml",
+      "source_location": null
+    },
+    {
+      "id": "plugin_semgrep",
+      "label": "Semgrep Scanner Plugin",
+      "file_type": "concept",
+      "source_file": "backend/ai_secos_core/capabilities/library/code_audit/manifest.yml",
+      "source_location": null
+    },
+    {
+      "id": "plugin_nmap",
+      "label": "Nmap Scanner Plugin",
+      "file_type": "concept",
+      "source_file": "backend/ai_secos_core/capabilities/library/network_vapt/manifest.yml",
+      "source_location": null
+    },
+    {
+      "id": "plugin_nuclei",
+      "label": "Nuclei Scanner Plugin",
+      "file_type": "concept",
+      "source_file": "backend/ai_secos_core/capabilities/library/network_vapt/manifest.yml",
+      "source_location": null
+    },
+    {
+      "id": "plugin_subfinder",
+      "label": "Subfinder Scanner Plugin",
+      "file_type": "concept",
+      "source_file": "backend/ai_secos_core/capabilities/library/subdomain_enum/manifest.yml",
+      "source_location": null
+    },
+    {
+      "id": "plugin_httpx",
+      "label": "HTTPX Scanner Plugin",
+      "file_type": "concept",
+      "source_file": "backend/ai_secos_core/capabilities/library/subdomain_enum/manifest.yml",
+      "source_location": null
+    },
+    {
+      "id": "plugins_httpx_plugin",
+      "label": "HTTP Probe (httpx) Plugin",
+      "file_type": "code",
+      "source_file": "backend/ai_secos_core/plugins/httpx/plugin.yml",
+      "source_location": null,
+      "source_url": null,
+      "captured_at": null,
+      "author": "AstraIX Engineering",
+      "contributor": null
+    },
+    {
+      "id": "plugins_nmap_plugin",
+      "label": "Nmap Port Scanner Plugin",
+      "file_type": "code",
+      "source_file": "backend/ai_secos_core/plugins/nmap/plugin.yml",
+      "source_location": null,
+      "source_url": null,
+      "captured_at": null,
+      "author": "AstraIX Engineering",
+      "contributor": null
+    },
+    {
+      "id": "plugins_nuclei_plugin",
+      "label": "Nuclei Vulnerability Scanner Plugin",
+      "file_type": "code",
+      "source_file": "backend/ai_secos_core/plugins/nuclei/plugin.yml",
+      "source_location": null,
+      "source_url": null,
+      "captured_at": null,
+      "author": "AstraIX Engineering",
+      "contributor": null
+    },
+    {
+      "id": "plugins_semgrep_plugin",
+      "label": "Semgrep SAST Scanner Plugin",
+      "file_type": "code",
+      "source_file": "backend/ai_secos_core/plugins/semgrep/plugin.yml",
+      "source_location": null,
+      "source_url": null,
+      "captured_at": null,
+      "author": "AstraIX Engineering",
+      "contributor": null
+    },
+    {
+      "id": "plugins_subfinder_plugin",
+      "label": "Subfinder Subdomain Enumeration Plugin",
+      "file_type": "code",
+      "source_file": "backend/ai_secos_core/plugins/subfinder/plugin.yml",
+      "source_location": null,
+      "source_url": null,
+      "captured_at": null,
+      "author": "AstraIX Engineering",
+      "contributor": null
+    },
+    {
+      "id": "plugins_trivy_plugin",
+      "label": "Trivy Security Scanner Plugin",
+      "file_type": "code",
+      "source_file": "backend/ai_secos_core/plugins/trivy/plugin.yml",
+      "source_location": null,
+      "source_url": null,
+      "captured_at": null,
+      "author": "AstraIX Engineering",
+      "contributor": null
+    },
+    {
+      "id": "httpx_web_discovery",
+      "label": "web/discovery capability",
+      "file_type": "concept",
+      "source_file": "backend/ai_secos_core/plugins/httpx/plugin.yml",
+      "source_location": "line 14",
+      "source_url": null,
+      "captured_at": null,
+      "author": null,
+      "contributor": null
+    },
+    {
+      "id": "nmap_network_recon",
+      "label": "network/recon capability",
+      "file_type": "concept",
+      "source_file": "backend/ai_secos_core/plugins/nmap/plugin.yml",
+      "source_location": "line 15",
+      "source_url": null,
+      "captured_at": null,
+      "author": null,
+      "contributor": null
+    },
+    {
+      "id": "nmap_network_vuln_scan",
+      "label": "network/vuln-scan capability",
+      "file_type": "concept",
+      "source_file": "backend/ai_secos_core/plugins/nmap/plugin.yml",
+      "source_location": "line 17",
+      "source_url": null,
+      "captured_at": null,
+      "author": null,
+      "contributor": null
+    },
+    {
+      "id": "nuclei_web_vuln_scan",
+      "label": "web/vuln-scan capability",
+      "file_type": "concept",
+      "source_file": "backend/ai_secos_core/plugins/nuclei/plugin.yml",
+      "source_location": "line 15",
+      "source_url": null,
+      "captured_at": null,
+      "author": null,
+      "contributor": null
+    },
+    {
+      "id": "nuclei_network_vuln_scan",
+      "label": "network/vuln-scan capability",
+      "file_type": "concept",
+      "source_file": "backend/ai_secos_core/plugins/nuclei/plugin.yml",
+      "source_location": "line 17",
+      "source_url": null,
+      "captured_at": null,
+      "author": null,
+      "contributor": null
+    },
+    {
+      "id": "nuclei_api_security",
+      "label": "api/security capability",
+      "file_type": "concept",
+      "source_file": "backend/ai_secos_core/plugins/nuclei/plugin.yml",
+      "source_location": "line 19",
+      "source_url": null,
+      "captured_at": null,
+      "author": null,
+      "contributor": null
+    },
+    {
+      "id": "semgrep_code_audit",
+      "label": "code/audit capability",
+      "file_type": "concept",
+      "source_file": "backend/ai_secos_core/plugins/semgrep/plugin.yml",
+      "source_location": "line 15",
+      "source_url": null,
+      "captured_at": null,
+      "author": null,
+      "contributor": null
+    },
+    {
+      "id": "semgrep_sast_security",
+      "label": "sast/security capability",
+      "file_type": "concept",
+      "source_file": "backend/ai_secos_core/plugins/semgrep/plugin.yml",
+      "source_location": "line 17",
+      "source_url": null,
+      "captured_at": null,
+      "author": null,
+      "contributor": null
+    },
+    {
+      "id": "subfinder_network_recon",
+      "label": "network/recon capability",
+      "file_type": "concept",
+      "source_file": "backend/ai_secos_core/plugins/subfinder/plugin.yml",
+      "source_location": "line 15",
+      "source_url": null,
+      "captured_at": null,
+      "author": null,
+      "contributor": null
+    },
+    {
+      "id": "subfinder_osint_asset_discovery",
+      "label": "osint/asset-discovery capability",
+      "file_type": "concept",
+      "source_file": "backend/ai_secos_core/plugins/subfinder/plugin.yml",
+      "source_location": "line 17",
+      "source_url": null,
+      "captured_at": null,
+      "author": null,
+      "contributor": null
+    },
+    {
+      "id": "trivy_cloud_posture",
+      "label": "cloud/posture capability",
+      "file_type": "concept",
+      "source_file": "backend/ai_secos_core/plugins/trivy/plugin.yml",
+      "source_location": "line 15",
+      "source_url": null,
+      "captured_at": null,
+      "author": null,
+      "contributor": null
+    },
+    {
+      "id": "trivy_container_security",
+      "label": "container/security capability",
+      "file_type": "concept",
+      "source_file": "backend/ai_secos_core/plugins/trivy/plugin.yml",
+      "source_location": "line 17",
+      "source_url": null,
+      "captured_at": null,
+      "author": null,
+      "contributor": null
+    },
+    {
+      "id": "trivy_iac_security",
+      "label": "iac/security capability",
+      "file_type": "concept",
+      "source_file": "backend/ai_secos_core/plugins/trivy/plugin.yml",
+      "source_location": "line 19",
+      "source_url": null,
+      "captured_at": null,
+      "author": null,
+      "contributor": null
+    },
+    {
+      "id": "workflows_asset_discovery",
+      "label": "External Asset Discovery Workflow",
+      "file_type": "code",
+      "source_file": "backend/ai_secos_core/workflows/asset_discovery/asset_discovery.yml",
+      "source_location": null,
+      "source_url": null,
+      "captured_at": null,
+      "author": null,
+      "contributor": null
+    },
+    {
+      "id": "workflows_cloud_posture",
+      "label": "Cloud Posture Assessment Workflow",
+      "file_type": "code",
+      "source_file": "backend/ai_secos_core/workflows/cloud_posture/cloud_posture.yml",
+      "source_location": null,
+      "source_url": null,
+      "captured_at": null,
+      "author": null,
+      "contributor": null
+    },
+    {
+      "id": "workflows_code_audit",
+      "label": "Code Security Audit Workflow",
+      "file_type": "code",
+      "source_file": "backend/ai_secos_core/workflows/code_audit/code_audit.yml",
+      "source_location": null,
+      "source_url": null,
+      "captured_at": null,
+      "author": null,
+      "contributor": null
+    },
+    {
+      "id": "workflows_discovery",
+      "label": "Web Discovery Workflow",
+      "file_type": "code",
+      "source_file": "backend/ai_secos_core/workflows/discovery/discovery.yml",
+      "source_location": null,
+      "source_url": null,
+      "captured_at": null,
+      "author": null,
+      "contributor": null
+    },
+    {
+      "id": "workflows_network_vapt",
+      "label": "Network VAPT Workflow",
+      "file_type": "code",
+      "source_file": "backend/ai_secos_core/workflows/network_vapt/network_vapt.yml",
+      "source_location": null,
+      "source_url": null,
+      "captured_at": null,
+      "author": null,
+      "contributor": null
+    },
+    {
+      "id": "workflows_web_vapt",
+      "label": "Web Application VAPT Workflow",
+      "file_type": "code",
+      "source_file": "backend/ai_secos_core/workflows/web_vapt/web_vapt.yml",
+      "source_location": null,
+      "source_url": null,
+      "captured_at": null,
+      "author": null,
+      "contributor": null
+    },
+    {
+      "id": "finding_engine",
+      "label": "Finding Engine",
+      "file_type": "concept",
+      "source_file": "backend/ai_secos_core/workflows/asset_discovery/asset_discovery.yml",
+      "source_location": null,
+      "source_url": null,
+      "captured_at": null,
+      "author": null,
+      "contributor": null
+    },
+    {
+      "id": "report_engine",
+      "label": "Report Engine",
+      "file_type": "concept",
+      "source_file": "backend/ai_secos_core/workflows/asset_discovery/asset_discovery.yml",
+      "source_location": null,
+      "source_url": null,
+      "captured_at": null,
+      "author": null,
+      "contributor": null
+    },
+    {
+      "id": "docker_compose_astraix",
+      "label": "AstraIX Docker Compose",
+      "file_type": "document",
+      "source_file": "docker-compose.yml",
+      "source_location": null,
+      "source_url": null,
+      "captured_at": null,
+      "author": null,
+      "contributor": null
+    },
+    {
+      "id": "services_postgres",
+      "label": "PostgreSQL Service",
+      "file_type": "concept",
+      "source_file": "docker-compose.yml",
+      "source_location": null,
+      "source_url": null,
+      "captured_at": null,
+      "author": null,
+      "contributor": null
+    },
+    {
+      "id": "services_redis",
+      "label": "Redis Service",
+      "file_type": "concept",
+      "source_file": "docker-compose.yml",
+      "source_location": null,
+      "source_url": null,
+      "captured_at": null,
+      "author": null,
+      "contributor": null
+    },
+    {
+      "id": "services_backend",
+      "label": "Backend API Service",
+      "file_type": "concept",
+      "source_file": "docker-compose.yml",
+      "source_location": null,
+      "source_url": null,
+      "captured_at": null,
+      "author": null,
+      "contributor": null
+    },
+    {
+      "id": "services_frontend",
+      "label": "Frontend Service",
+      "file_type": "concept",
+      "source_file": "docker-compose.yml",
+      "source_location": null,
+      "source_url": null,
+      "captured_at": null,
+      "author": null,
+      "contributor": null
+    },
+    {
+      "id": "plugin_sdk",
+      "label": "Plugin SDK Schema",
+      "file_type": "document",
+      "source_file": "plugins/core/plugin-sdk/plugin.yml",
+      "source_location": null,
+      "source_url": null,
+      "captured_at": null,
+      "author": "AstraIX",
+      "contributor": null
+    }
+  ],
+  "edges": [
+    {
+      "source": "project_manifest",
+      "target": "project_manifest_ai_secos_core",
+      "relation": "conceptually_related_to",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": "engineering/PROJECT_MANIFEST.md",
+      "source_location": null,
+      "weight": 1.0
+    },
+    {
+      "source": "project_manifest",
+      "target": "project_manifest_security_analyst",
+      "relation": "conceptually_related_to",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": "engineering/PROJECT_MANIFEST.md",
+      "source_location": null,
+      "weight": 1.0
+    },
+    {
+      "source": "project_manifest",
+      "target": "project_manifest_plugins",
+      "relation": "conceptually_related_to",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": "engineering/PROJECT_MANIFEST.md",
+      "source_location": null,
+      "weight": 1.0
+    },
+    {
+      "source": "project_manifest",
+      "target": "project_manifest_security_finding",
+      "relation": "conceptually_related_to",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": "engineering/PROJECT_MANIFEST.md",
+      "source_location": null,
+      "weight": 1.0
+    },
+    {
+      "source": "project_manifest",
+      "target": "project_manifest_capability",
+      "relation": "conceptually_related_to",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": "engineering/PROJECT_MANIFEST.md",
+      "source_location": null,
+      "weight": 1.0
+    },
+    {
+      "source": "project_manifest",
+      "target": "project_manifest_workflow",
+      "relation": "conceptually_related_to",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": "engineering/PROJECT_MANIFEST.md",
+      "source_location": null,
+      "weight": 1.0
+    },
+    {
+      "source": "project_manifest",
+      "target": "project_manifest_finding_engine",
+      "relation": "conceptually_related_to",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": "engineering/PROJECT_MANIFEST.md",
+      "source_location": null,
+      "weight": 1.0
+    },
+    {
+      "source": "project_manifest",
+      "target": "project_manifest_risk_engine",
+      "relation": "conceptually_related_to",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": "engineering/PROJECT_MANIFEST.md",
+      "source_location": null,
+      "weight": 1.0
+    },
+    {
+      "source": "project_manifest",
+      "target": "project_manifest_ai_gateway",
+      "relation": "conceptually_related_to",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": "engineering/PROJECT_MANIFEST.md",
+      "source_location": null,
+      "weight": 1.0
+    },
+    {
+      "source": "project_manifest_ai_secos_core",
+      "target": "architecture_ai_secos_core",
+      "relation": "references",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": "engineering/PROJECT_MANIFEST.md",
+      "source_location": null,
+      "weight": 1.0
+    },
+    {
+      "source": "project_manifest_capability",
+      "target": "architecture_capability",
+      "relation": "references",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": "engineering/PROJECT_MANIFEST.md",
+      "source_location": null,
+      "weight": 1.0
+    },
+    {
+      "source": "project_manifest_workflow",
+      "target": "architecture_workflow",
+      "relation": "references",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": "engineering/PROJECT_MANIFEST.md",
+      "source_location": null,
+      "weight": 1.0
+    },
+    {
+      "source": "project_manifest_security_finding",
+      "target": "architecture_security_finding",
+      "relation": "references",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": "engineering/PROJECT_MANIFEST.md",
+      "source_location": null,
+      "weight": 1.0
+    },
+    {
+      "source": "architecture",
+      "target": "architecture_ai_secos_core",
+      "relation": "conceptually_related_to",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": "engineering/ARCHITECTURE.md",
+      "source_location": null,
+      "weight": 1.0
+    },
+    {
+      "source": "architecture",
+      "target": "architecture_applications",
+      "relation": "conceptually_related_to",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": "engineering/ARCHITECTURE.md",
+      "source_location": null,
+      "weight": 1.0
+    },
+    {
+      "source": "architecture",
+      "target": "architecture_plugins",
+      "relation": "conceptually_related_to",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": "engineering/ARCHITECTURE.md",
+      "source_location": null,
+      "weight": 1.0
+    },
+    {
+      "source": "architecture",
+      "target": "architecture_security_finding",
+      "relation": "conceptually_related_to",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": "engineering/ARCHITECTURE.md",
+      "source_location": null,
+      "weight": 1.0
+    },
+    {
+      "source": "architecture",
+      "target": "architecture_security_plugin",
+      "relation": "conceptually_related_to",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": "engineering/ARCHITECTURE.md",
+      "source_location": null,
+      "weight": 1.0
+    },
+    {
+      "source": "architecture",
+      "target": "architecture_task_planner",
+      "relation": "conceptually_related_to",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": "engineering/ARCHITECTURE.md",
+      "source_location": null,
+      "weight": 1.0
+    },
+    {
+      "source": "architecture_ai_secos_core",
+      "target": "architecture_platform",
+      "relation": "implements",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": "engineering/ARCHITECTURE.md",
+      "source_location": null,
+      "weight": 1.0
+    },
+    {
+      "source": "architecture_ai_secos_core",
+      "target": "architecture_runtime",
+      "relation": "implements",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": "engineering/ARCHITECTURE.md",
+      "source_location": null,
+      "weight": 1.0
+    },
+    {
+      "source": "architecture_ai_secos_core",
+      "target": "architecture_plugin_system",
+      "relation": "implements",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": "engineering/ARCHITECTURE.md",
+      "source_location": null,
+      "weight": 1.0
+    },
+    {
+      "source": "architecture_ai_secos_core",
+      "target": "architecture_ai_gateway",
+      "relation": "implements",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": "engineering/ARCHITECTURE.md",
+      "source_location": null,
+      "weight": 1.0
+    },
+    {
+      "source": "architecture_ai_secos_core",
+      "target": "architecture_normalizer",
+      "relation": "implements",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": "engineering/ARCHITECTURE.md",
+      "source_location": null,
+      "weight": 1.0
+    },
+    {
+      "source": "architecture_ai_secos_core",
+      "target": "architecture_risk_engine",
+      "relation": "implements",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": "engineering/ARCHITECTURE.md",
+      "source_location": null,
+      "weight": 1.0
+    },
+    {
+      "source": "architecture_ai_secos_core",
+      "target": "architecture_report_engine",
+      "relation": "implements",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": "engineering/ARCHITECTURE.md",
+      "source_location": null,
+      "weight": 1.0
+    },
+    {
+      "source": "architecture_ai_secos_core",
+      "target": "architecture_shared",
+      "relation": "implements",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": "engineering/ARCHITECTURE.md",
+      "source_location": null,
+      "weight": 1.0
+    },
+    {
+      "source": "architecture_ai_secos_core",
+      "target": "architecture_infrastructure",
+      "relation": "implements",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": "engineering/ARCHITECTURE.md",
+      "source_location": null,
+      "weight": 1.0
+    },
+    {
+      "source": "architecture_ai_secos_core",
+      "target": "architecture_models",
+      "relation": "implements",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": "engineering/ARCHITECTURE.md",
+      "source_location": null,
+      "weight": 1.0
+    },
+    {
+      "source": "architecture_task_planner",
+      "target": "architecture_plugin_manager",
+      "relation": "calls",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": "engineering/ARCHITECTURE.md",
+      "source_location": null,
+      "weight": 1.0
+    },
+    {
+      "source": "architecture_plugin_manager",
+      "target": "architecture_plugin_validator",
+      "relation": "calls",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": "engineering/ARCHITECTURE.md",
+      "source_location": null,
+      "weight": 1.0
+    },
+    {
+      "source": "architecture_plugin_manager",
+      "target": "architecture_plugin_sandbox",
+      "relation": "calls",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": "engineering/ARCHITECTURE.md",
+      "source_location": null,
+      "weight": 1.0
+    },
+    {
+      "source": "architecture_plugin_manager",
+      "target": "architecture_plugin_executor",
+      "relation": "calls",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": "engineering/ARCHITECTURE.md",
+      "source_location": null,
+      "weight": 1.0
+    },
+    {
+      "source": "architecture_plugin_executor",
+      "target": "architecture_security_plugin",
+      "relation": "implements",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": "engineering/ARCHITECTURE.md",
+      "source_location": null,
+      "weight": 1.0
+    },
+    {
+      "source": "architecture_normalizer",
+      "target": "architecture_security_finding",
+      "relation": "produces",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": "engineering/ARCHITECTURE.md",
+      "source_location": null,
+      "weight": 1.0
+    },
+    {
+      "source": "architecture_risk_engine",
+      "target": "architecture_security_finding",
+      "relation": "conceptually_related_to",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": "engineering/ARCHITECTURE.md",
+      "source_location": null,
+      "weight": 1.0
+    },
+    {
+      "source": "architecture_ai_gateway",
+      "target": "architecture_security_finding",
+      "relation": "conceptually_related_to",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": "engineering/ARCHITECTURE.md",
+      "source_location": null,
+      "weight": 1.0
+    },
+    {
+      "source": "architecture_report_engine",
+      "target": "architecture_security_finding",
+      "relation": "conceptually_related_to",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": "engineering/ARCHITECTURE.md",
+      "source_location": null,
+      "weight": 1.0
+    },
+    {
+      "source": "coding_standards",
+      "target": "coding_standards_python",
+      "relation": "conceptually_related_to",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": "engineering/CODING_STANDARDS.md",
+      "source_location": null,
+      "weight": 1.0
+    },
+    {
+      "source": "coding_standards",
+      "target": "coding_standards_typescript",
+      "relation": "conceptually_related_to",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": "engineering/CODING_STANDARDS.md",
+      "source_location": null,
+      "weight": 1.0
+    },
+    {
+      "source": "coding_standards_platform",
+      "target": "architecture_shared",
+      "relation": "references",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": "engineering/CODING_STANDARDS.md",
+      "source_location": null,
+      "weight": 1.0
+    },
+    {
+      "source": "mvp_scope",
+      "target": "mvp_scope_build_now",
+      "relation": "conceptually_related_to",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": "engineering/MVP_SCOPE.md",
+      "source_location": null,
+      "weight": 1.0
+    },
+    {
+      "source": "mvp_scope",
+      "target": "mvp_scope_build_later",
+      "relation": "conceptually_related_to",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": "engineering/MVP_SCOPE.md",
+      "source_location": null,
+      "weight": 1.0
+    },
+    {
+      "source": "mvp_scope",
+      "target": "mvp_scope_never",
+      "relation": "conceptually_related_to",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": "engineering/MVP_SCOPE.md",
+      "source_location": null,
+      "weight": 1.0
+    },
+    {
+      "source": "roadmap",
+      "target": "roadmap_milestone_1",
+      "relation": "conceptually_related_to",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": "engineering/ROADMAP.md",
+      "source_location": null,
+      "weight": 1.0
+    },
+    {
+      "source": "roadmap",
+      "target": "roadmap_milestone_2",
+      "relation": "conceptually_related_to",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": "engineering/ROADMAP.md",
+      "source_location": null,
+      "weight": 1.0
+    },
+    {
+      "source": "roadmap",
+      "target": "roadmap_milestone_3",
+      "relation": "conceptually_related_to",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": "engineering/ROADMAP.md",
+      "source_location": null,
+      "weight": 1.0
+    },
+    {
+      "source": "roadmap",
+      "target": "roadmap_milestone_4",
+      "relation": "conceptually_related_to",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": "engineering/ROADMAP.md",
+      "source_location": null,
+      "weight": 1.0
+    },
+    {
+      "source": "roadmap",
+      "target": "roadmap_milestone_5",
+      "relation": "conceptually_related_to",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": "engineering/ROADMAP.md",
+      "source_location": null,
+      "weight": 1.0
+    },
+    {
+      "source": "tech_stack",
+      "target": "tech_stack_backend",
+      "relation": "conceptually_related_to",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": "engineering/TECH_STACK.md",
+      "source_location": null,
+      "weight": 1.0
+    },
+    {
+      "source": "tech_stack",
+      "target": "tech_stack_frontend",
+      "relation": "conceptually_related_to",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": "engineering/TECH_STACK.md",
+      "source_location": null,
+      "weight": 1.0
+    },
+    {
+      "source": "tech_stack",
+      "target": "tech_stack_ai",
+      "relation": "conceptually_related_to",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": "engineering/TECH_STACK.md",
+      "source_location": null,
+      "weight": 1.0
+    },
+    {
+      "source": "tech_stack",
+      "target": "tech_stack_devops",
+      "relation": "conceptually_related_to",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": "engineering/TECH_STACK.md",
+      "source_location": null,
+      "weight": 1.0
+    },
+    {
+      "source": "master_rules",
+      "target": "project_manifest",
+      "relation": "rationale_for",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": "engineering/rules/00_MASTER_RULES.md",
+      "source_location": null,
+      "weight": 1.0
+    },
+    {
+      "source": "master_rules",
+      "target": "architecture",
+      "relation": "rationale_for",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": "engineering/rules/00_MASTER_RULES.md",
+      "source_location": null,
+      "weight": 1.0
+    },
+    {
+      "source": "master_rules",
+      "target": "mvp_scope",
+      "relation": "rationale_for",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": "engineering/rules/00_MASTER_RULES.md",
+      "source_location": null,
+      "weight": 1.0
+    },
+    {
+      "source": "master_rules",
+      "target": "roadmap",
+      "relation": "rationale_for",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": "engineering/rules/00_MASTER_RULES.md",
+      "source_location": null,
+      "weight": 1.0
+    },
+    {
+      "source": "master_rules",
+      "target": "coding_standards",
+      "relation": "rationale_for",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": "engineering/rules/00_MASTER_RULES.md",
+      "source_location": null,
+      "weight": 1.0
+    },
+    {
+      "source": "capability_cloud_posture",
+      "target": "plugin_trivy",
+      "relation": "requires",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": "backend/ai_secos_core/capabilities/library/cloud_posture/manifest.yml",
+      "source_location": null,
+      "weight": 1.0
+    },
+    {
+      "source": "capability_code_audit",
+      "target": "plugin_semgrep",
+      "relation": "requires",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": "backend/ai_secos_core/capabilities/library/code_audit/manifest.yml",
+      "source_location": null,
+      "weight": 1.0
+    },
+    {
+      "source": "capability_network_vapt",
+      "target": "plugin_nmap",
+      "relation": "requires",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": "backend/ai_secos_core/capabilities/library/network_vapt/manifest.yml",
+      "source_location": null,
+      "weight": 1.0
+    },
+    {
+      "source": "capability_network_vapt",
+      "target": "plugin_nuclei",
+      "relation": "requires",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": "backend/ai_secos_core/capabilities/library/network_vapt/manifest.yml",
+      "source_location": null,
+      "weight": 1.0
+    },
+    {
+      "source": "capability_subdomain_enum",
+      "target": "plugin_subfinder",
+      "relation": "requires",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": "backend/ai_secos_core/capabilities/library/subdomain_enum/manifest.yml",
+      "source_location": null,
+      "weight": 1.0
+    },
+    {
+      "source": "capability_subdomain_enum",
+      "target": "plugin_httpx",
+      "relation": "requires",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": "backend/ai_secos_core/capabilities/library/subdomain_enum/manifest.yml",
+      "source_location": null,
+      "weight": 1.0
+    },
+    {
+      "source": "capability_web_discovery",
+      "target": "plugin_httpx",
+      "relation": "requires",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": "backend/ai_secos_core/capabilities/library/web_discovery/manifest.yml",
+      "source_location": null,
+      "weight": 1.0
+    },
+    {
+      "source": "capability_web_vapt",
+      "target": "plugin_httpx",
+      "relation": "requires",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": "backend/ai_secos_core/capabilities/library/web_vapt/manifest.yml",
+      "source_location": null,
+      "weight": 1.0
+    },
+    {
+      "source": "capability_web_vapt",
+      "target": "plugin_nuclei",
+      "relation": "requires",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": "backend/ai_secos_core/capabilities/library/web_vapt/manifest.yml",
+      "source_location": null,
+      "weight": 1.0
+    },
+    {
+      "source": "plugins_httpx_plugin",
+      "target": "httpx_web_discovery",
+      "relation": "implements",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": "backend/ai_secos_core/plugins/httpx/plugin.yml",
+      "source_location": "line 14",
+      "weight": 1.0
+    },
+    {
+      "source": "plugins_nmap_plugin",
+      "target": "nmap_network_recon",
+      "relation": "implements",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": "backend/ai_secos_core/plugins/nmap/plugin.yml",
+      "source_location": "line 15",
+      "weight": 1.0
+    },
+    {
+      "source": "plugins_nmap_plugin",
+      "target": "nmap_network_vuln_scan",
+      "relation": "implements",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": "backend/ai_secos_core/plugins/nmap/plugin.yml",
+      "source_location": "line 17",
+      "weight": 1.0
+    },
+    {
+      "source": "plugins_nuclei_plugin",
+      "target": "nuclei_web_vuln_scan",
+      "relation": "implements",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": "backend/ai_secos_core/plugins/nuclei/plugin.yml",
+      "source_location": "line 15",
+      "weight": 1.0
+    },
+    {
+      "source": "plugins_nuclei_plugin",
+      "target": "nuclei_network_vuln_scan",
+      "relation": "implements",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": "backend/ai_secos_core/plugins/nuclei/plugin.yml",
+      "source_location": "line 17",
+      "weight": 1.0
+    },
+    {
+      "source": "plugins_nuclei_plugin",
+      "target": "nuclei_api_security",
+      "relation": "implements",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": "backend/ai_secos_core/plugins/nuclei/plugin.yml",
+      "source_location": "line 19",
+      "weight": 1.0
+    },
+    {
+      "source": "plugins_semgrep_plugin",
+      "target": "semgrep_code_audit",
+      "relation": "implements",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": "backend/ai_secos_core/plugins/semgrep/plugin.yml",
+      "source_location": "line 15",
+      "weight": 1.0
+    },
+    {
+      "source": "plugins_semgrep_plugin",
+      "target": "semgrep_sast_security",
+      "relation": "implements",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": "backend/ai_secos_core/plugins/semgrep/plugin.yml",
+      "source_location": "line 17",
+      "weight": 1.0
+    },
+    {
+      "source": "plugins_subfinder_plugin",
+      "target": "subfinder_network_recon",
+      "relation": "implements",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": "backend/ai_secos_core/plugins/subfinder/plugin.yml",
+      "source_location": "line 15",
+      "weight": 1.0
+    },
+    {
+      "source": "plugins_subfinder_plugin",
+      "target": "subfinder_osint_asset_discovery",
+      "relation": "implements",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": "backend/ai_secos_core/plugins/subfinder/plugin.yml",
+      "source_location": "line 17",
+      "weight": 1.0
+    },
+    {
+      "source": "plugins_trivy_plugin",
+      "target": "trivy_cloud_posture",
+      "relation": "implements",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": "backend/ai_secos_core/plugins/trivy/plugin.yml",
+      "source_location": "line 15",
+      "weight": 1.0
+    },
+    {
+      "source": "plugins_trivy_plugin",
+      "target": "trivy_container_security",
+      "relation": "implements",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": "backend/ai_secos_core/plugins/trivy/plugin.yml",
+      "source_location": "line 17",
+      "weight": 1.0
+    },
+    {
+      "source": "plugins_trivy_plugin",
+      "target": "trivy_iac_security",
+      "relation": "implements",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": "backend/ai_secos_core/plugins/trivy/plugin.yml",
+      "source_location": "line 19",
+      "weight": 1.0
+    },
+    {
+      "source": "workflows_asset_discovery",
+      "target": "plugins_subfinder_plugin",
+      "relation": "uses",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": "backend/ai_secos_core/workflows/asset_discovery/asset_discovery.yml",
+      "source_location": "line 14",
+      "weight": 1.0
+    },
+    {
+      "source": "workflows_asset_discovery",
+      "target": "plugins_httpx_plugin",
+      "relation": "uses",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": "backend/ai_secos_core/workflows/asset_discovery/asset_discovery.yml",
+      "source_location": "line 25",
+      "weight": 1.0
+    },
+    {
+      "source": "workflows_asset_discovery",
+      "target": "finding_engine",
+      "relation": "references",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": "backend/ai_secos_core/workflows/asset_discovery/asset_discovery.yml",
+      "source_location": "line 49",
+      "weight": 1.0
+    },
+    {
+      "source": "workflows_asset_discovery",
+      "target": "report_engine",
+      "relation": "references",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": "backend/ai_secos_core/workflows/asset_discovery/asset_discovery.yml",
+      "source_location": "line 60",
+      "weight": 1.0
+    },
+    {
+      "source": "workflows_asset_discovery",
+      "target": "subfinder_osint_asset_discovery",
+      "relation": "references",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": "backend/ai_secos_core/workflows/asset_discovery/asset_discovery.yml",
+      "source_location": "line 38",
+      "weight": 1.0
+    },
+    {
+      "source": "workflows_cloud_posture",
+      "target": "plugins_trivy_plugin",
+      "relation": "uses",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": "backend/ai_secos_core/workflows/cloud_posture/cloud_posture.yml",
+      "source_location": "line 14",
+      "weight": 1.0
+    },
+    {
+      "source": "workflows_cloud_posture",
+      "target": "finding_engine",
+      "relation": "references",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": "backend/ai_secos_core/workflows/cloud_posture/cloud_posture.yml",
+      "source_location": "line 31",
+      "weight": 1.0
+    },
+    {
+      "source": "workflows_cloud_posture",
+      "target": "report_engine",
+      "relation": "references",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": "backend/ai_secos_core/workflows/cloud_posture/cloud_posture.yml",
+      "source_location": "line 42",
+      "weight": 1.0
+    },
+    {
+      "source": "workflows_code_audit",
+      "target": "plugins_semgrep_plugin",
+      "relation": "uses",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": "backend/ai_secos_core/workflows/code_audit/code_audit.yml",
+      "source_location": "line 14",
+      "weight": 1.0
+    },
+    {
+      "source": "workflows_code_audit",
+      "target": "finding_engine",
+      "relation": "references",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": "backend/ai_secos_core/workflows/code_audit/code_audit.yml",
+      "source_location": "line 31",
+      "weight": 1.0
+    },
+    {
+      "source": "workflows_code_audit",
+      "target": "report_engine",
+      "relation": "references",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": "backend/ai_secos_core/workflows/code_audit/code_audit.yml",
+      "source_location": "line 42",
+      "weight": 1.0
+    },
+    {
+      "source": "workflows_discovery",
+      "target": "plugins_httpx_plugin",
+      "relation": "uses",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": "backend/ai_secos_core/workflows/discovery/discovery.yml",
+      "source_location": "line 10",
+      "weight": 1.0
+    },
+    {
+      "source": "workflows_discovery",
+      "target": "httpx_web_discovery",
+      "relation": "references",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": "backend/ai_secos_core/workflows/discovery/discovery.yml",
+      "source_location": "line 23",
+      "weight": 1.0
+    },
+    {
+      "source": "workflows_discovery",
+      "target": "finding_engine",
+      "relation": "references",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": "backend/ai_secos_core/workflows/discovery/discovery.yml",
+      "source_location": "line 27",
+      "weight": 1.0
+    },
+    {
+      "source": "workflows_discovery",
+      "target": "report_engine",
+      "relation": "references",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": "backend/ai_secos_core/workflows/discovery/discovery.yml",
+      "source_location": "line 38",
+      "weight": 1.0
+    },
+    {
+      "source": "workflows_network_vapt",
+      "target": "plugins_nmap_plugin",
+      "relation": "uses",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": "backend/ai_secos_core/workflows/network_vapt/network_vapt.yml",
+      "source_location": "line 14",
+      "weight": 1.0
+    },
+    {
+      "source": "workflows_network_vapt",
+      "target": "plugins_nuclei_plugin",
+      "relation": "uses",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": "backend/ai_secos_core/workflows/network_vapt/network_vapt.yml",
+      "source_location": "line 27",
+      "weight": 1.0
+    },
+    {
+      "source": "workflows_network_vapt",
+      "target": "nmap_network_recon",
+      "relation": "references",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": "backend/ai_secos_core/workflows/network_vapt/network_vapt.yml",
+      "source_location": "line 44",
+      "weight": 1.0
+    },
+    {
+      "source": "workflows_network_vapt",
+      "target": "nuclei_network_vuln_scan",
+      "relation": "references",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": "backend/ai_secos_core/workflows/network_vapt/network_vapt.yml",
+      "source_location": "line 51",
+      "weight": 1.0
+    },
+    {
+      "source": "workflows_network_vapt",
+      "target": "finding_engine",
+      "relation": "references",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": "backend/ai_secos_core/workflows/network_vapt/network_vapt.yml",
+      "source_location": "line 55",
+      "weight": 1.0
+    },
+    {
+      "source": "workflows_network_vapt",
+      "target": "report_engine",
+      "relation": "references",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": "backend/ai_secos_core/workflows/network_vapt/network_vapt.yml",
+      "source_location": "line 66",
+      "weight": 1.0
+    },
+    {
+      "source": "workflows_web_vapt",
+      "target": "plugins_httpx_plugin",
+      "relation": "uses",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": "backend/ai_secos_core/workflows/web_vapt/web_vapt.yml",
+      "source_location": "line 14",
+      "weight": 1.0
+    },
+    {
+      "source": "workflows_web_vapt",
+      "target": "plugins_nuclei_plugin",
+      "relation": "uses",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": "backend/ai_secos_core/workflows/web_vapt/web_vapt.yml",
+      "source_location": "line 23",
+      "weight": 1.0
+    },
+    {
+      "source": "workflows_web_vapt",
+      "target": "httpx_web_discovery",
+      "relation": "references",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": "backend/ai_secos_core/workflows/web_vapt/web_vapt.yml",
+      "source_location": "line 38",
+      "weight": 1.0
+    },
+    {
+      "source": "workflows_web_vapt",
+      "target": "nuclei_web_vuln_scan",
+      "relation": "references",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": "backend/ai_secos_core/workflows/web_vapt/web_vapt.yml",
+      "source_location": "line 45",
+      "weight": 1.0
+    },
+    {
+      "source": "workflows_web_vapt",
+      "target": "finding_engine",
+      "relation": "references",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": "backend/ai_secos_core/workflows/web_vapt/web_vapt.yml",
+      "source_location": "line 49",
+      "weight": 1.0
+    },
+    {
+      "source": "workflows_web_vapt",
+      "target": "report_engine",
+      "relation": "references",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": "backend/ai_secos_core/workflows/web_vapt/web_vapt.yml",
+      "source_location": "line 60",
+      "weight": 1.0
+    },
+    {
+      "source": "docker_compose_astraix",
+      "target": "services_postgres",
+      "relation": "conceptually_related_to",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": "docker-compose.yml",
+      "source_location": null,
+      "weight": 1.0
+    },
+    {
+      "source": "docker_compose_astraix",
+      "target": "services_redis",
+      "relation": "conceptually_related_to",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": "docker-compose.yml",
+      "source_location": null,
+      "weight": 1.0
+    },
+    {
+      "source": "docker_compose_astraix",
+      "target": "services_backend",
+      "relation": "conceptually_related_to",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": "docker-compose.yml",
+      "source_location": null,
+      "weight": 1.0
+    },
+    {
+      "source": "docker_compose_astraix",
+      "target": "services_frontend",
+      "relation": "conceptually_related_to",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": "docker-compose.yml",
+      "source_location": null,
+      "weight": 1.0
+    },
+    {
+      "source": "services_backend",
+      "target": "services_postgres",
+      "relation": "conceptually_related_to",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": "docker-compose.yml",
+      "source_location": "line 50",
+      "weight": 1.0
+    },
+    {
+      "source": "services_backend",
+      "target": "services_redis",
+      "relation": "conceptually_related_to",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": "docker-compose.yml",
+      "source_location": "line 51",
+      "weight": 1.0
+    },
+    {
+      "source": "nmap_network_recon",
+      "target": "subfinder_network_recon",
+      "relation": "semantically_similar_to",
+      "confidence": "INFERRED",
+      "confidence_score": 0.85,
+      "source_file": "backend/ai_secos_core/plugins/nmap/plugin.yml",
+      "source_location": null,
+      "weight": 1.0
+    },
+    {
+      "source": "nuclei_network_vuln_scan",
+      "target": "nmap_network_vuln_scan",
+      "relation": "semantically_similar_to",
+      "confidence": "INFERRED",
+      "confidence_score": 0.85,
+      "source_file": "backend/ai_secos_core/plugins/nuclei/plugin.yml",
+      "source_location": null,
+      "weight": 1.0
+    }
+  ],
+  "hyperedges": [
+    {
+      "id": "platform_layered_model",
+      "label": "Three-Layer Platform Model",
+      "nodes": [
+        "architecture_ai_secos_core",
+        "architecture_applications",
+        "architecture_plugins"
+      ],
+      "relation": "form",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": "engineering/ARCHITECTURE.md"
+    },
+    {
+      "id": "capability_resolution_chain",
+      "label": "Capability Resolution Chain",
+      "nodes": [
+        "architecture_applications",
+        "architecture_capability",
+        "architecture_workflow",
+        "architecture_plugins",
+        "architecture_security_finding"
+      ],
+      "relation": "participate_in",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": "engineering/ARCHITECTURE.md"
+    },
+    {
+      "id": "asset_discovery_workflow_composition",
+      "label": "Asset Discovery Workflow Plugin Composition",
+      "nodes": [
+        "workflows_asset_discovery",
+        "plugins_subfinder_plugin",
+        "plugins_httpx_plugin",
+        "finding_engine",
+        "report_engine"
+      ],
+      "relation": "form",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": "backend/ai_secos_core/workflows/asset_discovery/asset_discovery.yml"
+    },
+    {
+      "id": "cloud_posture_workflow_composition",
+      "label": "Cloud Posture Workflow Plugin Composition",
+      "nodes": [
+        "workflows_cloud_posture",
+        "plugins_trivy_plugin",
+        "finding_engine",
+        "report_engine"
+      ],
+      "relation": "form",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": "backend/ai_secos_core/workflows/cloud_posture/cloud_posture.yml"
+    },
+    {
+      "id": "network_vapt_workflow_composition",
+      "label": "Network VAPT Workflow Plugin Composition",
+      "nodes": [
+        "workflows_network_vapt",
+        "plugins_nmap_plugin",
+        "plugins_nuclei_plugin",
+        "finding_engine",
+        "report_engine"
+      ],
+      "relation": "form",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": "backend/ai_secos_core/workflows/network_vapt/network_vapt.yml"
+    },
+    {
+      "id": "web_vapt_workflow_composition",
+      "label": "Web VAPT Workflow Plugin Composition",
+      "nodes": [
+        "workflows_web_vapt",
+        "plugins_httpx_plugin",
+        "plugins_nuclei_plugin",
+        "finding_engine",
+        "report_engine"
+      ],
+      "relation": "form",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": "backend/ai_secos_core/workflows/web_vapt/web_vapt.yml"
+    },
+    {
+      "id": "platform_infrastructure",
+      "label": "AstraIX Platform Infrastructure",
+      "nodes": [
+        "services_postgres",
+        "services_redis",
+        "services_backend",
+        "services_frontend"
+      ],
+      "relation": "form",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": "docker-compose.yml"
+    },
+    {
+      "id": "shared_risk_scoring",
+      "label": "Shared Risk Scoring Component",
+      "nodes": [
+        "finding_engine",
+        "workflows_asset_discovery",
+        "workflows_cloud_posture",
+        "workflows_code_audit",
+        "workflows_discovery",
+        "workflows_network_vapt",
+        "workflows_web_vapt"
+      ],
+      "relation": "participate_in",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": "backend/ai_secos_core/workflows/asset_discovery/asset_discovery.yml"
+    },
+    {
+      "id": "shared_reporting",
+      "label": "Shared Reporting Component",
+      "nodes": [
+        "report_engine",
+        "workflows_asset_discovery",
+        "workflows_cloud_posture",
+        "workflows_code_audit",
+        "workflows_discovery",
+        "workflows_network_vapt",
+        "workflows_web_vapt"
+      ],
+      "relation": "participate_in",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": "backend/ai_secos_core/workflows/asset_discovery/asset_discovery.yml"
+    },
+    {
+      "id": "plugin_sdk_schema_defines_plugin_structure",
+      "label": "Plugin SDK Schema Defines Plugin Structure",
+      "nodes": [
+        "plugin_sdk",
+        "plugins_httpx_plugin",
+        "plugins_nmap_plugin",
+        "plugins_nuclei_plugin",
+        "plugins_semgrep_plugin",
+        "plugins_subfinder_plugin",
+        "plugins_trivy_plugin"
+      ],
+      "relation": "implement",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": "plugins/core/plugin-sdk/plugin.yml"
+    }
+  ],
+  "input_tokens": 0,
+  "output_tokens": 0
+}
