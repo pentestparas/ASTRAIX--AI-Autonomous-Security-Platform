@@ -2,6 +2,7 @@
 
 import { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
+import { projectsApi } from "@/services/api";
 import {
   Card,
   CardContent,
@@ -119,15 +120,12 @@ export default function VaptPage() {
 
     setLoadingProjects(true);
     try {
-      const response = await fetch("/api/v1/projects?organization_id=" + orgId);
-      if (response.ok) {
-        const data = await response.json();
-        const projectsList = data.data || data;
-        if (Array.isArray(projectsList)) {
-          setProjects(projectsList);
-          if (projectsList.length > 0 && !selectedProject) {
-            setSelectedProject(projectsList[0].id);
-          }
+      const response = await projectsApi.list(orgId);
+      const projectsList = (response as any)?.data?.items || (response as any)?.data || [];
+      if (Array.isArray(projectsList)) {
+        setProjects(projectsList);
+        if (projectsList.length > 0 && !selectedProject) {
+          setSelectedProject(projectsList[0].id);
         }
       }
     } catch (e) {
