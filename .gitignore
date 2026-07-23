@@ -78,6 +78,10 @@ build/
 *.sublime-project
 *.sublime-workspace
 
+# Graphify
+graphify-out/
+graphify-*/
+
 # Misc
 *.pem
 .nyc_output/
