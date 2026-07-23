@@ -17,7 +17,6 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
     git \
     ca-certificates \
     gnupg \
-    gosu \
     && rm -rf /var/lib/apt/lists/*
 
 # Install Docker CLI
@@ -27,9 +26,6 @@ RUN mkdir -p /etc/apt/keyrings && \
     apt-get update && \
     apt-get install -y --no-install-recommends docker-ce-cli && \
     rm -rf /var/lib/apt/lists/*
-
-# Create non-root user
-RUN groupadd -r appuser && useradd -r -g appuser appuser
 
 # Set work directory
 WORKDIR /app
@@ -43,11 +39,11 @@ COPY backend/app ./app
 COPY backend/alembic.ini .
 COPY backend/alembic ./alembic
 
-# Change ownership
-RUN chown -R appuser:appuser /app
+# Change ownership to root (running as root)
+RUN chown -R root:root /app
 
-# Switch to non-root user with gosu for docker socket access
-USER appuser
+# Create docker group for socket access
+RUN groupadd -r dockeraccess && usermod -aG dockeraccess root
 
 # Expose port
 EXPOSE 8000
@@ -56,5 +52,5 @@ EXPOSE 8000
 HEALTHCHECK --interval=30s --timeout=10s --start-period=5s --retries=3 \
     CMD curl -f http://localhost:8000/health || exit 1
 
-# Run application
-CMD ["gosu", "root", "uvicorn", "app.main:app", "--host", "0.0.0.0", "--port", "8000"]
+# Run as root (docker socket mounted from host - root has full access)
+CMD ["uvicorn", "app.main:app", "--host", "0.0.0.0", "--port", "8000"]

@@ -35,7 +35,7 @@ class VAPTExecutor:
     - No host dependency
     """
 
-    KALI_IMAGE = "kalilinux/kali-rolling:latest"
+    KALI_IMAGE = "astraix-kali:latest"
 
     def __init__(self):
         self._last_run: Dict[str, float] = {}
