@@ -28,7 +28,7 @@ async def list_findings(
     db: AsyncSession = Depends(get_session),
 ):
     """List findings with pagination."""
-    filters = filters__dict()
+    filters = {}
     if severity:
         filters["severity"] = severity
     if assessment_id:
@@ -46,11 +46,6 @@ async def list_findings(
             total_pages=(total + page_size - 1) // page_size,
         )
     )
-
-
-def filters__dict():
-    """Helper to allow scoped filters."""
-    return {}
 
 
 @router.get("/{finding_id}", response_model=ResponseSchema[FindingRead])

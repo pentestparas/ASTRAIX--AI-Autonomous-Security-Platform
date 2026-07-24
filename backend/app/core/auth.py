@@ -102,14 +102,14 @@ async def get_current_user(
         # API Key authentication
         api_key_repo = ApiKeyRepository(db)
         key_hash = ApiKey.hash_key(api_key)
-        api_key_obj = await api_key_repo.get_by_hash(db, key_hash)
+        api_key_obj = await api_key_repo.get_by_hash(key_hash)
         if not api_key_obj or not api_key_obj.is_active:
             raise HTTPException(status_code=401, detail="Invalid API key")
         if api_key_obj.expires_at and api_key_obj.expires_at < datetime.utcnow():
             raise HTTPException(status_code=401, detail="API key expired")
 
         # Update last used
-        await api_key_repo.update_last_used(db, api_key_obj.id)
+        await api_key_repo.update_last_used(api_key_obj.id)
 
         if api_key_obj.user_id:
             user = await user_repo.get(api_key_obj.user_id)
@@ -334,11 +334,11 @@ async def get_user_organizations(
     db: AsyncSession = Depends(get_session),
 ) -> list[Organization]:
     """Get all organizations the current user is a member of."""
-    memberships = await membership_repo.get_user_memberships(db, current_user.id)
+    memberships = await membership_repo.get_user_memberships(current_user.id)
     org_ids = [m.organization_id for m in memberships]
     if not org_ids:
         return []
-    return await organization_repo.get_by_ids(db, org_ids)
+    return await organization_repo.get_by_ids(org_ids)
 
 
 async def get_user_projects(
@@ -347,17 +347,17 @@ async def get_user_projects(
     db: AsyncSession = Depends(get_session),
 ) -> list[Project]:
     """Get all projects in an organization the user has access to."""
-    membership = await membership_repo.get_user_membership(db, current_user.id, organization_id)
+    membership = await membership_repo.get_user_membership(current_user.id, organization_id)
     if not membership:
         return []
 
-    if membership.role in (Role.OWNER, Role.ADMIN):
+    if membership.role in (RoleName.OWNER, RoleName.ADMIN):
         # Owners and admins see all projects
-        return await project_repo.get_by_organization(db, organization_id)
+        return await project_repo.get_by_organization(organization_id)
 
     # Analysts and viewers only see projects they're members of
-    project_memberships = await membership_repo.get_user_project_memberships(db, current_user.id, organization_id)
+    project_memberships = await membership_repo.get_user_project_memberships(current_user.id, organization_id)
     project_ids = [m.project_id for m in project_memberships if m.project_id]
     if not project_ids:
         return []
-    return await project_repo.get_by_ids(db, project_ids)
+    return await project_repo.get_by_ids(project_ids)

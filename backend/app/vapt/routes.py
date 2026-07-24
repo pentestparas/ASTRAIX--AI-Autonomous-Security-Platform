@@ -14,6 +14,8 @@ from pydantic import BaseModel
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.database.session import get_session
+from app.core.auth import get_current_active_user
+from app.domain.models.organization import User
 from app.vapt.models import VAPTScanType, VAPTTarget
 from app.vapt.orchestrator import get_vapt_orchestrator
 from app.vapt.tools import check_tool_availability, get_available_tools, TOOLS_REGISTRY
@@ -42,6 +44,7 @@ class ScanResponse(BaseModel):
     status: str
     target: str
     findings_count: int
+    findings: list = []
     severity_breakdown: dict
     insights: dict
 
@@ -56,6 +59,7 @@ class ToolStatusResponse(BaseModel):
 async def run_scan(
     request: ScanRequest,
     session: AsyncSession = Depends(get_session),
+    current_user: User = Depends(get_current_active_user),
 ) -> ScanResponse:
     """
     Run a VAPT scan on target with database persistence.
@@ -173,6 +177,7 @@ async def run_scan(
         status=result.status,
         target=request.target,
         findings_count=len(result.findings),
+        findings=[f.to_dict() for f in result.findings],
         severity_breakdown=insights["severity_breakdown"],
         insights=insights,
     )
@@ -204,7 +209,10 @@ async def tools_health():
 
 
 @router.post("/scan/quick")
-async def quick_scan(request: ScanRequest) -> dict:
+async def quick_scan(
+    request: ScanRequest,
+    current_user: User = Depends(get_current_active_user),
+) -> dict:
     """Quick scan with essential tools (no persistence)."""
     orchestrator = get_vapt_orchestrator()
     result = await orchestrator.analyze_and_scan(request.target, request.scan_type or "auto")

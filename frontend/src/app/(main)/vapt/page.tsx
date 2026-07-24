@@ -171,75 +171,20 @@ export default function VaptPage() {
 
       setResult(data);
 
-      const demoFindings: Finding[] = [
-        {
-          id: "1",
-          title: "Open Port: 22/tcp (SSH)",
-          description: "SSH service detected - verify access controls",
-          severity: "medium",
-          tool_name: "nmap",
-          target: target,
-          remediation: "Restrict SSH to known IPs or disable password auth",
-          port: 22,
-        },
-        {
-          id: "2",
-          title: "Open Port: 443/tcp (HTTPS)",
-          description: "HTTPS service detected",
-          severity: "info",
-          tool_name: "nmap",
-          target: target,
-          port: 443,
-        },
-        {
-          id: "3",
-          title: "SQL Injection Potential",
-          description: "Possible SQL injection in user input fields",
-          severity: "high",
-          tool_name: "sqlmap",
-          target: target,
-          remediation: "Use parameterized queries",
-        },
-        {
-          id: "4",
-          title: "XSS in Search Parameter",
-          description: "Reflected XSS detected",
-          severity: "high",
-          tool_name: "nuclei",
-          target: target,
-          remediation: "Implement output encoding and CSP headers",
-        },
-        {
-          id: "5",
-          title: "Missing Security Headers",
-          description: "X-Frame-Options, CSP not set",
-          severity: "low",
-          tool_name: "nuclei",
-          target: target,
-          remediation: "Add security headers",
-        },
-        {
-          id: "6",
-          title: "Directory Listing Enabled",
-          description: "Web server has directory listing enabled",
-          severity: "medium",
-          tool_name: "gobuster",
-          target: target,
-          remediation: "Disable directory listing",
-        },
-        {
-          id: "7",
-          title: "Weak SSL/TLS Configuration",
-          description: "Server supports outdated TLS versions",
-          severity: "medium",
-          tool_name: "sslscan",
-          target: target,
-          remediation: "Disable TLS 1.0/1.1, use TLS 1.2+",
-        },
-      ];
+      const rawFindings = data.findings || [];
+      const mappedFindings: Finding[] = rawFindings.map((f: Record<string, unknown>) => ({
+        id: String(f.id || Math.random().toString(36).substr(2, 9)),
+        title: String(f.title || ""),
+        description: String(f.description || ""),
+        severity: String(f.severity || "info"),
+        tool_name: String(f.tool_name || "unknown"),
+        target: String(f.target || target),
+        remediation: f.remediation ? String(f.remediation) : undefined,
+        port: f.port ? Number(f.port) : undefined,
+      }));
 
       const count = data.findings_count || 0;
-      setFindings(count > 0 ? demoFindings.slice(0, count) : demoFindings);
+      setFindings(count > 0 ? mappedFindings.slice(0, count) : mappedFindings);
       setShowResults(true);
     } catch (error) {
       console.error("Scan failed:", error);
