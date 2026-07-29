@@ -247,7 +247,7 @@ export default function ScansPage() {
       projectsApi.list(orgId),
       assessmentsApi.list({ organization_id: orgId }),
     ]).then(([projectsRes, assessmentsRes]) => {
-      const projectsList = (projectsRes as any)?.data?.items || (projectsRes as any)?.data || [];
+      const projectsList = Array.isArray(projectsRes) ? projectsRes : (projectsRes as any)?.data?.items || (projectsRes as any)?.data || [];
       if (Array.isArray(projectsList)) {
         setProjects(projectsList);
         if (projectsList.length > 0 && !initialProjectSet.current) {
