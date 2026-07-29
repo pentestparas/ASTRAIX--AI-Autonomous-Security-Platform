@@ -12,6 +12,7 @@ import {
   FileBarChart,
   ShieldCheck,
   Loader2,
+  CheckCircle2,
 } from "lucide-react";
 import type { Assessment } from "@/types";
 
@@ -52,6 +53,7 @@ export default function ReportsPage() {
   const [selectedFormat, setSelectedFormat] = useState("pdf");
   const [generating, setGenerating] = useState(false);
   const [loading, setLoading] = useState(true);
+  const [successMessage, setSuccessMessage] = useState("");
 
   useEffect(() => {
     async function load() {
@@ -74,17 +76,34 @@ export default function ReportsPage() {
     load();
   }, []);
 
+  function downloadReport(reportContent: string, filename: string) {
+    const blob = new Blob([reportContent], { type: "application/octet-stream" });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement("a");
+    a.href = url;
+    a.download = filename;
+    document.body.appendChild(a);
+    a.click();
+    document.body.removeChild(a);
+    URL.revokeObjectURL(url);
+  }
+
   async function handleGenerate() {
     if (!selectedAssessment) return;
     setGenerating(true);
+    setSuccessMessage("");
     try {
       const res = await reportsApi.generate(
         selectedAssessment,
         selectedTemplate,
         selectedFormat
       );
-      if (res.success && res.data?.download_url) {
-        window.open(res.data.download_url, "_blank");
+      if (res.success && res.data?.report) {
+        const ext = res.data.format === "json" ? "json" : "md";
+        const filename = res.data.filename || `report_${selectedAssessment.slice(0, 8)}_${selectedTemplate}.${ext}`;
+        downloadReport(res.data.report, filename);
+        setSuccessMessage(`Report downloaded as ${filename}`);
+        setTimeout(() => setSuccessMessage(""), 3000);
       }
     } catch (e) {
       console.error("Failed to generate report:", e);
@@ -120,7 +139,7 @@ export default function ReportsPage() {
                 <option value="">Choose an assessment...</option>
                 {assessments.map((a) => (
                   <option key={a.id} value={a.id}>
-                    {a.asset?.name ?? a.id} — {a.type}
+                    {a.asset_name ?? a.id} — {a.type}
                   </option>
                 ))}
               </select>
@@ -180,6 +199,12 @@ export default function ReportsPage() {
               </div>
             </div>
 
+            {successMessage && (
+              <div className="flex items-center gap-2 text-sm text-green-600 bg-green-50 dark:bg-green-950 dark:text-green-400 px-3 py-2 rounded-lg">
+                <CheckCircle2 className="w-4 h-4" />
+                {successMessage}
+              </div>
+            )}
             <Button
               className="w-full"
               disabled={!selectedAssessment || generating}

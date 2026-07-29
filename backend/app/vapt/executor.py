@@ -170,7 +170,7 @@ class VAPTExecutor:
     def _build_docker_command(self, tool: VAPTTool, target: str) -> Optional[str]:
         """Build command for Docker execution."""
         tool_cmd = {
-            "nmap": f"nmap -sV -Pn -oX - {target}",
+            "nmap": f"nmap -sV -Pn -T4 --top-ports 100 -oX - {target}",
             "sqlmap": f"sqlmap -u {target} --batch --random-agent --output-dir=/tmp",
             "nuclei": f"nuclei -u {target} -json-export - -silent",
             "nikto": f"nikto -h {target} -Format xml -output -",

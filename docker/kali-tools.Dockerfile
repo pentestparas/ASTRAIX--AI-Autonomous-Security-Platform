@@ -7,8 +7,9 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
     nuclei \
     gobuster \
     sslscan \
+    ca-certificates \
     curl \
     wget \
     git \
-    > /dev/null 2>&1 && rm -rf /var/lib/apt/lists/*
+    > /dev/null 2>&1 && rm -rf /var/lib/apt/lists/* && update-ca-certificates --fresh > /dev/null 2>&1
 CMD ["bash"]

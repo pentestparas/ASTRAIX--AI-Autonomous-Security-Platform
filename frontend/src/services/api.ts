@@ -242,7 +242,7 @@ export const healthApi = {
 // --- Reports ---
 export const reportsApi = {
   generate: (assessmentId: string, template: string, format: string) =>
-    apiClient.post<{ download_url: string }>("/reports/generate", {
+    apiClient.post<{ download_url: string | null; report: string; filename: string; format: string; title: string; findings_count: number }>("/reports/generate", {
       assessment_id: assessmentId,
       template,
       format,

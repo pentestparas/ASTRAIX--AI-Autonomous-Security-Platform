@@ -111,6 +111,7 @@ export interface Assessment {
   // Relations
   asset?: Asset;
   project?: Project;
+  asset_name?: string;
 }
 
 export interface Finding {

@@ -41,9 +41,14 @@ async def list_assessments(
         filters["organization_id"] = organization_id
     items = await assessment_repo.list(db, skip=(page - 1) * page_size, limit=page_size, **filters)
     total = await assessment_repo.count(db, **filters)
+    result_items = []
+    for i in items:
+        d = AssessmentRead.from_orm(i)
+        d.asset_name = i.asset.name if hasattr(i, 'asset') and i.asset else None
+        result_items.append(d)
     return ResponseSchema(
         data=PaginatedResponse(
-            items=[AssessmentRead.from_orm(i) for i in items],
+            items=result_items,
             total=total,
             page=page,
             page_size=page_size,
@@ -82,7 +87,9 @@ async def get_assessment(
     assessment = await assessment_repo.get(db, assessment_id)
     if not assessment:
         raise HTTPException(status_code=404, detail="Assessment not found")
-    return ResponseSchema(data=AssessmentRead.from_orm(assessment))
+    d = AssessmentRead.from_orm(assessment)
+    d.asset_name = assessment.asset.name if hasattr(assessment, 'asset') and assessment.asset else None
+    return ResponseSchema(data=d)
 
 
 @router.post("/{assessment_id}/start", response_model=ResponseSchema[AssessmentRead])

@@ -25,6 +25,7 @@ class AssessmentRead(AssessmentBase, BaseSchema):
     error: Optional[str] = None
     created_at: datetime
     updated_at: datetime
+    asset_name: Optional[str] = None
 
 
 class AssessmentSummary(BaseSchema):
