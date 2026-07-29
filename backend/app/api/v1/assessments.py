@@ -26,7 +26,7 @@ async def list_assessments(
     status: Optional[str] = None,
     type: Optional[str] = None,
     project_id: Optional[UUID] = None,
-    organization_id: Optional[UUID] = None,
+    organization_id: Optional[str] = None,
     db: AsyncSession = Depends(get_session),
 ):
     """List assessments with pagination."""
