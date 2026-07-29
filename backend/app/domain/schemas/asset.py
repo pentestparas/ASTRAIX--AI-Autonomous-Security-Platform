@@ -12,7 +12,7 @@ class AssetBase(BaseModel):
     identifier: str
     criticality: str = "medium"
     tags: List[str] = []
-    metadata: dict = {}
+    metadata_json: dict = {}
 
 
 class AssetCreate(AssetBase):
@@ -25,11 +25,12 @@ class AssetUpdate(BaseModel):
     identifier: Optional[str] = None
     criticality: Optional[str] = None
     tags: Optional[List[str]] = None
-    metadata: Optional[dict] = None
+    metadata_json: Optional[dict] = None
     last_scanned: Optional[datetime] = None
 
 
 class AssetRead(AssetBase, BaseSchema):
+    model_config = ConfigDict(from_attributes=True)
     id: UUID
     last_scanned: Optional[datetime] = None
     created_at: datetime

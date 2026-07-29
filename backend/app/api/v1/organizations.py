@@ -277,7 +277,7 @@ async def invite_member(
 
 @membership_router.get("", response_model=list[MembershipReadWithUser])
 async def list_members(
-    organization_id: UUID,
+    organization_id: str,
     project_id: Optional[UUID] = Query(None),
     current_user: User = Depends(RequiresPermission(Permission.ORG_VIEW)),
     membership_repo: MembershipRepository = Depends(get_membership_repo),

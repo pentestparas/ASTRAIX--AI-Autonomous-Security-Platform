@@ -79,6 +79,8 @@ services:
     build:
       context: .
       dockerfile: docker/Dockerfile.frontend
+      args:
+        BACKEND_API_URL: http://backend:8000
     container_name: astraix-frontend
     environment:
       - NODE_ENV=production
