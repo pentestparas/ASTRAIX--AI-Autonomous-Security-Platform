@@ -12,7 +12,7 @@ logger = get_logger(__name__)
 router = APIRouter()
 
 
-@router.get("/", response_model=ResponseSchema[List[dict]])
+@router.get("", response_model=ResponseSchema[List[dict]])
 async def list_plugins(
     registry: PluginRegistry = Depends(get_plugin_registry),
 ):

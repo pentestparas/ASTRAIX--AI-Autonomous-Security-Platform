@@ -19,7 +19,7 @@ logger = get_logger(__name__)
 router = APIRouter()
 
 
-@router.get("/", response_model=ResponseSchema[PaginatedResponse[AssetRead]])
+@router.get("", response_model=ResponseSchema[PaginatedResponse[AssetRead]])
 async def list_assets(
     page: int = Query(1, ge=1),
     page_size: int = Query(20, ge=1, le=200),
@@ -43,7 +43,7 @@ async def list_assets(
     )
 
 
-@router.post("/", response_model=ResponseSchema[AssetRead])
+@router.post("", response_model=ResponseSchema[AssetRead])
 async def create_asset(
     payload: AssetCreate,
     db: AsyncSession = Depends(get_session),

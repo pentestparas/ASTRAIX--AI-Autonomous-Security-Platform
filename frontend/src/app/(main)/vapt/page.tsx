@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
-import { projectsApi } from "@/services/api";
+import { apiClient, projectsApi } from "@/services/api";
 import {
   Card,
   CardContent,
@@ -58,6 +58,7 @@ interface ScanResult {
   target: string;
   findings_count: number;
   assessment_id?: string;
+  findings?: Record<string, unknown>[];
   severity_breakdown: {
     critical: number;
     high: number;
@@ -157,17 +158,8 @@ export default function VaptPage() {
         project_id: selectedProject,
       };
 
-      const response = await fetch("/api/v1/vapt/scan", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(requestBody),
-      });
-
-      const data = await response.json();
-
-      if (!response.ok) {
-        throw new Error(data.detail || "Scan failed");
-      }
+      const res = await apiClient.post("/vapt/scan", requestBody) as any;
+      const data: ScanResult = res.data || res;
 
       setResult(data);
 

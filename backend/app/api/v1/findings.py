@@ -18,7 +18,7 @@ logger = get_logger(__name__)
 router = APIRouter()
 
 
-@router.get("/", response_model=ResponseSchema[PaginatedResponse[FindingRead]])
+@router.get("", response_model=ResponseSchema[PaginatedResponse[FindingRead]])
 async def list_findings(
     page: int = Query(1, ge=1),
     page_size: int = Query(20, ge=1, le=200),

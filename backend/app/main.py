@@ -56,6 +56,7 @@ app = FastAPI(
     openapi_url="/openapi.json",
     default_response_class=ORJSONResponse,
     lifespan=lifespan,
+    redirect_slashes=False,
 )
 
 # CORS middleware
