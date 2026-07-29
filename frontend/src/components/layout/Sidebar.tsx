@@ -14,7 +14,6 @@ import {
   Activity,
   Key,
   Users,
-  Shield,
 } from "lucide-react";
 import { useState } from "react";
 
@@ -22,7 +21,6 @@ const navigation = [
   { name: "Dashboard", href: "/dashboard", icon: LayoutDashboard },
   { name: "Projects", href: "/projects", icon: FolderKanban },
   { name: "Scans", href: "/scans", icon: Scan },
-  { name: "VAPT", href: "/vapt", icon: Shield },
   { name: "Findings", href: "/findings", icon: ShieldAlert },
   { name: "Reports", href: "/reports", icon: FileText },
 ];

@@ -1,1062 +1,1157 @@
 {
-  "/Users/paras.patil/AI-native Security Engineering Platform/astraix-security-analyst/backend/ai_secos_core/__init__.py": {
+  "backend/ai_secos_core/__init__.py": {
     "mtime": 1783677920.043892,
     "ast_hash": "d41d8cd98f00b204e9800998ecf8427e",
     "semantic_hash": "d41d8cd98f00b204e9800998ecf8427e"
   },
-  "/Users/paras.patil/AI-native Security Engineering Platform/astraix-security-analyst/backend/ai_secos_core/ai_gateway/__init__.py": {
+  "backend/ai_secos_core/ai_gateway/__init__.py": {
     "mtime": 1783677919.990084,
     "ast_hash": "f10dbb1336ba4f1e9df4de81ee53cae3",
     "semantic_hash": "f10dbb1336ba4f1e9df4de81ee53cae3"
   },
-  "/Users/paras.patil/AI-native Security Engineering Platform/astraix-security-analyst/backend/ai_secos_core/ai_gateway/context.py": {
+  "backend/ai_secos_core/ai_gateway/context.py": {
     "mtime": 1783677919.9996638,
     "ast_hash": "c8a4ef247e985e2f7190ce01765dddc3",
     "semantic_hash": "c8a4ef247e985e2f7190ce01765dddc3"
   },
-  "/Users/paras.patil/AI-native Security Engineering Platform/astraix-security-analyst/backend/ai_secos_core/ai_gateway/gateway.py": {
+  "backend/ai_secos_core/ai_gateway/gateway.py": {
     "mtime": 1783677919.984641,
     "ast_hash": "39dadcf22459f9e1476b99cadcc9b635",
     "semantic_hash": "39dadcf22459f9e1476b99cadcc9b635"
   },
-  "/Users/paras.patil/AI-native Security Engineering Platform/astraix-security-analyst/backend/ai_secos_core/ai_gateway/manager.py": {
+  "backend/ai_secos_core/ai_gateway/manager.py": {
     "mtime": 1783677920.0052931,
     "ast_hash": "13317eea7d37ee11b9e0e0cb8686e288",
     "semantic_hash": "13317eea7d37ee11b9e0e0cb8686e288"
   },
-  "/Users/paras.patil/AI-native Security Engineering Platform/astraix-security-analyst/backend/ai_secos_core/ai_gateway/prompts.py": {
+  "backend/ai_secos_core/ai_gateway/prompts.py": {
     "mtime": 1783677919.9970691,
     "ast_hash": "20a08e7169528e3454c4cb2859ab55d6",
     "semantic_hash": "20a08e7169528e3454c4cb2859ab55d6"
   },
-  "/Users/paras.patil/AI-native Security Engineering Platform/astraix-security-analyst/backend/ai_secos_core/ai_gateway/provider.py": {
+  "backend/ai_secos_core/ai_gateway/provider.py": {
     "mtime": 1783677919.9876673,
     "ast_hash": "210fe3c6a20fdeb9d6e49051994fada3",
     "semantic_hash": "210fe3c6a20fdeb9d6e49051994fada3"
   },
-  "/Users/paras.patil/AI-native Security Engineering Platform/astraix-security-analyst/backend/ai_secos_core/ai_gateway/response.py": {
+  "backend/ai_secos_core/ai_gateway/response.py": {
     "mtime": 1783677919.9924614,
     "ast_hash": "73ea9e8f293c5b1e778d333d4bdbe210",
     "semantic_hash": "73ea9e8f293c5b1e778d333d4bdbe210"
   },
-  "/Users/paras.patil/AI-native Security Engineering Platform/astraix-security-analyst/backend/ai_secos_core/ai_gateway/router.py": {
+  "backend/ai_secos_core/ai_gateway/router.py": {
     "mtime": 1783677920.0023828,
     "ast_hash": "28cddad948b168f5b6883976a9df3d5b",
     "semantic_hash": "28cddad948b168f5b6883976a9df3d5b"
   },
-  "/Users/paras.patil/AI-native Security Engineering Platform/astraix-security-analyst/backend/ai_secos_core/api.py": {
+  "backend/ai_secos_core/api.py": {
     "mtime": 1783938935.9656525,
     "ast_hash": "ef53108d9023ea7e1937e5d59156eec5",
     "semantic_hash": "ef53108d9023ea7e1937e5d59156eec5"
   },
-  "/Users/paras.patil/AI-native Security Engineering Platform/astraix-security-analyst/backend/ai_secos_core/api_platform/__init__.py": {
+  "backend/ai_secos_core/api_platform/__init__.py": {
     "mtime": 1783677919.94969,
     "ast_hash": "7302904b1f40d347d30225cd7d05b445",
     "semantic_hash": "7302904b1f40d347d30225cd7d05b445"
   },
-  "/Users/paras.patil/AI-native Security Engineering Platform/astraix-security-analyst/backend/ai_secos_core/api_platform/app_factory.py": {
+  "backend/ai_secos_core/api_platform/app_factory.py": {
     "mtime": 1783677919.947167,
     "ast_hash": "ab96b59ad00a1cfa4feeb87fd60936f8",
     "semantic_hash": "ab96b59ad00a1cfa4feeb87fd60936f8"
   },
-  "/Users/paras.patil/AI-native Security Engineering Platform/astraix-security-analyst/backend/ai_secos_core/api_platform/container.py": {
+  "backend/ai_secos_core/api_platform/container.py": {
     "mtime": 1783677919.9531856,
     "ast_hash": "70d72868528de0f9466ef5bb540721db",
     "semantic_hash": "70d72868528de0f9466ef5bb540721db"
   },
-  "/Users/paras.patil/AI-native Security Engineering Platform/astraix-security-analyst/backend/ai_secos_core/api_platform/dependencies.py": {
+  "backend/ai_secos_core/api_platform/dependencies.py": {
     "mtime": 1783677919.958109,
     "ast_hash": "f812f023b1edf177bde7741882dfbec5",
     "semantic_hash": "f812f023b1edf177bde7741882dfbec5"
   },
-  "/Users/paras.patil/AI-native Security Engineering Platform/astraix-security-analyst/backend/ai_secos_core/api_platform/error_handlers.py": {
+  "backend/ai_secos_core/api_platform/error_handlers.py": {
     "mtime": 1783677919.9557931,
     "ast_hash": "348f03b98acf330b896b74ed39856567",
     "semantic_hash": "348f03b98acf330b896b74ed39856567"
   },
-  "/Users/paras.patil/AI-native Security Engineering Platform/astraix-security-analyst/backend/ai_secos_core/api_platform/routes.py": {
+  "backend/ai_secos_core/api_platform/routes.py": {
     "mtime": 1783677919.9604776,
     "ast_hash": "4e745b75ade5a95a8c81f1729394171e",
     "semantic_hash": "4e745b75ade5a95a8c81f1729394171e"
   },
-  "/Users/paras.patil/AI-native Security Engineering Platform/astraix-security-analyst/backend/ai_secos_core/capabilities/__init__.py": {
+  "backend/ai_secos_core/capabilities/__init__.py": {
     "mtime": 1783677919.9351883,
     "ast_hash": "f30d1480c065e112658efa2d3f5093a7",
     "semantic_hash": "f30d1480c065e112658efa2d3f5093a7"
   },
-  "/Users/paras.patil/AI-native Security Engineering Platform/astraix-security-analyst/backend/ai_secos_core/capabilities/errors.py": {
+  "backend/ai_secos_core/capabilities/errors.py": {
     "mtime": 1783677919.9439616,
     "ast_hash": "b5da10d43d51eae0b613812098f7ba39",
     "semantic_hash": "b5da10d43d51eae0b613812098f7ba39"
   },
-  "/Users/paras.patil/AI-native Security Engineering Platform/astraix-security-analyst/backend/ai_secos_core/capabilities/loader.py": {
+  "backend/ai_secos_core/capabilities/loader.py": {
     "mtime": 1783677919.9382582,
     "ast_hash": "e7e4f36c64642ac5a877ab5ac73a56f6",
     "semantic_hash": "e7e4f36c64642ac5a877ab5ac73a56f6"
   },
-  "/Users/paras.patil/AI-native Security Engineering Platform/astraix-security-analyst/backend/ai_secos_core/capabilities/models.py": {
+  "backend/ai_secos_core/capabilities/models.py": {
     "mtime": 1783677919.9284787,
     "ast_hash": "1a1acfdc537ddf89dfa3367eb85ac7c2",
     "semantic_hash": "1a1acfdc537ddf89dfa3367eb85ac7c2"
   },
-  "/Users/paras.patil/AI-native Security Engineering Platform/astraix-security-analyst/backend/ai_secos_core/capabilities/registry.py": {
+  "backend/ai_secos_core/capabilities/registry.py": {
     "mtime": 1783677919.9322164,
     "ast_hash": "fdff6ba862b6e4f6fe2850bfe9d65b23",
     "semantic_hash": "fdff6ba862b6e4f6fe2850bfe9d65b23"
   },
-  "/Users/paras.patil/AI-native Security Engineering Platform/astraix-security-analyst/backend/ai_secos_core/capabilities/resolver.py": {
+  "backend/ai_secos_core/capabilities/resolver.py": {
     "mtime": 1783677919.9412901,
     "ast_hash": "a07da5da67dbac20fc1454d85e2e9df0",
     "semantic_hash": "a07da5da67dbac20fc1454d85e2e9df0"
   },
-  "/Users/paras.patil/AI-native Security Engineering Platform/astraix-security-analyst/backend/ai_secos_core/config/__init__.py": {
+  "backend/ai_secos_core/config/__init__.py": {
     "mtime": 1783677919.9761767,
     "ast_hash": "9cc2e798f9be95ea43349d791fbc96f9",
     "semantic_hash": "9cc2e798f9be95ea43349d791fbc96f9"
   },
-  "/Users/paras.patil/AI-native Security Engineering Platform/astraix-security-analyst/backend/ai_secos_core/config/constants.py": {
+  "backend/ai_secos_core/config/constants.py": {
     "mtime": 1783677919.9737258,
     "ast_hash": "0efb49705e0e541f91c253894051ce3e",
     "semantic_hash": "0efb49705e0e541f91c253894051ce3e"
   },
-  "/Users/paras.patil/AI-native Security Engineering Platform/astraix-security-analyst/backend/ai_secos_core/config/settings.py": {
+  "backend/ai_secos_core/config/settings.py": {
     "mtime": 1783677919.9784818,
     "ast_hash": "b7c3c4b2daf3b53aad80148f98b291c6",
     "semantic_hash": "b7c3c4b2daf3b53aad80148f98b291c6"
   },
-  "/Users/paras.patil/AI-native Security Engineering Platform/astraix-security-analyst/backend/ai_secos_core/finding_engine/__init__.py": {
+  "backend/ai_secos_core/finding_engine/__init__.py": {
     "mtime": 1783677920.1152067,
     "ast_hash": "32bcc5d69d88f6c09a8c897a8cc711f3",
     "semantic_hash": "32bcc5d69d88f6c09a8c897a8cc711f3"
   },
-  "/Users/paras.patil/AI-native Security Engineering Platform/astraix-security-analyst/backend/ai_secos_core/finding_engine/correlator.py": {
+  "backend/ai_secos_core/finding_engine/correlator.py": {
     "mtime": 1783677920.1175172,
     "ast_hash": "980e3f898773f44c447412839515ce76",
     "semantic_hash": "980e3f898773f44c447412839515ce76"
   },
-  "/Users/paras.patil/AI-native Security Engineering Platform/astraix-security-analyst/backend/ai_secos_core/finding_engine/deduplicator.py": {
+  "backend/ai_secos_core/finding_engine/deduplicator.py": {
     "mtime": 1783677920.1102326,
     "ast_hash": "91c36661a33cc35b6f164d7d36eed2db",
     "semantic_hash": "91c36661a33cc35b6f164d7d36eed2db"
   },
-  "/Users/paras.patil/AI-native Security Engineering Platform/astraix-security-analyst/backend/ai_secos_core/finding_engine/engine.py": {
+  "backend/ai_secos_core/finding_engine/engine.py": {
     "mtime": 1783677920.1202624,
     "ast_hash": "f5194a31b503d0819fbf9a1bf0a80e20",
     "semantic_hash": "f5194a31b503d0819fbf9a1bf0a80e20"
   },
-  "/Users/paras.patil/AI-native Security Engineering Platform/astraix-security-analyst/backend/ai_secos_core/finding_engine/enricher.py": {
+  "backend/ai_secos_core/finding_engine/enricher.py": {
     "mtime": 1783677920.1227913,
     "ast_hash": "14c1608d2704c98268ed5e29ed3f3789",
     "semantic_hash": "14c1608d2704c98268ed5e29ed3f3789"
   },
-  "/Users/paras.patil/AI-native Security Engineering Platform/astraix-security-analyst/backend/ai_secos_core/finding_engine/fingerprint.py": {
+  "backend/ai_secos_core/finding_engine/fingerprint.py": {
     "mtime": 1783677920.1129193,
     "ast_hash": "881d8765f9e8befa710fb2e89b48eeaa",
     "semantic_hash": "881d8765f9e8befa710fb2e89b48eeaa"
   },
-  "/Users/paras.patil/AI-native Security Engineering Platform/astraix-security-analyst/backend/ai_secos_core/finding_engine/normalizer.py": {
+  "backend/ai_secos_core/finding_engine/normalizer.py": {
     "mtime": 1783677920.125185,
     "ast_hash": "451f3e60dab51b43f34475dba0b5b0dc",
     "semantic_hash": "451f3e60dab51b43f34475dba0b5b0dc"
   },
-  "/Users/paras.patil/AI-native Security Engineering Platform/astraix-security-analyst/backend/ai_secos_core/finding_engine/normalizers/httpx.py": {
+  "backend/ai_secos_core/finding_engine/normalizers/httpx.py": {
     "mtime": 1783677920.106847,
     "ast_hash": "e5bd7e5d317ee855b036528edd3a1034",
     "semantic_hash": "e5bd7e5d317ee855b036528edd3a1034"
   },
-  "/Users/paras.patil/AI-native Security Engineering Platform/astraix-security-analyst/backend/ai_secos_core/finding_engine/normalizers/nmap.py": {
+  "backend/ai_secos_core/finding_engine/normalizers/nmap.py": {
     "mtime": 1783938234.5287685,
     "ast_hash": "dd369948a9305e5ad798cf4c1c907457",
     "semantic_hash": "dd369948a9305e5ad798cf4c1c907457"
   },
-  "/Users/paras.patil/AI-native Security Engineering Platform/astraix-security-analyst/backend/ai_secos_core/finding_engine/normalizers/nuclei.py": {
+  "backend/ai_secos_core/finding_engine/normalizers/nuclei.py": {
     "mtime": 1783938323.4219759,
     "ast_hash": "9376419e730d7c6e490817fa3832f842",
     "semantic_hash": "9376419e730d7c6e490817fa3832f842"
   },
-  "/Users/paras.patil/AI-native Security Engineering Platform/astraix-security-analyst/backend/ai_secos_core/finding_engine/normalizers/semgrep.py": {
+  "backend/ai_secos_core/finding_engine/normalizers/semgrep.py": {
     "mtime": 1783938614.1193619,
     "ast_hash": "e3c5fd97da98b7b1b3330f6e9d80ef37",
     "semantic_hash": "e3c5fd97da98b7b1b3330f6e9d80ef37"
   },
-  "/Users/paras.patil/AI-native Security Engineering Platform/astraix-security-analyst/backend/ai_secos_core/finding_engine/normalizers/subfinder.py": {
+  "backend/ai_secos_core/finding_engine/normalizers/subfinder.py": {
     "mtime": 1783938409.3384404,
     "ast_hash": "e156ae3bec877ac9b8fe10384cccc8e6",
     "semantic_hash": "e156ae3bec877ac9b8fe10384cccc8e6"
   },
-  "/Users/paras.patil/AI-native Security Engineering Platform/astraix-security-analyst/backend/ai_secos_core/finding_engine/normalizers/trivy.py": {
+  "backend/ai_secos_core/finding_engine/normalizers/trivy.py": {
     "mtime": 1783938522.2757452,
     "ast_hash": "5890418d9be9b539f3b9a329f96971fa",
     "semantic_hash": "5890418d9be9b539f3b9a329f96971fa"
   },
-  "/Users/paras.patil/AI-native Security Engineering Platform/astraix-security-analyst/backend/ai_secos_core/infrastructure/__init__.py": {
+  "backend/ai_secos_core/infrastructure/__init__.py": {
     "mtime": 1783677920.1039195,
     "ast_hash": "8a286c77d929ed56eb390db48b10d83f",
     "semantic_hash": "8a286c77d929ed56eb390db48b10d83f"
   },
-  "/Users/paras.patil/AI-native Security Engineering Platform/astraix-security-analyst/backend/ai_secos_core/infrastructure/error_mapping.py": {
+  "backend/ai_secos_core/infrastructure/error_mapping.py": {
     "mtime": 1783677920.101597,
     "ast_hash": "f4234e581ff06a1381978126571f841b",
     "semantic_hash": "f4234e581ff06a1381978126571f841b"
   },
-  "/Users/paras.patil/AI-native Security Engineering Platform/astraix-security-analyst/backend/ai_secos_core/infrastructure/logging.py": {
+  "backend/ai_secos_core/infrastructure/logging.py": {
     "mtime": 1783677920.0968251,
     "ast_hash": "1b7018f6b66f05a46e507805363731ad",
     "semantic_hash": "1b7018f6b66f05a46e507805363731ad"
   },
-  "/Users/paras.patil/AI-native Security Engineering Platform/astraix-security-analyst/backend/ai_secos_core/infrastructure/metrics.py": {
+  "backend/ai_secos_core/infrastructure/metrics.py": {
     "mtime": 1783677920.0992663,
     "ast_hash": "04ce5f23e6f85c942f5ebed0104d916c",
     "semantic_hash": "04ce5f23e6f85c942f5ebed0104d916c"
   },
-  "/Users/paras.patil/AI-native Security Engineering Platform/astraix-security-analyst/backend/ai_secos_core/m2_demo.py": {
+  "backend/ai_secos_core/m2_demo.py": {
     "mtime": 1783677920.0632937,
     "ast_hash": "07ace26bc60e1a8f61479996f58dae33",
     "semantic_hash": "07ace26bc60e1a8f61479996f58dae33"
   },
-  "/Users/paras.patil/AI-native Security Engineering Platform/astraix-security-analyst/backend/ai_secos_core/plugin_system/__init__.py": {
+  "backend/ai_secos_core/plugin_system/__init__.py": {
     "mtime": 1783677920.0529652,
     "ast_hash": "cea79a2eef0029b232af568952fbb091",
     "semantic_hash": "cea79a2eef0029b232af568952fbb091"
   },
-  "/Users/paras.patil/AI-native Security Engineering Platform/astraix-security-analyst/backend/ai_secos_core/plugin_system/executor.py": {
+  "backend/ai_secos_core/plugin_system/executor.py": {
     "mtime": 1783677920.0607865,
     "ast_hash": "9e605274e61fd0a7465a583926e27e67",
     "semantic_hash": "9e605274e61fd0a7465a583926e27e67"
   },
-  "/Users/paras.patil/AI-native Security Engineering Platform/astraix-security-analyst/backend/ai_secos_core/plugin_system/loader.py": {
+  "backend/ai_secos_core/plugin_system/loader.py": {
     "mtime": 1783677920.0584774,
     "ast_hash": "8adfb3b9312122b7c160076a7a07c7cb",
     "semantic_hash": "8adfb3b9312122b7c160076a7a07c7cb"
   },
-  "/Users/paras.patil/AI-native Security Engineering Platform/astraix-security-analyst/backend/ai_secos_core/plugin_system/manifest.py": {
+  "backend/ai_secos_core/plugin_system/manifest.py": {
     "mtime": 1783677920.0486503,
     "ast_hash": "6c35ab97bd3fd48347aaeb36f2d51235",
     "semantic_hash": "6c35ab97bd3fd48347aaeb36f2d51235"
   },
-  "/Users/paras.patil/AI-native Security Engineering Platform/astraix-security-analyst/backend/ai_secos_core/plugin_system/registry.py": {
+  "backend/ai_secos_core/plugin_system/registry.py": {
     "mtime": 1783677920.0509603,
     "ast_hash": "2df50b1d7974e5496dfd1634025e2707",
     "semantic_hash": "2df50b1d7974e5496dfd1634025e2707"
   },
-  "/Users/paras.patil/AI-native Security Engineering Platform/astraix-security-analyst/backend/ai_secos_core/plugin_system/sandbox.py": {
+  "backend/ai_secos_core/plugin_system/sandbox.py": {
     "mtime": 1783677920.055505,
     "ast_hash": "6a98e85519611a508495615375104baf",
     "semantic_hash": "6a98e85519611a508495615375104baf"
   },
-  "/Users/paras.patil/AI-native Security Engineering Platform/astraix-security-analyst/backend/ai_secos_core/plugin_system/validator.py": {
+  "backend/ai_secos_core/plugin_system/validator.py": {
     "mtime": 1783677920.0462947,
     "ast_hash": "2e65ae905b9a68beb65ea7b3eaa83c95",
     "semantic_hash": "2e65ae905b9a68beb65ea7b3eaa83c95"
   },
-  "/Users/paras.patil/AI-native Security Engineering Platform/astraix-security-analyst/backend/ai_secos_core/plugins/httpx/main.py": {
+  "backend/ai_secos_core/plugins/httpx/main.py": {
     "mtime": 1783677919.981186,
     "ast_hash": "ac796076f44a93b326c6b3ef268566d4",
     "semantic_hash": "ac796076f44a93b326c6b3ef268566d4"
   },
-  "/Users/paras.patil/AI-native Security Engineering Platform/astraix-security-analyst/backend/ai_secos_core/plugins/nmap/main.py": {
+  "backend/ai_secos_core/plugins/nmap/main.py": {
     "mtime": 1783934199.1461728,
     "ast_hash": "781981fed28126985a477d42758d4255",
     "semantic_hash": "781981fed28126985a477d42758d4255"
   },
-  "/Users/paras.patil/AI-native Security Engineering Platform/astraix-security-analyst/backend/ai_secos_core/plugins/nuclei/main.py": {
+  "backend/ai_secos_core/plugins/nuclei/main.py": {
     "mtime": 1783934787.5688508,
     "ast_hash": "3c6e7991c30cb47ca7e2a35fd6147a68",
     "semantic_hash": "3c6e7991c30cb47ca7e2a35fd6147a68"
   },
-  "/Users/paras.patil/AI-native Security Engineering Platform/astraix-security-analyst/backend/ai_secos_core/plugins/semgrep/main.py": {
+  "backend/ai_secos_core/plugins/semgrep/main.py": {
     "mtime": 1783936174.5806098,
     "ast_hash": "58c7b3392e46cc7b3db6e0ccf5afc70a",
     "semantic_hash": "58c7b3392e46cc7b3db6e0ccf5afc70a"
   },
-  "/Users/paras.patil/AI-native Security Engineering Platform/astraix-security-analyst/backend/ai_secos_core/plugins/subfinder/main.py": {
+  "backend/ai_secos_core/plugins/subfinder/main.py": {
     "mtime": 1783935292.1645644,
     "ast_hash": "d94bc3c526d8dc04db6196ed40c379db",
     "semantic_hash": "d94bc3c526d8dc04db6196ed40c379db"
   },
-  "/Users/paras.patil/AI-native Security Engineering Platform/astraix-security-analyst/backend/ai_secos_core/plugins/trivy/main.py": {
+  "backend/ai_secos_core/plugins/trivy/main.py": {
     "mtime": 1783935578.8181703,
     "ast_hash": "766847434dd18576c8448bedf12fafe3",
     "semantic_hash": "766847434dd18576c8448bedf12fafe3"
   },
-  "/Users/paras.patil/AI-native Security Engineering Platform/astraix-security-analyst/backend/ai_secos_core/pyproject.toml": {
+  "backend/ai_secos_core/pyproject.toml": {
     "mtime": 1783684502.0212119,
     "ast_hash": "a7ddc97f30d9fafc9bde9e570d864825",
     "semantic_hash": "a7ddc97f30d9fafc9bde9e570d864825"
   },
-  "/Users/paras.patil/AI-native Security Engineering Platform/astraix-security-analyst/backend/ai_secos_core/report_engine/__init__.py": {
+  "backend/ai_secos_core/report_engine/__init__.py": {
     "mtime": 1783677920.0885162,
     "ast_hash": "66b27891dc2185a255b1196eda835ec4",
     "semantic_hash": "66b27891dc2185a255b1196eda835ec4"
   },
-  "/Users/paras.patil/AI-native Security Engineering Platform/astraix-security-analyst/backend/ai_secos_core/report_engine/engine.py": {
+  "backend/ai_secos_core/report_engine/engine.py": {
     "mtime": 1783677920.0941718,
     "ast_hash": "a63e8e9747a809846f8636ac5d0f12b5",
     "semantic_hash": "a63e8e9747a809846f8636ac5d0f12b5"
   },
-  "/Users/paras.patil/AI-native Security Engineering Platform/astraix-security-analyst/backend/ai_secos_core/report_engine/types.py": {
+  "backend/ai_secos_core/report_engine/types.py": {
     "mtime": 1783677920.0908916,
     "ast_hash": "e18c0d3db82ed9a7e3ae88ddcc188e17",
     "semantic_hash": "e18c0d3db82ed9a7e3ae88ddcc188e17"
   },
-  "/Users/paras.patil/AI-native Security Engineering Platform/astraix-security-analyst/backend/ai_secos_core/risk_engine/__init__.py": {
+  "backend/ai_secos_core/risk_engine/__init__.py": {
     "mtime": 1783677919.9628644,
     "ast_hash": "be867677dbdc2de3b182697050d67429",
     "semantic_hash": "be867677dbdc2de3b182697050d67429"
   },
-  "/Users/paras.patil/AI-native Security Engineering Platform/astraix-security-analyst/backend/ai_secos_core/risk_engine/engine.py": {
+  "backend/ai_secos_core/risk_engine/engine.py": {
     "mtime": 1783677919.9703472,
     "ast_hash": "ff70ef02c67c48fc280747e96e92b01c",
     "semantic_hash": "ff70ef02c67c48fc280747e96e92b01c"
   },
-  "/Users/paras.patil/AI-native Security Engineering Platform/astraix-security-analyst/backend/ai_secos_core/risk_engine/providers.py": {
+  "backend/ai_secos_core/risk_engine/providers.py": {
     "mtime": 1783677919.9679682,
     "ast_hash": "c66b4122d9a0bee318b3dd8847fec516",
     "semantic_hash": "c66b4122d9a0bee318b3dd8847fec516"
   },
-  "/Users/paras.patil/AI-native Security Engineering Platform/astraix-security-analyst/backend/ai_secos_core/risk_engine/types.py": {
+  "backend/ai_secos_core/risk_engine/types.py": {
     "mtime": 1783677919.965195,
     "ast_hash": "16e8a27feba7858045b9aa4b80d9c2a3",
     "semantic_hash": "16e8a27feba7858045b9aa4b80d9c2a3"
   },
-  "/Users/paras.patil/AI-native Security Engineering Platform/astraix-security-analyst/backend/ai_secos_core/runtime/__init__.py": {
+  "backend/ai_secos_core/runtime/__init__.py": {
     "mtime": 1783677920.018099,
     "ast_hash": "1f8bc9973ea40fefa7045b6ac763fc64",
     "semantic_hash": "1f8bc9973ea40fefa7045b6ac763fc64"
   },
-  "/Users/paras.patil/AI-native Security Engineering Platform/astraix-security-analyst/backend/ai_secos_core/runtime/cancellation.py": {
+  "backend/ai_secos_core/runtime/cancellation.py": {
     "mtime": 1783677920.0129666,
     "ast_hash": "d90b625628bcf1dae5d29fe972cac674",
     "semantic_hash": "d90b625628bcf1dae5d29fe972cac674"
   },
-  "/Users/paras.patil/AI-native Security Engineering Platform/astraix-security-analyst/backend/ai_secos_core/runtime/executor.py": {
+  "backend/ai_secos_core/runtime/executor.py": {
     "mtime": 1783677920.0288637,
     "ast_hash": "23384443367f3a953b3d73ad1bd48ce8",
     "semantic_hash": "23384443367f3a953b3d73ad1bd48ce8"
   },
-  "/Users/paras.patil/AI-native Security Engineering Platform/astraix-security-analyst/backend/ai_secos_core/runtime/plugin_streaming.py": {
+  "backend/ai_secos_core/runtime/plugin_streaming.py": {
     "mtime": 1783677920.02083,
     "ast_hash": "60122bccc53d8a7f884f0bbd0fa9f068",
     "semantic_hash": "60122bccc53d8a7f884f0bbd0fa9f068"
   },
-  "/Users/paras.patil/AI-native Security Engineering Platform/astraix-security-analyst/backend/ai_secos_core/runtime/stream.py": {
+  "backend/ai_secos_core/runtime/stream.py": {
     "mtime": 1783677920.0237274,
     "ast_hash": "cb5dd510fe8cbcef8dd2f43ce605f8cf",
     "semantic_hash": "cb5dd510fe8cbcef8dd2f43ce605f8cf"
   },
-  "/Users/paras.patil/AI-native Security Engineering Platform/astraix-security-analyst/backend/ai_secos_core/runtime/task.py": {
+  "backend/ai_secos_core/runtime/task.py": {
     "mtime": 1783677920.0082946,
     "ast_hash": "76c2e59d0d8de478eb7305cf643f020c",
     "semantic_hash": "76c2e59d0d8de478eb7305cf643f020c"
   },
-  "/Users/paras.patil/AI-native Security Engineering Platform/astraix-security-analyst/backend/ai_secos_core/runtime/task_planner.py": {
+  "backend/ai_secos_core/runtime/task_planner.py": {
     "mtime": 1783677920.0155694,
     "ast_hash": "4973b3c25cb25652fddcdd58725bfa34",
     "semantic_hash": "4973b3c25cb25652fddcdd58725bfa34"
   },
-  "/Users/paras.patil/AI-native Security Engineering Platform/astraix-security-analyst/backend/ai_secos_core/runtime/workflow.py": {
+  "backend/ai_secos_core/runtime/workflow.py": {
     "mtime": 1783677920.0261393,
     "ast_hash": "d5258276ac249331b6d05063f1628913",
     "semantic_hash": "d5258276ac249331b6d05063f1628913"
   },
-  "/Users/paras.patil/AI-native Security Engineering Platform/astraix-security-analyst/backend/ai_secos_core/runtime/workflow_engine.py": {
+  "backend/ai_secos_core/runtime/workflow_engine.py": {
     "mtime": 1783677920.010663,
     "ast_hash": "4e2da05bd87721d9eeaff253ad00bc2c",
     "semantic_hash": "4e2da05bd87721d9eeaff253ad00bc2c"
   },
-  "/Users/paras.patil/AI-native Security Engineering Platform/astraix-security-analyst/backend/ai_secos_core/shared/__init__.py": {
+  "backend/ai_secos_core/shared/__init__.py": {
     "mtime": 1783677920.075592,
     "ast_hash": "97c661ac2c736ae067b492977b7314ea",
     "semantic_hash": "97c661ac2c736ae067b492977b7314ea"
   },
-  "/Users/paras.patil/AI-native Security Engineering Platform/astraix-security-analyst/backend/ai_secos_core/shared/assessment.py": {
+  "backend/ai_secos_core/shared/assessment.py": {
     "mtime": 1783677920.0659645,
     "ast_hash": "ea844bca2119d138181e7112aa4fc277",
     "semantic_hash": "ea844bca2119d138181e7112aa4fc277"
   },
-  "/Users/paras.patil/AI-native Security Engineering Platform/astraix-security-analyst/backend/ai_secos_core/shared/asset.py": {
+  "backend/ai_secos_core/shared/asset.py": {
     "mtime": 1783677920.068332,
     "ast_hash": "29c290509c91a6c5a1da4d4015d2b08d",
     "semantic_hash": "29c290509c91a6c5a1da4d4015d2b08d"
   },
-  "/Users/paras.patil/AI-native Security Engineering Platform/astraix-security-analyst/backend/ai_secos_core/shared/correlation.py": {
+  "backend/ai_secos_core/shared/correlation.py": {
     "mtime": 1783677920.0835433,
     "ast_hash": "786ef274ddf593de80e0559e1e4c2b37",
     "semantic_hash": "786ef274ddf593de80e0559e1e4c2b37"
   },
-  "/Users/paras.patil/AI-native Security Engineering Platform/astraix-security-analyst/backend/ai_secos_core/shared/errors.py": {
+  "backend/ai_secos_core/shared/errors.py": {
     "mtime": 1783677920.0810385,
     "ast_hash": "f7efa90fabee26ec76a76494312ca7b4",
     "semantic_hash": "f7efa90fabee26ec76a76494312ca7b4"
   },
-  "/Users/paras.patil/AI-native Security Engineering Platform/astraix-security-analyst/backend/ai_secos_core/shared/events.py": {
+  "backend/ai_secos_core/shared/events.py": {
     "mtime": 1783677920.0731065,
     "ast_hash": "d96ea253f9a30d488ae515c0612d0cd7",
     "semantic_hash": "d96ea253f9a30d488ae515c0612d0cd7"
   },
-  "/Users/paras.patil/AI-native Security Engineering Platform/astraix-security-analyst/backend/ai_secos_core/shared/results.py": {
+  "backend/ai_secos_core/shared/results.py": {
     "mtime": 1783677920.0706403,
     "ast_hash": "f8a59b7c98ce4abe7ce4bdb3bd9f4046",
     "semantic_hash": "f8a59b7c98ce4abe7ce4bdb3bd9f4046"
   },
-  "/Users/paras.patil/AI-native Security Engineering Platform/astraix-security-analyst/backend/ai_secos_core/shared/value_objects.py": {
+  "backend/ai_secos_core/shared/value_objects.py": {
     "mtime": 1783677920.0783257,
     "ast_hash": "bc2c89a643aba0bd1c87beea7f58fca9",
     "semantic_hash": "bc2c89a643aba0bd1c87beea7f58fca9"
   },
-  "/Users/paras.patil/AI-native Security Engineering Platform/astraix-security-analyst/backend/ai_secos_core/tests/conftest.py": {
+  "backend/ai_secos_core/tests/conftest.py": {
     "mtime": 1783677920.0312195,
     "ast_hash": "4873779a73f8f90e884f341e73cb6e01",
     "semantic_hash": "4873779a73f8f90e884f341e73cb6e01"
   },
-  "/Users/paras.patil/AI-native Security Engineering Platform/astraix-security-analyst/backend/ai_secos_core/tests/m2/test_m2_demo.py": {
+  "backend/ai_secos_core/tests/m2/test_m2_demo.py": {
     "mtime": 1783677920.0413082,
     "ast_hash": "69c39ada9e83c232712c57d7f7696e60",
     "semantic_hash": "69c39ada9e83c232712c57d7f7696e60"
   },
-  "/Users/paras.patil/AI-native Security Engineering Platform/astraix-security-analyst/backend/ai_secos_core/tests/platform/test_container.py": {
+  "backend/ai_secos_core/tests/platform/test_container.py": {
     "mtime": 1783677920.0337098,
     "ast_hash": "772bc7755b9715da1c76de82b7d875a2",
     "semantic_hash": "772bc7755b9715da1c76de82b7d875a2"
   },
-  "/Users/paras.patil/AI-native Security Engineering Platform/astraix-security-analyst/backend/ai_secos_core/tests/runtime/test_task_planner.py": {
+  "backend/ai_secos_core/tests/runtime/test_task_planner.py": {
     "mtime": 1783677920.03611,
     "ast_hash": "5398ad6cb27c9c20b5c7f33ea05d4236",
     "semantic_hash": "5398ad6cb27c9c20b5c7f33ea05d4236"
   },
-  "/Users/paras.patil/AI-native Security Engineering Platform/astraix-security-analyst/backend/alembic/env.py": {
+  "backend/alembic/env.py": {
     "mtime": 1782811379.2044942,
     "ast_hash": "12a937c6e2355e6b5bbdda6b9768c54e",
     "semantic_hash": "12a937c6e2355e6b5bbdda6b9768c54e"
   },
-  "/Users/paras.patil/AI-native Security Engineering Platform/astraix-security-analyst/backend/alembic/versions/001_add_multi_tenant.py": {
+  "backend/alembic/versions/001_add_multi_tenant.py": {
     "mtime": 1783684320.4369802,
     "ast_hash": "d30111af118170c1e0c6045f1fb18307",
     "semantic_hash": "d30111af118170c1e0c6045f1fb18307"
   },
-  "/Users/paras.patil/AI-native Security Engineering Platform/astraix-security-analyst/backend/app/__init__.py": {
+  "backend/app/__init__.py": {
     "mtime": 1782811247.3878145,
     "ast_hash": "d41d8cd98f00b204e9800998ecf8427e",
     "semantic_hash": "d41d8cd98f00b204e9800998ecf8427e"
   },
-  "/Users/paras.patil/AI-native Security Engineering Platform/astraix-security-analyst/backend/app/api/__init__.py": {
+  "backend/app/api/__init__.py": {
     "mtime": 1782828029.0459511,
     "ast_hash": "d41d8cd98f00b204e9800998ecf8427e",
     "semantic_hash": "d41d8cd98f00b204e9800998ecf8427e"
   },
-  "/Users/paras.patil/AI-native Security Engineering Platform/astraix-security-analyst/backend/app/api/v1/__init__.py": {
-    "mtime": 1784028926.1373765,
-    "ast_hash": "fa7a3bd3cfb110c9f4eb7a35fdcddc9c",
-    "semantic_hash": "fa7a3bd3cfb110c9f4eb7a35fdcddc9c"
+  "backend/app/api/v1/__init__.py": {
+    "mtime": 1784285907.6365926,
+    "ast_hash": "78c86161fc06d689500dc36012468b16",
+    "semantic_hash": "78c86161fc06d689500dc36012468b16"
   },
-  "/Users/paras.patil/AI-native Security Engineering Platform/astraix-security-analyst/backend/app/api/v1/assessments.py": {
-    "mtime": 1784008256.0225043,
-    "ast_hash": "3a945285142c33261157455de9baa8a9",
-    "semantic_hash": "3a945285142c33261157455de9baa8a9"
+  "backend/app/api/v1/assessments.py": {
+    "mtime": 1785313213.5972404,
+    "ast_hash": "6b908023f365d09d9964c300250f62b1",
+    "semantic_hash": "6b908023f365d09d9964c300250f62b1"
   },
-  "/Users/paras.patil/AI-native Security Engineering Platform/astraix-security-analyst/backend/app/api/v1/assets.py": {
-    "mtime": 1784008256.0208204,
-    "ast_hash": "5b9a1c840cebbb70343c86ac1d1ccf5c",
-    "semantic_hash": "5b9a1c840cebbb70343c86ac1d1ccf5c"
+  "backend/app/api/v1/assets.py": {
+    "mtime": 1785313214.6213908,
+    "ast_hash": "2a2fbe266165d570c34debc5c9906df8",
+    "semantic_hash": "2a2fbe266165d570c34debc5c9906df8"
   },
-  "/Users/paras.patil/AI-native Security Engineering Platform/astraix-security-analyst/backend/app/api/v1/auth.py": {
-    "mtime": 1784092559.658912,
-    "ast_hash": "75ac726f1d80f8f369b98b82b5c1184d",
-    "semantic_hash": "75ac726f1d80f8f369b98b82b5c1184d"
+  "backend/app/api/v1/auth.py": {
+    "mtime": 1784278625.202422,
+    "ast_hash": "b976b5768d6b5abf804d102052c87242",
+    "semantic_hash": "b976b5768d6b5abf804d102052c87242"
   },
-  "/Users/paras.patil/AI-native Security Engineering Platform/astraix-security-analyst/backend/app/api/v1/findings.py": {
-    "mtime": 1784008256.0201528,
-    "ast_hash": "37681a22d4e42bbc6ecb4154ec00e553",
-    "semantic_hash": "37681a22d4e42bbc6ecb4154ec00e553"
+  "backend/app/api/v1/findings.py": {
+    "mtime": 1785313215.1387975,
+    "ast_hash": "0bce3bf561a806762a5aed27505edefb",
+    "semantic_hash": "0bce3bf561a806762a5aed27505edefb"
   },
-  "/Users/paras.patil/AI-native Security Engineering Platform/astraix-security-analyst/backend/app/api/v1/organizations.py": {
-    "mtime": 1784008256.0217896,
-    "ast_hash": "11bdaa4558840fcd014ef8a1f9c7a231",
-    "semantic_hash": "11bdaa4558840fcd014ef8a1f9c7a231"
+  "backend/app/api/v1/organizations.py": {
+    "mtime": 1784197438.8488863,
+    "ast_hash": "7537c75e14b0d4d1478c955a44b5d5f4",
+    "semantic_hash": "7537c75e14b0d4d1478c955a44b5d5f4"
   },
-  "/Users/paras.patil/AI-native Security Engineering Platform/astraix-security-analyst/backend/app/api/v1/plugins.py": {
-    "mtime": 1782826671.87684,
-    "ast_hash": "e4c26537db3e4a77abdfcf5f60ea0c01",
-    "semantic_hash": "e4c26537db3e4a77abdfcf5f60ea0c01"
+  "backend/app/api/v1/plugins.py": {
+    "mtime": 1785313215.6336563,
+    "ast_hash": "5e3f06f2cf8bd3d10ee83603fbc88537",
+    "semantic_hash": "5e3f06f2cf8bd3d10ee83603fbc88537"
   },
-  "/Users/paras.patil/AI-native Security Engineering Platform/astraix-security-analyst/backend/app/config/__init__.py": {
+  "backend/app/config/__init__.py": {
     "mtime": 1784018963.7332876,
     "ast_hash": "94f8af6727899478078b2dae1a792eb2",
     "semantic_hash": "94f8af6727899478078b2dae1a792eb2"
   },
-  "/Users/paras.patil/AI-native Security Engineering Platform/astraix-security-analyst/backend/app/core/__init__.py": {
+  "backend/app/core/__init__.py": {
     "mtime": 1782828072.7085466,
     "ast_hash": "ec9d1dc696299f92ddd19b8ac7a1f212",
     "semantic_hash": "ec9d1dc696299f92ddd19b8ac7a1f212"
   },
-  "/Users/paras.patil/AI-native Security Engineering Platform/astraix-security-analyst/backend/app/core/auth.py": {
-    "mtime": 1784092936.4824007,
-    "ast_hash": "7e1210f46f4a785f90a93f81dabbfed8",
-    "semantic_hash": "7e1210f46f4a785f90a93f81dabbfed8"
+  "backend/app/core/auth.py": {
+    "mtime": 1784806330.0007656,
+    "ast_hash": "36cbd7150ba25b32baf32e6b19522731",
+    "semantic_hash": "36cbd7150ba25b32baf32e6b19522731"
   },
-  "/Users/paras.patil/AI-native Security Engineering Platform/astraix-security-analyst/backend/app/core/config.py": {
+  "backend/app/core/config.py": {
     "mtime": 1782828165.397501,
     "ast_hash": "619e212636daec5cdfb048a85f1dd99a",
     "semantic_hash": "619e212636daec5cdfb048a85f1dd99a"
   },
-  "/Users/paras.patil/AI-native Security Engineering Platform/astraix-security-analyst/backend/app/core/logging.py": {
+  "backend/app/core/logging.py": {
     "mtime": 1782811134.675154,
     "ast_hash": "42ef024b71a6dc1080aa8fc3c7eedd89",
     "semantic_hash": "42ef024b71a6dc1080aa8fc3c7eedd89"
   },
-  "/Users/paras.patil/AI-native Security Engineering Platform/astraix-security-analyst/backend/app/database/__init__.py": {
+  "backend/app/database/__init__.py": {
     "mtime": 1782828043.627078,
     "ast_hash": "103f43092ae0e23b381ef3844d885597",
     "semantic_hash": "103f43092ae0e23b381ef3844d885597"
   },
-  "/Users/paras.patil/AI-native Security Engineering Platform/astraix-security-analyst/backend/app/database/session.py": {
-    "mtime": 1784092713.8577871,
-    "ast_hash": "174a5d5a174951745a18d83d1bdb8fea",
-    "semantic_hash": "174a5d5a174951745a18d83d1bdb8fea"
+  "backend/app/database/session.py": {
+    "mtime": 1784197307.9820008,
+    "ast_hash": "0d19fd8666edc55995493d5177a16782",
+    "semantic_hash": "0d19fd8666edc55995493d5177a16782"
   },
-  "/Users/paras.patil/AI-native Security Engineering Platform/astraix-security-analyst/backend/app/domain/__init__.py": {
+  "backend/app/domain/__init__.py": {
     "mtime": 1782828485.8964293,
     "ast_hash": "86d273b720e4d5a324267bad2d1a082d",
     "semantic_hash": "86d273b720e4d5a324267bad2d1a082d"
   },
-  "/Users/paras.patil/AI-native Security Engineering Platform/astraix-security-analyst/backend/app/domain/models/__init__.py": {
+  "backend/app/domain/models/__init__.py": {
     "mtime": 1784008672.13678,
     "ast_hash": "f4ab2b0eb4215870c4f53e7fcd6eef2e",
     "semantic_hash": "f4ab2b0eb4215870c4f53e7fcd6eef2e"
   },
-  "/Users/paras.patil/AI-native Security Engineering Platform/astraix-security-analyst/backend/app/domain/models/assessment.py": {
+  "backend/app/domain/models/assessment.py": {
     "mtime": 1783683792.108918,
     "ast_hash": "0d0afd18abcd6422f3393f0b257bb0b7",
     "semantic_hash": "0d0afd18abcd6422f3393f0b257bb0b7"
   },
-  "/Users/paras.patil/AI-native Security Engineering Platform/astraix-security-analyst/backend/app/domain/models/asset.py": {
+  "backend/app/domain/models/asset.py": {
     "mtime": 1783683815.5465932,
     "ast_hash": "313e2852d8b55092c6f0ae76b0f0f378",
     "semantic_hash": "313e2852d8b55092c6f0ae76b0f0f378"
   },
-  "/Users/paras.patil/AI-native Security Engineering Platform/astraix-security-analyst/backend/app/domain/models/base.py": {
+  "backend/app/domain/models/base.py": {
     "mtime": 1784008402.612511,
     "ast_hash": "36b2b72bf5e03650e791d26817868418",
     "semantic_hash": "36b2b72bf5e03650e791d26817868418"
   },
-  "/Users/paras.patil/AI-native Security Engineering Platform/astraix-security-analyst/backend/app/domain/models/finding.py": {
+  "backend/app/domain/models/finding.py": {
     "mtime": 1783683804.988507,
     "ast_hash": "701dede82e8b02acc3c550ca19cd9797",
     "semantic_hash": "701dede82e8b02acc3c550ca19cd9797"
   },
-  "/Users/paras.patil/AI-native Security Engineering Platform/astraix-security-analyst/backend/app/domain/models/organization.py": {
+  "backend/app/domain/models/organization.py": {
     "mtime": 1784008596.3319952,
     "ast_hash": "e2cf829907e7a97d9dbcd79483c0f16d",
     "semantic_hash": "e2cf829907e7a97d9dbcd79483c0f16d"
   },
-  "/Users/paras.patil/AI-native Security Engineering Platform/astraix-security-analyst/backend/app/domain/models/plugin.py": {
+  "backend/app/domain/models/plugin.py": {
     "mtime": 1782818475.6976051,
     "ast_hash": "2b0fe508e3c990be0e535424e72bd276",
     "semantic_hash": "2b0fe508e3c990be0e535424e72bd276"
   },
-  "/Users/paras.patil/AI-native Security Engineering Platform/astraix-security-analyst/backend/app/domain/schemas/__init__.py": {
+  "backend/app/domain/schemas/__init__.py": {
     "mtime": 1783683888.406624,
     "ast_hash": "3052c6fedcf0bb070bc9f284bd7f2b8f",
     "semantic_hash": "3052c6fedcf0bb070bc9f284bd7f2b8f"
   },
-  "/Users/paras.patil/AI-native Security Engineering Platform/astraix-security-analyst/backend/app/domain/schemas/assessment.py": {
+  "backend/app/domain/schemas/assessment.py": {
     "mtime": 1782827229.1306581,
     "ast_hash": "e352b3fcf0506cbaf9e394bc2dace727",
     "semantic_hash": "e352b3fcf0506cbaf9e394bc2dace727"
   },
-  "/Users/paras.patil/AI-native Security Engineering Platform/astraix-security-analyst/backend/app/domain/schemas/asset.py": {
+  "backend/app/domain/schemas/asset.py": {
     "mtime": 1782827178.5446203,
     "ast_hash": "f65783a4c8d7da0a01be8168c205bc3f",
     "semantic_hash": "f65783a4c8d7da0a01be8168c205bc3f"
   },
-  "/Users/paras.patil/AI-native Security Engineering Platform/astraix-security-analyst/backend/app/domain/schemas/finding.py": {
+  "backend/app/domain/schemas/finding.py": {
     "mtime": 1782827345.2524996,
     "ast_hash": "56efc7685566a4923593f902d2ab9685",
     "semantic_hash": "56efc7685566a4923593f902d2ab9685"
   },
-  "/Users/paras.patil/AI-native Security Engineering Platform/astraix-security-analyst/backend/app/domain/schemas/organization.py": {
+  "backend/app/domain/schemas/organization.py": {
     "mtime": 1784008779.871272,
     "ast_hash": "3c38a6e56061fc51b981d1d14698ca67",
     "semantic_hash": "3c38a6e56061fc51b981d1d14698ca67"
   },
-  "/Users/paras.patil/AI-native Security Engineering Platform/astraix-security-analyst/backend/app/domain/services/__init__.py": {
+  "backend/app/domain/services/__init__.py": {
     "mtime": 1782828029.0460913,
     "ast_hash": "d41d8cd98f00b204e9800998ecf8427e",
     "semantic_hash": "d41d8cd98f00b204e9800998ecf8427e"
   },
-  "/Users/paras.patil/AI-native Security Engineering Platform/astraix-security-analyst/backend/app/domain/services/orchestrator.py": {
+  "backend/app/domain/services/orchestrator.py": {
     "mtime": 1782818800.9814098,
     "ast_hash": "c01676672e3c5a61b4f251495a668c89",
     "semantic_hash": "c01676672e3c5a61b4f251495a668c89"
   },
-  "/Users/paras.patil/AI-native Security Engineering Platform/astraix-security-analyst/backend/app/main.py": {
-    "mtime": 1782828282.0194955,
-    "ast_hash": "1280cafeb67b066632ec633b06009bb3",
-    "semantic_hash": "1280cafeb67b066632ec633b06009bb3"
+  "backend/app/main.py": {
+    "mtime": 1785313120.535735,
+    "ast_hash": "eb93785ed9b69221368fc522a0e77991",
+    "semantic_hash": "eb93785ed9b69221368fc522a0e77991"
   },
-  "/Users/paras.patil/AI-native Security Engineering Platform/astraix-security-analyst/backend/app/models/__init__.py": {
+  "backend/app/models/__init__.py": {
     "mtime": 1782828029.0458844,
     "ast_hash": "d41d8cd98f00b204e9800998ecf8427e",
     "semantic_hash": "d41d8cd98f00b204e9800998ecf8427e"
   },
-  "/Users/paras.patil/AI-native Security Engineering Platform/astraix-security-analyst/backend/app/models/base.py": {
+  "backend/app/models/base.py": {
     "mtime": 1782811229.0853875,
     "ast_hash": "cc6532309b7c02d058e2b54c4b5f7d49",
     "semantic_hash": "cc6532309b7c02d058e2b54c4b5f7d49"
   },
-  "/Users/paras.patil/AI-native Security Engineering Platform/astraix-security-analyst/backend/app/orchestrator/__init__.py": {
+  "backend/app/orchestrator/__init__.py": {
     "mtime": 1782828400.7017045,
     "ast_hash": "3067832e7c212555ed5c6e2794d3fca6",
     "semantic_hash": "3067832e7c212555ed5c6e2794d3fca6"
   },
-  "/Users/paras.patil/AI-native Security Engineering Platform/astraix-security-analyst/backend/app/orchestrator/service.py": {
-    "mtime": 1782819771.8094916,
-    "ast_hash": "60c1635dd263c51f44a38723584b1def",
-    "semantic_hash": "60c1635dd263c51f44a38723584b1def"
+  "backend/app/orchestrator/service.py": {
+    "mtime": 1784282191.7396605,
+    "ast_hash": "92118404ae9891459ac573a511154a63",
+    "semantic_hash": "92118404ae9891459ac573a511154a63"
   },
-  "/Users/paras.patil/AI-native Security Engineering Platform/astraix-security-analyst/backend/app/plugins/__init__.py": {
+  "backend/app/plugins/__init__.py": {
     "mtime": 1782828365.3454857,
     "ast_hash": "45cc4433b2a15d2b96687a7812274b6e",
     "semantic_hash": "45cc4433b2a15d2b96687a7812274b6e"
   },
-  "/Users/paras.patil/AI-native Security Engineering Platform/astraix-security-analyst/backend/app/plugins/manifest.py": {
+  "backend/app/plugins/manifest.py": {
     "mtime": 1784010099.404425,
     "ast_hash": "f5bf0e6920239201bd3ff7474445cfc4",
     "semantic_hash": "f5bf0e6920239201bd3ff7474445cfc4"
   },
-  "/Users/paras.patil/AI-native Security Engineering Platform/astraix-security-analyst/backend/app/plugins/registry.py": {
+  "backend/app/plugins/registry.py": {
     "mtime": 1782819458.1704109,
     "ast_hash": "cff45a8ad491268368522c99e107f2cb",
     "semantic_hash": "cff45a8ad491268368522c99e107f2cb"
   },
-  "/Users/paras.patil/AI-native Security Engineering Platform/astraix-security-analyst/backend/app/repositories/__init__.py": {
+  "backend/app/repositories/__init__.py": {
     "mtime": 1784028305.960362,
     "ast_hash": "945d7907c9483e44377a33a47441d69f",
     "semantic_hash": "945d7907c9483e44377a33a47441d69f"
   },
-  "/Users/paras.patil/AI-native Security Engineering Platform/astraix-security-analyst/backend/app/repositories/organization.py": {
-    "mtime": 1784093082.8955326,
-    "ast_hash": "8886a6289acdd2395fec0fb9d7e2aa39",
-    "semantic_hash": "8886a6289acdd2395fec0fb9d7e2aa39"
+  "backend/app/repositories/organization.py": {
+    "mtime": 1784197682.1506388,
+    "ast_hash": "2f75724ca277461f38d9ec917e111f21",
+    "semantic_hash": "2f75724ca277461f38d9ec917e111f21"
   },
-  "/Users/paras.patil/AI-native Security Engineering Platform/astraix-security-analyst/backend/app/schemas/__init__.py": {
+  "backend/app/schemas/__init__.py": {
     "mtime": 1782827498.8578618,
     "ast_hash": "e6acfbdb525447aef7130ea5ea8a8311",
     "semantic_hash": "e6acfbdb525447aef7130ea5ea8a8311"
   },
-  "/Users/paras.patil/AI-native Security Engineering Platform/astraix-security-analyst/backend/app/schemas/base.py": {
+  "backend/app/schemas/base.py": {
     "mtime": 1782811235.459887,
     "ast_hash": "41e70087249d870ece439fcffa4bde30",
     "semantic_hash": "41e70087249d870ece439fcffa4bde30"
   },
-  "/Users/paras.patil/AI-native Security Engineering Platform/astraix-security-analyst/backend/app/services/__init__.py": {
+  "backend/app/services/__init__.py": {
     "mtime": 1782811247.3873665,
     "ast_hash": "d41d8cd98f00b204e9800998ecf8427e",
     "semantic_hash": "d41d8cd98f00b204e9800998ecf8427e"
   },
-  "/Users/paras.patil/AI-native Security Engineering Platform/astraix-security-analyst/backend/app/utils/__init__.py": {
+  "backend/app/utils/__init__.py": {
     "mtime": 1782811247.387679,
     "ast_hash": "d41d8cd98f00b204e9800998ecf8427e",
     "semantic_hash": "d41d8cd98f00b204e9800998ecf8427e"
   },
-  "/Users/paras.patil/AI-native Security Engineering Platform/astraix-security-analyst/backend/pyproject.toml": {
+  "backend/pyproject.toml": {
     "mtime": 1782810998.5888133,
     "ast_hash": "e10e84d11129603eb686573670cbce98",
     "semantic_hash": "e10e84d11129603eb686573670cbce98"
   },
-  "/Users/paras.patil/AI-native Security Engineering Platform/astraix-security-analyst/backend/tests/__init__.py": {
+  "backend/tests/__init__.py": {
     "mtime": 1782829011.11341,
     "ast_hash": "d41d8cd98f00b204e9800998ecf8427e",
     "semantic_hash": "d41d8cd98f00b204e9800998ecf8427e"
   },
-  "/Users/paras.patil/AI-native Security Engineering Platform/astraix-security-analyst/backend/tests/conftest.py": {
+  "backend/tests/conftest.py": {
     "mtime": 1782829162.7688112,
     "ast_hash": "2cc3bc205faa4e5009dbcde640d83f41",
     "semantic_hash": "2cc3bc205faa4e5009dbcde640d83f41"
   },
-  "/Users/paras.patil/AI-native Security Engineering Platform/astraix-security-analyst/backend/tests/test_health.py": {
+  "backend/tests/test_health.py": {
     "mtime": 1782811398.7153406,
     "ast_hash": "3497a0145d67aafb9e1e8893a4d0c829",
     "semantic_hash": "3497a0145d67aafb9e1e8893a4d0c829"
   },
-  "/Users/paras.patil/AI-native Security Engineering Platform/astraix-security-analyst/frontend/next-env.d.ts": {
-    "mtime": 1783943729.385092,
-    "ast_hash": "3d7a37ab27b6abb660752aa3bd94b2b8",
-    "semantic_hash": "3d7a37ab27b6abb660752aa3bd94b2b8"
+  "frontend/next-env.d.ts": {
+    "mtime": 1784208152.2050543,
+    "ast_hash": "e6ec306e550ce264a8cb3eb557bd6d9f",
+    "semantic_hash": "e6ec306e550ce264a8cb3eb557bd6d9f"
   },
-  "/Users/paras.patil/AI-native Security Engineering Platform/astraix-security-analyst/frontend/next.config.js": {
-    "mtime": 1782811478.3372629,
-    "ast_hash": "1e3ff9f40c166926f2f7ce211c619762",
-    "semantic_hash": "1e3ff9f40c166926f2f7ce211c619762"
+  "frontend/next.config.js": {
+    "mtime": 1785313784.000152,
+    "ast_hash": "88161470678bf96b407fd3014a85a9bf",
+    "semantic_hash": "88161470678bf96b407fd3014a85a9bf"
   },
-  "/Users/paras.patil/AI-native Security Engineering Platform/astraix-security-analyst/frontend/package.json": {
-    "mtime": 1783943133.5708642,
-    "ast_hash": "555487b9bb47ff53600e5c0d896ecc73",
-    "semantic_hash": "555487b9bb47ff53600e5c0d896ecc73"
+  "frontend/package.json": {
+    "mtime": 1784537920.3144674,
+    "ast_hash": "f448aa93cbb767a4611a39800368e8e5",
+    "semantic_hash": "f448aa93cbb767a4611a39800368e8e5"
   },
-  "/Users/paras.patil/AI-native Security Engineering Platform/astraix-security-analyst/frontend/postcss.config.js": {
+  "frontend/postcss.config.js": {
     "mtime": 1782811552.023505,
     "ast_hash": "b46edce5c4fbda3c64745a89d92aa2d6",
     "semantic_hash": "b46edce5c4fbda3c64745a89d92aa2d6"
   },
-  "/Users/paras.patil/AI-native Security Engineering Platform/astraix-security-analyst/frontend/src/app/(main)/dashboard/page.tsx": {
+  "frontend/src/app/(main)/dashboard/page.tsx": {
     "mtime": 1783941974.5431666,
     "ast_hash": "b0d67fd795a04b5256af935fa15e24e8",
     "semantic_hash": "b0d67fd795a04b5256af935fa15e24e8"
   },
-  "/Users/paras.patil/AI-native Security Engineering Platform/astraix-security-analyst/frontend/src/app/(main)/findings/page.tsx": {
+  "frontend/src/app/(main)/findings/page.tsx": {
     "mtime": 1783942145.8747132,
     "ast_hash": "7a16ccaf986a0a648c7f9cb8deb426d2",
     "semantic_hash": "7a16ccaf986a0a648c7f9cb8deb426d2"
   },
-  "/Users/paras.patil/AI-native Security Engineering Platform/astraix-security-analyst/frontend/src/app/(main)/layout.tsx": {
+  "frontend/src/app/(main)/layout.tsx": {
     "mtime": 1783941907.2651598,
     "ast_hash": "bd816a7cb970e16efb1215d69e5e10c6",
     "semantic_hash": "bd816a7cb970e16efb1215d69e5e10c6"
   },
-  "/Users/paras.patil/AI-native Security Engineering Platform/astraix-security-analyst/frontend/src/app/(main)/projects/[id]/page.tsx": {
+  "frontend/src/app/(main)/projects/[id]/page.tsx": {
     "mtime": 1783943763.2947912,
     "ast_hash": "de7697ab0d412f86feca4bf6f120356e",
     "semantic_hash": "de7697ab0d412f86feca4bf6f120356e"
   },
-  "/Users/paras.patil/AI-native Security Engineering Platform/astraix-security-analyst/frontend/src/app/(main)/projects/page.tsx": {
-    "mtime": 1783942024.8215322,
-    "ast_hash": "d720662376c100b71ef091a55ae73f21",
-    "semantic_hash": "d720662376c100b71ef091a55ae73f21"
+  "frontend/src/app/(main)/projects/page.tsx": {
+    "mtime": 1784278347.724145,
+    "ast_hash": "2653f7647eb25b02edc7d45e447c884d",
+    "semantic_hash": "2653f7647eb25b02edc7d45e447c884d"
   },
-  "/Users/paras.patil/AI-native Security Engineering Platform/astraix-security-analyst/frontend/src/app/(main)/reports/page.tsx": {
+  "frontend/src/app/(main)/reports/page.tsx": {
     "mtime": 1783942224.3141904,
     "ast_hash": "4ec2fde9d878ff7ffa4bf779babc4f52",
     "semantic_hash": "4ec2fde9d878ff7ffa4bf779babc4f52"
   },
-  "/Users/paras.patil/AI-native Security Engineering Platform/astraix-security-analyst/frontend/src/app/(main)/scans/page.tsx": {
-    "mtime": 1783942075.1691077,
-    "ast_hash": "10c15dc2834e27c1ace5cb2cefecacca",
-    "semantic_hash": "10c15dc2834e27c1ace5cb2cefecacca"
+  "frontend/src/app/(main)/scans/page.tsx": {
+    "mtime": 1784271309.6119297,
+    "ast_hash": "bb555574ae4c212c6d60caa84efa18b4",
+    "semantic_hash": "bb555574ae4c212c6d60caa84efa18b4"
   },
-  "/Users/paras.patil/AI-native Security Engineering Platform/astraix-security-analyst/frontend/src/app/(main)/settings/api-keys/page.tsx": {
-    "mtime": 1783942667.2982707,
-    "ast_hash": "a31864ea0bc41b3d5d82f18a47149c66",
-    "semantic_hash": "a31864ea0bc41b3d5d82f18a47149c66"
+  "frontend/src/app/(main)/settings/api-keys/page.tsx": {
+    "mtime": 1784198658.2025273,
+    "ast_hash": "c453688116fff42d482491cb7e45489e",
+    "semantic_hash": "c453688116fff42d482491cb7e45489e"
   },
-  "/Users/paras.patil/AI-native Security Engineering Platform/astraix-security-analyst/frontend/src/app/(main)/settings/members/page.tsx": {
+  "frontend/src/app/(main)/settings/members/page.tsx": {
     "mtime": 1783943545.3912423,
     "ast_hash": "e5197440c8d0a1228720908b5ff932d1",
     "semantic_hash": "e5197440c8d0a1228720908b5ff932d1"
   },
-  "/Users/paras.patil/AI-native Security Engineering Platform/astraix-security-analyst/frontend/src/app/(main)/settings/page.tsx": {
-    "mtime": 1783942346.1632936,
-    "ast_hash": "59ecb6712847cd0b58e34c5bd2d2ed60",
-    "semantic_hash": "59ecb6712847cd0b58e34c5bd2d2ed60"
+  "frontend/src/app/(main)/settings/page.tsx": {
+    "mtime": 1784198472.6822534,
+    "ast_hash": "52f5e1f38d89d046510db45c12503f9b",
+    "semantic_hash": "52f5e1f38d89d046510db45c12503f9b"
   },
-  "/Users/paras.patil/AI-native Security Engineering Platform/astraix-security-analyst/frontend/src/app/layout.tsx": {
+  "frontend/src/app/layout.tsx": {
     "mtime": 1783941891.1994133,
     "ast_hash": "fda17da925570ab1cdc911e6d298f51c",
     "semantic_hash": "fda17da925570ab1cdc911e6d298f51c"
   },
-  "/Users/paras.patil/AI-native Security Engineering Platform/astraix-security-analyst/frontend/src/app/login/page.tsx": {
-    "mtime": 1783942798.3785238,
-    "ast_hash": "e16462c4ea18d9124d0d089f2e823ae8",
-    "semantic_hash": "e16462c4ea18d9124d0d089f2e823ae8"
+  "frontend/src/app/login/page.tsx": {
+    "mtime": 1784215478.0633352,
+    "ast_hash": "fea7538961c6cf20adb7a77aebfb9901",
+    "semantic_hash": "fea7538961c6cf20adb7a77aebfb9901"
   },
-  "/Users/paras.patil/AI-native Security Engineering Platform/astraix-security-analyst/frontend/src/app/page.tsx": {
-    "mtime": 1783942693.3724432,
-    "ast_hash": "e8bbd54095307cf765adf0f6b9d39876",
-    "semantic_hash": "e8bbd54095307cf765adf0f6b9d39876"
+  "frontend/src/app/page.tsx": {
+    "mtime": 1784208081.993192,
+    "ast_hash": "09ea6ba3dffe82ada43abe5e22de7bd7",
+    "semantic_hash": "09ea6ba3dffe82ada43abe5e22de7bd7"
   },
-  "/Users/paras.patil/AI-native Security Engineering Platform/astraix-security-analyst/frontend/src/components/dashboard/Dashboard.tsx": {
+  "frontend/src/components/dashboard/Dashboard.tsx": {
     "mtime": 1782812254.3343163,
     "ast_hash": "01834fe06c5cb1558a49abd1382ee505",
     "semantic_hash": "01834fe06c5cb1558a49abd1382ee505"
   },
-  "/Users/paras.patil/AI-native Security Engineering Platform/astraix-security-analyst/frontend/src/components/dashboard/QuickActions.tsx": {
-    "mtime": 1782812373.8106291,
-    "ast_hash": "729df59263c150ff10dfdbefb5b27c50",
-    "semantic_hash": "729df59263c150ff10dfdbefb5b27c50"
+  "frontend/src/components/dashboard/QuickActions.tsx": {
+    "mtime": 1784198350.4183595,
+    "ast_hash": "b6ba6d754dd68dffb4e6bc8290048537",
+    "semantic_hash": "b6ba6d754dd68dffb4e6bc8290048537"
   },
-  "/Users/paras.patil/AI-native Security Engineering Platform/astraix-security-analyst/frontend/src/components/dashboard/RecentAssessments.tsx": {
+  "frontend/src/components/dashboard/RecentAssessments.tsx": {
     "mtime": 1783941695.4081874,
     "ast_hash": "f6bdc2bff60a7171cd2fad28ae459010",
     "semantic_hash": "f6bdc2bff60a7171cd2fad28ae459010"
   },
-  "/Users/paras.patil/AI-native Security Engineering Platform/astraix-security-analyst/frontend/src/components/dashboard/StatsCards.tsx": {
+  "frontend/src/components/dashboard/StatsCards.tsx": {
     "mtime": 1783941603.7554202,
     "ast_hash": "fb020dfdcb0126d82a9c4c4d8e24b8e7",
     "semantic_hash": "fb020dfdcb0126d82a9c4c4d8e24b8e7"
   },
-  "/Users/paras.patil/AI-native Security Engineering Platform/astraix-security-analyst/frontend/src/components/dashboard/SystemStatus.tsx": {
+  "frontend/src/components/dashboard/SystemStatus.tsx": {
     "mtime": 1782812444.8987653,
     "ast_hash": "0cb34795ee7f0ad10de236bd7dddd932",
     "semantic_hash": "0cb34795ee7f0ad10de236bd7dddd932"
   },
-  "/Users/paras.patil/AI-native Security Engineering Platform/astraix-security-analyst/frontend/src/components/layout/Sidebar.tsx": {
-    "mtime": 1783943852.2870457,
-    "ast_hash": "fd79cfe9c892c0834b45e4f2f11c30c0",
-    "semantic_hash": "fd79cfe9c892c0834b45e4f2f11c30c0"
+  "frontend/src/components/layout/Sidebar.tsx": {
+    "mtime": 1784527629.7443569,
+    "ast_hash": "26f2f291e4dc5814df3d1b872d212e3b",
+    "semantic_hash": "26f2f291e4dc5814df3d1b872d212e3b"
   },
-  "/Users/paras.patil/AI-native Security Engineering Platform/astraix-security-analyst/frontend/src/components/ui/badge.tsx": {
+  "frontend/src/components/ui/badge.tsx": {
     "mtime": 1782812667.1412141,
     "ast_hash": "3e5bdf2d7de8e0b09a2f1f19c235ed74",
     "semantic_hash": "3e5bdf2d7de8e0b09a2f1f19c235ed74"
   },
-  "/Users/paras.patil/AI-native Security Engineering Platform/astraix-security-analyst/frontend/src/components/ui/button.tsx": {
+  "frontend/src/components/ui/button.tsx": {
     "mtime": 1782812452.4479156,
     "ast_hash": "75469923aa907e8135b4b6bd0423efe5",
     "semantic_hash": "75469923aa907e8135b4b6bd0423efe5"
   },
-  "/Users/paras.patil/AI-native Security Engineering Platform/astraix-security-analyst/frontend/src/components/ui/card.tsx": {
+  "frontend/src/components/ui/card.tsx": {
     "mtime": 1782812605.244031,
     "ast_hash": "efdaa320ceef60e5d77739ccd31d95c5",
     "semantic_hash": "efdaa320ceef60e5d77739ccd31d95c5"
   },
-  "/Users/paras.patil/AI-native Security Engineering Platform/astraix-security-analyst/frontend/src/components/ui/input.tsx": {
+  "frontend/src/components/ui/input.tsx": {
     "mtime": 1783942503.7685325,
     "ast_hash": "3f55419a83b445f08387bc551095d343",
     "semantic_hash": "3f55419a83b445f08387bc551095d343"
   },
-  "/Users/paras.patil/AI-native Security Engineering Platform/astraix-security-analyst/frontend/src/components/ui/progress.tsx": {
+  "frontend/src/components/ui/progress.tsx": {
     "mtime": 1782812632.0481653,
     "ast_hash": "b5436452fb2d4b5cafa46d36fab79042",
     "semantic_hash": "b5436452fb2d4b5cafa46d36fab79042"
   },
-  "/Users/paras.patil/AI-native Security Engineering Platform/astraix-security-analyst/frontend/src/components/ui/table.tsx": {
+  "frontend/src/components/ui/table.tsx": {
     "mtime": 1782812595.314166,
     "ast_hash": "efff29213a29519d544a047559215fc4",
     "semantic_hash": "efff29213a29519d544a047559215fc4"
   },
-  "/Users/paras.patil/AI-native Security Engineering Platform/astraix-security-analyst/frontend/src/hooks/useApi.ts": {
+  "frontend/src/hooks/useApi.ts": {
     "mtime": 1782815756.923684,
     "ast_hash": "2c4b8e5070e651e9cca0e12fe3d2e197",
     "semantic_hash": "2c4b8e5070e651e9cca0e12fe3d2e197"
   },
-  "/Users/paras.patil/AI-native Security Engineering Platform/astraix-security-analyst/frontend/src/lib/utils.ts": {
+  "frontend/src/lib/utils.ts": {
     "mtime": 1782812682.277462,
     "ast_hash": "447ba4aae3d6d0f5c38c363ab652d727",
     "semantic_hash": "447ba4aae3d6d0f5c38c363ab652d727"
   },
-  "/Users/paras.patil/AI-native Security Engineering Platform/astraix-security-analyst/frontend/src/services/api.ts": {
-    "mtime": 1783943430.3019814,
-    "ast_hash": "0eeb9ac48b4da648f40bb568c03e3954",
-    "semantic_hash": "0eeb9ac48b4da648f40bb568c03e3954"
+  "frontend/src/services/api.ts": {
+    "mtime": 1784278455.0868857,
+    "ast_hash": "caf135a97671f32d62d233aa6435edc3",
+    "semantic_hash": "caf135a97671f32d62d233aa6435edc3"
   },
-  "/Users/paras.patil/AI-native Security Engineering Platform/astraix-security-analyst/frontend/src/types/index.ts": {
-    "mtime": 1783943347.6583345,
+  "frontend/src/types/index.ts": {
+    "mtime": 1784810406.88497,
     "ast_hash": "01175d13056f260c577204e749de5d64",
     "semantic_hash": "01175d13056f260c577204e749de5d64"
   },
-  "/Users/paras.patil/AI-native Security Engineering Platform/astraix-security-analyst/frontend/tailwind.config.js": {
+  "frontend/tailwind.config.js": {
     "mtime": 1783943706.8859453,
     "ast_hash": "3592ce190965824905c26ae3903229a9",
     "semantic_hash": "3592ce190965824905c26ae3903229a9"
   },
-  "/Users/paras.patil/AI-native Security Engineering Platform/astraix-security-analyst/frontend/tsconfig.json": {
+  "frontend/tsconfig.json": {
     "mtime": 1782811451.192468,
     "ast_hash": "1af9b1111e0d52ddefa460e9ae1ff6b0",
     "semantic_hash": "1af9b1111e0d52ddefa460e9ae1ff6b0"
   },
-  "/Users/paras.patil/AI-native Security Engineering Platform/astraix-security-analyst/frontend/vitest.config.ts": {
+  "frontend/vitest.config.ts": {
     "mtime": 1783943469.8227358,
     "ast_hash": "d9e3eeb52603730af1b820b82f1f90dd",
     "semantic_hash": "d9e3eeb52603730af1b820b82f1f90dd"
   },
-  "/Users/paras.patil/AI-native Security Engineering Platform/astraix-security-analyst/frontend/vitest.setup.ts": {
+  "frontend/vitest.setup.ts": {
     "mtime": 1782815572.509871,
     "ast_hash": "275172ed01030587b354734edb497282",
     "semantic_hash": "275172ed01030587b354734edb497282"
   },
-  "/Users/paras.patil/AI-native Security Engineering Platform/astraix-security-analyst/plugins/community/nmap-example/main.py": {
+  "plugins/community/nmap-example/main.py": {
     "mtime": 1782818446.852146,
     "ast_hash": "d7f44209f91310ee7fa41ba1061ffa64",
     "semantic_hash": "d7f44209f91310ee7fa41ba1061ffa64"
   },
-  "/Users/paras.patil/AI-native Security Engineering Platform/astraix-security-analyst/plugins/core/plugin-sdk/base.py": {
+  "plugins/core/plugin-sdk/base.py": {
     "mtime": 1782818381.2217863,
     "ast_hash": "6aeead52322d1d99f3b3b7e4059da2b9",
     "semantic_hash": "6aeead52322d1d99f3b3b7e4059da2b9"
   },
-  "/Users/paras.patil/AI-native Security Engineering Platform/astraix-security-analyst/start-dev.sh": {
+  "start-dev.sh": {
     "mtime": 1784102449.1117833,
     "ast_hash": "519f330ecaea3fb3b347af74d5be82f9",
     "semantic_hash": "519f330ecaea3fb3b347af74d5be82f9"
   },
-  "/Users/paras.patil/AI-native Security Engineering Platform/astraix-security-analyst/README.md": {
+  "README.md": {
     "mtime": 1782810781.4801886,
     "ast_hash": "18b34fbf3b7e4bc7b87571bd50553f28",
     "semantic_hash": "18b34fbf3b7e4bc7b87571bd50553f28"
   },
-  "/Users/paras.patil/AI-native Security Engineering Platform/astraix-security-analyst/backend/ai_secos_core/capabilities/library/cloud_posture/manifest.yml": {
+  "backend/ai_secos_core/capabilities/library/cloud_posture/manifest.yml": {
     "mtime": 1783939991.7932196,
     "ast_hash": "c71346c749ca3b538de267bbc04b7fae",
     "semantic_hash": "c71346c749ca3b538de267bbc04b7fae"
   },
-  "/Users/paras.patil/AI-native Security Engineering Platform/astraix-security-analyst/backend/ai_secos_core/capabilities/library/code_audit/manifest.yml": {
+  "backend/ai_secos_core/capabilities/library/code_audit/manifest.yml": {
     "mtime": 1783940051.4893515,
     "ast_hash": "cf9ae62a444e2ef3d9649998eca46999",
     "semantic_hash": "cf9ae62a444e2ef3d9649998eca46999"
   },
-  "/Users/paras.patil/AI-native Security Engineering Platform/astraix-security-analyst/backend/ai_secos_core/capabilities/library/network_vapt/manifest.yml": {
+  "backend/ai_secos_core/capabilities/library/network_vapt/manifest.yml": {
     "mtime": 1783939860.6174736,
     "ast_hash": "060416081afcc1a1d2834262de629106",
     "semantic_hash": "060416081afcc1a1d2834262de629106"
   },
-  "/Users/paras.patil/AI-native Security Engineering Platform/astraix-security-analyst/backend/ai_secos_core/capabilities/library/subdomain_enum/manifest.yml": {
+  "backend/ai_secos_core/capabilities/library/subdomain_enum/manifest.yml": {
     "mtime": 1783940106.6861634,
     "ast_hash": "160e465211f3aa67e795e5b131f11d38",
     "semantic_hash": "160e465211f3aa67e795e5b131f11d38"
   },
-  "/Users/paras.patil/AI-native Security Engineering Platform/astraix-security-analyst/backend/ai_secos_core/capabilities/library/web_discovery/manifest.yml": {
+  "backend/ai_secos_core/capabilities/library/web_discovery/manifest.yml": {
     "mtime": 1783419134.2135787,
     "ast_hash": "2bb794b4eaa4a6ca90b499be7e13f597",
     "semantic_hash": "2bb794b4eaa4a6ca90b499be7e13f597"
   },
-  "/Users/paras.patil/AI-native Security Engineering Platform/astraix-security-analyst/backend/ai_secos_core/capabilities/library/web_vapt/manifest.yml": {
+  "backend/ai_secos_core/capabilities/library/web_vapt/manifest.yml": {
     "mtime": 1783939917.3459175,
     "ast_hash": "0a332480fe6c0be4cf6b95c380518252",
     "semantic_hash": "0a332480fe6c0be4cf6b95c380518252"
   },
-  "/Users/paras.patil/AI-native Security Engineering Platform/astraix-security-analyst/backend/ai_secos_core/plugins/httpx/plugin.yml": {
+  "backend/ai_secos_core/plugins/httpx/plugin.yml": {
     "mtime": 1782973572.9515274,
     "ast_hash": "29b41354814ebe91e33c6a870516efdc",
     "semantic_hash": "29b41354814ebe91e33c6a870516efdc"
   },
-  "/Users/paras.patil/AI-native Security Engineering Platform/astraix-security-analyst/backend/ai_secos_core/plugins/nmap/plugin.yml": {
+  "backend/ai_secos_core/plugins/nmap/plugin.yml": {
     "mtime": 1783934079.8849545,
     "ast_hash": "c51fd0f1f948e37d41df79cfb931d97f",
     "semantic_hash": "c51fd0f1f948e37d41df79cfb931d97f"
   },
-  "/Users/paras.patil/AI-native Security Engineering Platform/astraix-security-analyst/backend/ai_secos_core/plugins/nuclei/plugin.yml": {
+  "backend/ai_secos_core/plugins/nuclei/plugin.yml": {
     "mtime": 1783934446.0802262,
     "ast_hash": "e218c707dfd37800d375ea4429a34383",
     "semantic_hash": "e218c707dfd37800d375ea4429a34383"
   },
-  "/Users/paras.patil/AI-native Security Engineering Platform/astraix-security-analyst/backend/ai_secos_core/plugins/semgrep/plugin.yml": {
+  "backend/ai_secos_core/plugins/semgrep/plugin.yml": {
     "mtime": 1783936047.8877218,
     "ast_hash": "ffa9bcc3ac0ae479c1b64950dcb718ef",
     "semantic_hash": "ffa9bcc3ac0ae479c1b64950dcb718ef"
   },
-  "/Users/paras.patil/AI-native Security Engineering Platform/astraix-security-analyst/backend/ai_secos_core/plugins/subfinder/plugin.yml": {
+  "backend/ai_secos_core/plugins/subfinder/plugin.yml": {
     "mtime": 1783935211.2793388,
     "ast_hash": "6860bcf4a8abf843aa0a9e6f81f01d5a",
     "semantic_hash": "6860bcf4a8abf843aa0a9e6f81f01d5a"
   },
-  "/Users/paras.patil/AI-native Security Engineering Platform/astraix-security-analyst/backend/ai_secos_core/plugins/trivy/plugin.yml": {
+  "backend/ai_secos_core/plugins/trivy/plugin.yml": {
     "mtime": 1783935474.4618263,
     "ast_hash": "372755b213655460994e3bbce9153c83",
     "semantic_hash": "372755b213655460994e3bbce9153c83"
   },
-  "/Users/paras.patil/AI-native Security Engineering Platform/astraix-security-analyst/backend/ai_secos_core/requirements.txt": {
+  "backend/ai_secos_core/requirements.txt": {
     "mtime": 1782903748.4777977,
     "ast_hash": "548c59742b67b724f235f5d085e20704",
     "semantic_hash": "548c59742b67b724f235f5d085e20704"
   },
-  "/Users/paras.patil/AI-native Security Engineering Platform/astraix-security-analyst/backend/ai_secos_core/static/index.html": {
+  "backend/ai_secos_core/static/index.html": {
     "mtime": 1783674350.3074484,
     "ast_hash": "505e53b9b20c3258cf7e3d2db144c4a5",
     "semantic_hash": "505e53b9b20c3258cf7e3d2db144c4a5"
   },
-  "/Users/paras.patil/AI-native Security Engineering Platform/astraix-security-analyst/backend/ai_secos_core/workflows/asset_discovery/asset_discovery.yml": {
+  "backend/ai_secos_core/workflows/asset_discovery/asset_discovery.yml": {
     "mtime": 1783940659.2929695,
     "ast_hash": "5b4e4fcfc9a7362e6e76d6dd34c3c964",
     "semantic_hash": "5b4e4fcfc9a7362e6e76d6dd34c3c964"
   },
-  "/Users/paras.patil/AI-native Security Engineering Platform/astraix-security-analyst/backend/ai_secos_core/workflows/cloud_posture/cloud_posture.yml": {
+  "backend/ai_secos_core/workflows/cloud_posture/cloud_posture.yml": {
     "mtime": 1783940422.5445566,
     "ast_hash": "5a195446f0014545bb5d1c035ce466b9",
     "semantic_hash": "5a195446f0014545bb5d1c035ce466b9"
   },
-  "/Users/paras.patil/AI-native Security Engineering Platform/astraix-security-analyst/backend/ai_secos_core/workflows/code_audit/code_audit.yml": {
+  "backend/ai_secos_core/workflows/code_audit/code_audit.yml": {
     "mtime": 1783940540.7141368,
     "ast_hash": "9577dfd3670d878c1224d8fe1b8e3157",
     "semantic_hash": "9577dfd3670d878c1224d8fe1b8e3157"
   },
-  "/Users/paras.patil/AI-native Security Engineering Platform/astraix-security-analyst/backend/ai_secos_core/workflows/discovery/discovery.yml": {
+  "backend/ai_secos_core/workflows/discovery/discovery.yml": {
     "mtime": 1783414561.4151502,
     "ast_hash": "27f2429d3774aae0814e872f1e58245e",
     "semantic_hash": "27f2429d3774aae0814e872f1e58245e"
   },
-  "/Users/paras.patil/AI-native Security Engineering Platform/astraix-security-analyst/backend/ai_secos_core/workflows/network_vapt/network_vapt.yml": {
+  "backend/ai_secos_core/workflows/network_vapt/network_vapt.yml": {
     "mtime": 1783940311.4408057,
     "ast_hash": "7b8b967c7a386cca3250752848760750",
     "semantic_hash": "7b8b967c7a386cca3250752848760750"
   },
-  "/Users/paras.patil/AI-native Security Engineering Platform/astraix-security-analyst/backend/ai_secos_core/workflows/web_vapt/web_vapt.yml": {
+  "backend/ai_secos_core/workflows/web_vapt/web_vapt.yml": {
     "mtime": 1783940348.105791,
     "ast_hash": "746620534685cf8f2092ed3e5cb8eada",
     "semantic_hash": "746620534685cf8f2092ed3e5cb8eada"
   },
-  "/Users/paras.patil/AI-native Security Engineering Platform/astraix-security-analyst/backend/requirements-core.txt": {
+  "backend/requirements-core.txt": {
     "mtime": 1783947621.9328954,
     "ast_hash": "f25fba1351c5139e0e181dd4b8b43eef",
     "semantic_hash": "f25fba1351c5139e0e181dd4b8b43eef"
   },
-  "/Users/paras.patil/AI-native Security Engineering Platform/astraix-security-analyst/backend/requirements.txt": {
+  "backend/requirements.txt": {
     "mtime": 1784102981.7224596,
     "ast_hash": "216a0c4d7fe7f505d868c00a7fad4f20",
     "semantic_hash": "216a0c4d7fe7f505d868c00a7fad4f20"
   },
-  "/Users/paras.patil/AI-native Security Engineering Platform/astraix-security-analyst/docker-compose.yml": {
+  "docker-compose.yml": {
     "mtime": 1782810915.498744,
     "ast_hash": "2ba7c3aaeb3fb4482d63e3fcec0c8773",
     "semantic_hash": "2ba7c3aaeb3fb4482d63e3fcec0c8773"
   },
-  "/Users/paras.patil/AI-native Security Engineering Platform/astraix-security-analyst/engineering/ARCHITECTURE.md": {
+  "engineering/ARCHITECTURE.md": {
     "mtime": 1782837121.1417205,
     "ast_hash": "a5a0c6a04575af99c90719632d4b0714",
     "semantic_hash": "a5a0c6a04575af99c90719632d4b0714"
   },
-  "/Users/paras.patil/AI-native Security Engineering Platform/astraix-security-analyst/engineering/CODING_STANDARDS.md": {
+  "engineering/CODING_STANDARDS.md": {
     "mtime": 1782836520.714213,
     "ast_hash": "557a260a955ba5a3b2622ff8af24760c",
     "semantic_hash": "557a260a955ba5a3b2622ff8af24760c"
   },
-  "/Users/paras.patil/AI-native Security Engineering Platform/astraix-security-analyst/engineering/MVP_SCOPE.md": {
+  "engineering/MVP_SCOPE.md": {
     "mtime": 1782835832.7056437,
     "ast_hash": "3d78f60d4cb639707bfb1598703abcfd",
     "semantic_hash": "3d78f60d4cb639707bfb1598703abcfd"
   },
-  "/Users/paras.patil/AI-native Security Engineering Platform/astraix-security-analyst/engineering/PROJECT.md": {
+  "engineering/PROJECT.md": {
     "mtime": 1782815773.2437296,
     "ast_hash": "a96180d1c8f1a4111da5a7e1e51f43df",
     "semantic_hash": "a96180d1c8f1a4111da5a7e1e51f43df"
   },
-  "/Users/paras.patil/AI-native Security Engineering Platform/astraix-security-analyst/engineering/PROJECT_MANIFEST.md": {
+  "engineering/PROJECT_MANIFEST.md": {
     "mtime": 1782837420.4955757,
     "ast_hash": "603745b4cec59c91e09fceca6412a3de",
     "semantic_hash": "603745b4cec59c91e09fceca6412a3de"
   },
-  "/Users/paras.patil/AI-native Security Engineering Platform/astraix-security-analyst/engineering/ROADMAP.md": {
+  "engineering/ROADMAP.md": {
     "mtime": 1782836345.0400136,
     "ast_hash": "68dd7babdf6e45cb58ff9b42fde451f3",
     "semantic_hash": "68dd7babdf6e45cb58ff9b42fde451f3"
   },
-  "/Users/paras.patil/AI-native Security Engineering Platform/astraix-security-analyst/engineering/TECH_STACK.md": {
+  "engineering/TECH_STACK.md": {
     "mtime": 1782818274.8267756,
     "ast_hash": "ed870eccd82d3d5b30b9e71550b49841",
     "semantic_hash": "ed870eccd82d3d5b30b9e71550b49841"
   },
-  "/Users/paras.patil/AI-native Security Engineering Platform/astraix-security-analyst/engineering/VISION.md": {
+  "engineering/VISION.md": {
     "mtime": 1782816080.696695,
     "ast_hash": "f7eb5571e5a776f21ff794158a81b212",
     "semantic_hash": "f7eb5571e5a776f21ff794158a81b212"
   },
-  "/Users/paras.patil/AI-native Security Engineering Platform/astraix-security-analyst/engineering/prompts/README.md": {
+  "engineering/prompts/README.md": {
     "mtime": 1782829619.849648,
     "ast_hash": "44ecbe332808855de5c5eb4e3c926f4f",
     "semantic_hash": "44ecbe332808855de5c5eb4e3c926f4f"
   },
-  "/Users/paras.patil/AI-native Security Engineering Platform/astraix-security-analyst/engineering/rules/00_MASTER_RULES.md": {
+  "engineering/rules/00_MASTER_RULES.md": {
     "mtime": 1782836725.7047596,
     "ast_hash": "a939b2e60490f6b98a3339f0f6abfab9",
     "semantic_hash": "a939b2e60490f6b98a3339f0f6abfab9"
   },
-  "/Users/paras.patil/AI-native Security Engineering Platform/astraix-security-analyst/engineering/rules/README.md": {
+  "engineering/rules/README.md": {
     "mtime": 1782829528.3397367,
     "ast_hash": "27472249a929982617cbd5faf46410c8",
     "semantic_hash": "27472249a929982617cbd5faf46410c8"
   },
-  "/Users/paras.patil/AI-native Security Engineering Platform/astraix-security-analyst/plugins/core/plugin-sdk/plugin.yml": {
+  "plugins/core/plugin-sdk/plugin.yml": {
     "mtime": 1782818389.299498,
     "ast_hash": "f345396c4ba79be18aa82067f94739d8",
     "semantic_hash": "f345396c4ba79be18aa82067f94739d8"
+  },
+  "backend/ai_secos_core/ai_gateway/tokens.py": {
+    "mtime": 1783677919.9946473,
+    "ast_hash": "e752941d5eece3a3c6878f3ba113aa73",
+    "semantic_hash": "e752941d5eece3a3c6878f3ba113aa73"
+  },
+  "backend/app/scanner/__init__.py": {
+    "mtime": 1784282966.03662,
+    "ast_hash": "129247de4b3e15ef7e74107f6697a3bb",
+    "semantic_hash": "129247de4b3e15ef7e74107f6697a3bb"
+  },
+  "backend/app/scanner/executor.py": {
+    "mtime": 1784282065.0156193,
+    "ast_hash": "f95736bc01a8a400dd2a954e6e3ec601",
+    "semantic_hash": "f95736bc01a8a400dd2a954e6e3ec601"
+  },
+  "backend/app/scanner/models.py": {
+    "mtime": 1784281324.0418541,
+    "ast_hash": "e8f5fb844a2ab7babc3c2b4417e2835f",
+    "semantic_hash": "e8f5fb844a2ab7babc3c2b4417e2835f"
+  },
+  "backend/app/scanner/tools.py": {
+    "mtime": 1784286090.9342124,
+    "ast_hash": "7004fcac24bcdfebfdb923106cc24d46",
+    "semantic_hash": "7004fcac24bcdfebfdb923106cc24d46"
+  },
+  "backend/app/scanner/vapt_platforms.py": {
+    "mtime": 1784282902.549455,
+    "ast_hash": "7e2afd0d534bc9f221ea21dd28f5c7c8",
+    "semantic_hash": "7e2afd0d534bc9f221ea21dd28f5c7c8"
+  },
+  "backend/app/scanner/vapt_platforms_integration.py": {
+    "mtime": 1784282286.516713,
+    "ast_hash": "ef67aa83df56cf3bf72a44b45824c549",
+    "semantic_hash": "ef67aa83df56cf3bf72a44b45824c549"
+  },
+  "backend/app/vapt/__init__.py": {
+    "mtime": 1784285549.5411832,
+    "ast_hash": "f1f065d5d6d8cb41726c18044f9a9fe9",
+    "semantic_hash": "f1f065d5d6d8cb41726c18044f9a9fe9"
+  },
+  "backend/app/vapt/executor.py": {
+    "mtime": 1784881283.446229,
+    "ast_hash": "64043f718b28b2b83e747616c36ff389",
+    "semantic_hash": "64043f718b28b2b83e747616c36ff389"
+  },
+  "backend/app/vapt/models.py": {
+    "mtime": 1784285602.9136279,
+    "ast_hash": "542adabae938cc40195c635cce85cff4",
+    "semantic_hash": "542adabae938cc40195c635cce85cff4"
+  },
+  "backend/app/vapt/orchestrator.py": {
+    "mtime": 1784285828.3839977,
+    "ast_hash": "48d54ebd5ac4f5f72c149b6d86d43345",
+    "semantic_hash": "48d54ebd5ac4f5f72c149b6d86d43345"
+  },
+  "backend/app/vapt/routes.py": {
+    "mtime": 1784881517.3771229,
+    "ast_hash": "edd258f4a1cb7aecf1adb93ed58253cf",
+    "semantic_hash": "edd258f4a1cb7aecf1adb93ed58253cf"
+  },
+  "backend/app/vapt/tools.py": {
+    "mtime": 1784285641.4171338,
+    "ast_hash": "c09cef67472cc9d42e145046a1938df4",
+    "semantic_hash": "c09cef67472cc9d42e145046a1938df4"
+  },
+  "frontend/.eslintrc.json": {
+    "mtime": 1784803106.9349725,
+    "ast_hash": "3ded863ff95e6330de03e5f0975bebc6",
+    "semantic_hash": "3ded863ff95e6330de03e5f0975bebc6"
+  },
+  "frontend/src/app/(main)/vapt/page.tsx": {
+    "mtime": 1785313954.273689,
+    "ast_hash": "778501e1900da63c0244d5b74282676b",
+    "semantic_hash": "778501e1900da63c0244d5b74282676b"
+  },
+  "frontend/src/components/ui/dialog.tsx": {
+    "mtime": 1784123479.892079,
+    "ast_hash": "c18e4556fe37762b43836756ec867a74",
+    "semantic_hash": "c18e4556fe37762b43836756ec867a74"
+  },
+  "frontend/src/components/ui/dropdown-menu.tsx": {
+    "mtime": 1784537706.5995438,
+    "ast_hash": "591ae44f62ef53c7a9ed15626e6c71a4",
+    "semantic_hash": "591ae44f62ef53c7a9ed15626e6c71a4"
+  },
+  "frontend/src/components/ui/label.tsx": {
+    "mtime": 1784123529.8622468,
+    "ast_hash": "740154e36657ad6297dad0f9f762b48f",
+    "semantic_hash": "740154e36657ad6297dad0f9f762b48f"
+  },
+  "frontend/src/components/ui/select.tsx": {
+    "mtime": 1784537795.4770768,
+    "ast_hash": "f0da98ac1db5bc9403a5160c9339e4b4",
+    "semantic_hash": "f0da98ac1db5bc9403a5160c9339e4b4"
   }
 }
