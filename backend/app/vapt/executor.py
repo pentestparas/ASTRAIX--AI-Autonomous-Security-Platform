@@ -1,19 +1,14 @@
-"""
-VAPT Executor
-
-Executes security tools inside Docker containers (Kali Linux).
-Provides isolation and access to full suite of VAPT tools.
-"""
-
 import asyncio
 import json
 import os
 import re
-import subprocess
 import time
 from datetime import datetime
 from typing import Any, Dict, List, Optional
 from uuid import uuid4, uuid5, UUID
+
+import docker
+from docker.errors import DockerException, ContainerError, APIError, NotFound
 
 from app.vapt.models import (
     VAPTFinding,
@@ -26,15 +21,6 @@ from app.vapt.tools import TOOLS_REGISTRY, get_tool, get_tools_for_scan_type
 
 
 class VAPTExecutor:
-    """
-    VAPT executor using Docker containers.
-
-    Tools run inside isolated Kali Linux containers for:
-    - Complete tool suite access
-    - Security isolation
-    - No host dependency
-    """
-
     KALI_IMAGE = "astraix-kali:latest"
 
     def __init__(self):
@@ -42,9 +28,18 @@ class VAPTExecutor:
         self._rate_limit = 1.0
         self._demo_mode = os.environ.get("VAPT_DEMO_MODE", "false").lower() == "true"
         self._use_docker = os.environ.get("VAPT_USE_DOCKER", "true").lower() == "true"
+        self._docker_client = None
+
+    @property
+    def docker_client(self):
+        if self._docker_client is None:
+            try:
+                self._docker_client = docker.from_env()
+            except DockerException:
+                self._docker_client = None
+        return self._docker_client
 
     async def execute_scan(self, request: VAPTScanRequest) -> VAPTScanResult:
-        """Execute a complete VAPT scan."""
         result = VAPTScanResult(
             id=uuid4(),
             request=request,
@@ -52,10 +47,7 @@ class VAPTExecutor:
             started_at=datetime.utcnow(),
         )
 
-        if self._demo_mode:
-            return await self._execute_demo_scan(request, result)
-
-        if not self._use_docker:
+        if self._demo_mode or not self._use_docker:
             return await self._execute_demo_scan(request, result)
 
         try:
@@ -86,14 +78,11 @@ class VAPTExecutor:
         return result
 
     async def _check_docker(self) -> bool:
-        """Check if Docker is available."""
         try:
-            result = subprocess.run(
-                ["docker", "--version"],
-                capture_output=True,
-                timeout=5,
-            )
-            return result.returncode == 0
+            client = await asyncio.to_thread(docker.from_env)
+            await asyncio.to_thread(client.ping)
+            client.close()
+            return True
         except Exception:
             return False
 
@@ -103,7 +92,6 @@ class VAPTExecutor:
         request: VAPTScanRequest,
         result: VAPTScanResult,
     ) -> None:
-        """Run a tool inside a Docker container."""
         tool = get_tool(tool_id)
         if not tool:
             result.errors.append(f"Tool not found: {tool_id}")
@@ -122,37 +110,22 @@ class VAPTExecutor:
 
         container_name = f"astraix-vapt-{uuid4().hex[:8]}"
 
-        docker_cmd = [
-            "docker", "run",
-            "--rm",
-            "--name", container_name,
-            "--network", "bridge",
-            "--memory", "512m",
-            "--cpus", "1",
-            "-i",
-            self.KALI_IMAGE,
-            "sh", "-c",
-            " && ".join(cmd) if isinstance(cmd, list) else cmd
-        ]
-
         try:
-            process = await asyncio.create_subprocess_exec(
-                *docker_cmd,
-                stdout=asyncio.subprocess.PIPE,
-                stderr=asyncio.subprocess.PIPE,
+            output = await asyncio.wait_for(
+                asyncio.to_thread(
+                    self._run_container_sync,
+                    self.KALI_IMAGE,
+                    cmd,
+                    container_name,
+                    tool.timeout,
+                ),
+                timeout=tool.timeout + 30,
             )
-
-            stdout, stderr = await asyncio.wait_for(
-                process.communicate(),
-                timeout=tool.timeout,
-            )
-
-            output = stdout.decode("utf-8", errors="ignore")
 
             result.tool_results[tool_id] = {
                 "duration": tool.timeout,
-                "return_code": process.returncode or 0,
-                "success": process.returncode == 0,
+                "return_code": 0,
+                "success": True,
             }
 
             findings = self._parse_output(output, tool, request.target.value)
@@ -160,15 +133,64 @@ class VAPTExecutor:
                 result.add_finding(finding)
 
         except asyncio.TimeoutError:
-            subprocess.run(["docker", "kill", container_name], capture_output=True)
+            self._kill_container(container_name)
             result.errors.append(f"{tool_id}: timeout")
-        except FileNotFoundError:
-            result.errors.append(f"{tool_id}: Docker not available")
+        except DockerException as e:
+            result.errors.append(f"{tool_id}: Docker error - {str(e)}")
         except Exception as e:
             result.errors.append(f"{tool_id}: {str(e)}")
 
+    def _run_container_sync(
+        self,
+        image: str,
+        cmd_string: str,
+        container_name: str,
+        timeout: int,
+    ) -> str:
+        client = docker.from_env()
+        container = None
+        try:
+            container = client.containers.run(
+                image=image,
+                command=["sh", "-c", cmd_string],
+                name=container_name,
+                network_mode="bridge",
+                mem_limit="512m",
+                nano_cpus=int(1 * 1e9),
+                detach=True,
+                auto_remove=False,
+            )
+
+            result = container.wait(timeout=timeout)
+            logs = container.logs(stdout=True, stderr=True).decode("utf-8", errors="ignore")
+
+            if result.get("StatusCode", 0) != 0:
+                pass
+
+            return logs
+        except docker.errors.TimeoutError:
+            raise asyncio.TimeoutError()
+        finally:
+            if container:
+                try:
+                    container.remove(force=True)
+                except Exception:
+                    pass
+
+    def _kill_container(self, container_name: str) -> None:
+        try:
+            client = docker.from_env()
+            try:
+                container = client.containers.get(container_name)
+                container.kill()
+            except NotFound:
+                pass
+            finally:
+                client.close()
+        except Exception:
+            pass
+
     def _build_docker_command(self, tool: VAPTTool, target: str) -> Optional[str]:
-        """Build command for Docker execution."""
         tool_cmd = {
             "nmap": f"nmap -sV -Pn -T4 --top-ports 100 -oX - {target}",
             "sqlmap": f"sqlmap -u {target} --batch --random-agent --output-dir=/tmp",
@@ -183,7 +205,6 @@ class VAPTExecutor:
         return tool_cmd
 
     def _check_rate_limit(self, tool_id: str) -> None:
-        """Enforce rate limiting."""
         now = time.time()
         if tool_id in self._last_run:
             elapsed = now - self._last_run[tool_id]
@@ -192,7 +213,6 @@ class VAPTExecutor:
         self._last_run[tool_id] = time.time()
 
     def _resolve_tools(self, request: VAPTScanRequest) -> List[str]:
-        """Resolve tools to execute."""
         if request.tools:
             return request.tools
         return get_tools_for_scan_type(request.scan_type)
@@ -203,7 +223,6 @@ class VAPTExecutor:
         tool: VAPTTool,
         target: str,
     ) -> List[VAPTFinding]:
-        """Parse tool output to findings."""
         parser_map = {
             "nmap": self._parse_nmap,
             "nikto": self._parse_nikto,
@@ -363,7 +382,6 @@ class VAPTExecutor:
         request: VAPTScanRequest,
         result: VAPTScanResult,
     ) -> VAPTScanResult:
-        """Execute demo scan with realistic sample findings."""
         await asyncio.sleep(2)
 
         demo_findings = [

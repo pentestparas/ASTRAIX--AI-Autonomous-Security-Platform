@@ -1,0 +1,34 @@
+{% extends "base.html" %}
+{% block content %}
+
+<h2>Executive Summary</h2>
+<p>{{ total_findings }} finding(s) identified during the assessment.</p>
+
+<div class="summary-cards">
+  {% set counts = severity_counts %}
+  <div class="card card-critical"><div class="card-num">{{ counts.get("critical", 0) }}</div><div class="card-label">Critical</div></div>
+  <div class="card card-high"><div class="card-num">{{ counts.get("high", 0) }}</div><div class="card-label">High</div></div>
+  <div class="card card-medium"><div class="card-num">{{ counts.get("medium", 0) }}</div><div class="card-label">Medium</div></div>
+  <div class="card card-low"><div class="card-num">{{ counts.get("low", 0) }}</div><div class="card-label">Low</div></div>
+  <div class="card card-info"><div class="card-num">{{ counts.get("info", 0) }}</div><div class="card-label">Info</div></div>
+</div>
+
+<h2>Detailed Findings</h2>
+{% for f in findings %}
+<div class="finding" style="border-left-color: {{ '#dc2626' if f.severity == 'critical' else '#ea580c' if f.severity == 'high' else '#ca8a04' if f.severity == 'medium' else '#65a30d' if f.severity == 'low' else '#6b7280' }};">
+  <strong>{{ f.title }}</strong><br>
+  <span class="badge severity-{{ f.severity }}">{{ f.severity | upper }}</span>
+  {% if f.cvss %}&nbsp;CVSS: {{ "%.1f"|format(f.cvss) }}{% endif %}
+  {% if f.risk_score %}&nbsp;Risk: {{ "%.1f"|format(f.risk_score) }}{% endif %}
+  <p>{{ f.description }}</p>
+  {% if f.asset %}<p><strong>Asset:</strong> {{ f.asset }}</p>{% endif %}
+  {% if f.plugin %}<p><strong>Detected by:</strong> {{ f.plugin }}</p>{% endif %}
+  {% if f.cwe %}<p><strong>CWE:</strong> {{ f.cwe | join(", ") }}</p>{% endif %}
+  {% if f.cve %}<p><strong>CVE:</strong> {{ f.cve | join(", ") }}</p>{% endif %}
+  {% if f.remediation %}
+  <div class="remediation"><strong>Remediation:</strong> {{ f.remediation }}</div>
+  {% endif %}
+</div>
+{% endfor %}
+
+{% endblock %}

@@ -1,0 +1,47 @@
+{% extends "base.html" %}
+{% block content %}
+
+<h2>Executive Summary</h2>
+<p>{{ total_findings }} finding(s) identified during the assessment.</p>
+
+<h3>Severity Breakdown</h3>
+<div class="summary-cards">
+  {% set counts = severity_counts %}
+  <div class="card card-critical">
+    <div class="card-num">{{ counts.get("critical", 0) }}</div>
+    <div class="card-label">Critical</div>
+  </div>
+  <div class="card card-high">
+    <div class="card-num">{{ counts.get("high", 0) }}</div>
+    <div class="card-label">High</div>
+  </div>
+  <div class="card card-medium">
+    <div class="card-num">{{ counts.get("medium", 0) }}</div>
+    <div class="card-label">Medium</div>
+  </div>
+  <div class="card card-low">
+    <div class="card-num">{{ counts.get("low", 0) }}</div>
+    <div class="card-label">Low</div>
+  </div>
+  <div class="card card-info">
+    <div class="card-num">{{ counts.get("info", 0) }}</div>
+    <div class="card-label">Info</div>
+  </div>
+</div>
+
+{% if top_risks %}
+<h3>Top Risks</h3>
+<table>
+  <tr><th>Asset</th><th>Risk Score</th></tr>
+  {% for r in top_risks %}
+  <tr><td>{{ r.asset }}</td><td>{{ "%.1f"|format(r.score) }}</td></tr>
+  {% endfor %}
+</table>
+{% endif %}
+
+{% if ai_comment %}
+<h3>AI Analyst Comment</h3>
+<p>{{ ai_comment }}</p>
+{% endif %}
+
+{% endblock %}

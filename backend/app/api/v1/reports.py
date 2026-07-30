@@ -10,7 +10,7 @@ from app.schemas.base import ResponseSchema
 from app.domain.models.assessment import Assessment as AssessmentModel
 from app.domain.models.finding import Finding as FindingModel
 from app.core.logging import get_logger
-from ai_secos_core.report_engine.engine import NullReportEngine
+from app.report_engine.engine import Jinja2ReportEngine
 from ai_secos_core.report_engine.types import (
     ReportRequest,
     ReportTemplate,
@@ -47,8 +47,8 @@ TEMPLATES = {
 
 FORMAT_MAP = {
     "json": ReportFormat.JSON,
-    "html": ReportFormat.MARKDOWN,
-    "pdf": ReportFormat.MARKDOWN,
+    "html": ReportFormat.HTML,
+    "pdf": ReportFormat.HTML,
 }
 
 
@@ -103,8 +103,10 @@ async def generate_report(
         correlation_id=body.assessment_id,
     )
 
-    engine = NullReportEngine()
-    artifacts = await engine.render(request, formats=(fmt,))
+    engine = Jinja2ReportEngine()
+    artifacts = await engine.render(request, formats=(
+        ReportFormat.HTML if body.format == "pdf" else fmt,
+    ))
 
     if not artifacts:
         raise HTTPException(status_code=500, detail="Report generation failed")
@@ -112,7 +114,7 @@ async def generate_report(
     artifact = artifacts[0]
 
     report_content = artifact.serialize()
-    ext = "json" if body.format == "json" else "md"
+    ext = {"json": "json", "html": "html", "pdf": "pdf"}.get(body.format, "json")
     filename = f"report_{body.assessment_id[:8]}_{body.template}.{ext}"
     return ResponseSchema(
         data={

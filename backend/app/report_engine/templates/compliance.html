@@ -1,0 +1,51 @@
+{% extends "base.html" %}
+{% block content %}
+
+<h2>Compliance Assessment Summary</h2>
+<p>{{ total_findings }} finding(s) identified during the compliance assessment.</p>
+
+<div class="summary-cards">
+  {% set counts = severity_counts %}
+  <div class="card card-critical"><div class="card-num">{{ counts.get("critical", 0) }}</div><div class="card-label">Critical</div></div>
+  <div class="card card-high"><div class="card-num">{{ counts.get("high", 0) }}</div><div class="card-label">High</div></div>
+  <div class="card card-medium"><div class="card-num">{{ counts.get("medium", 0) }}</div><div class="card-label">Medium</div></div>
+  <div class="card card-low"><div class="card-num">{{ counts.get("low", 0) }}</div><div class="card-label">Low</div></div>
+  <div class="card card-info"><div class="card-num">{{ counts.get("info", 0) }}</div><div class="card-label">Info</div></div>
+</div>
+
+<h2>Findings by Severity</h2>
+{% for severity_level in ["critical", "high", "medium", "low", "info"] %}
+{% set level_findings = findings | selectattr("severity", "equalto", severity_level) | list %}
+{% if level_findings %}
+<h3>{{ severity_level | upper }} ({{ level_findings | length }})</h3>
+<table>
+  <tr><th>ID</th><th>Title</th><th>Asset</th><th>CVSS</th><th>Status</th></tr>
+  {% for f in level_findings %}
+  <tr>
+    <td>{{ f.id | truncate(8, true, "") }}</td>
+    <td>{{ f.title }}</td>
+    <td>{{ f.asset }}</td>
+    <td>{{ "%.1f"|format(f.cvss) if f.cvss else "N/A" }}</td>
+    <td><span class="badge severity-{{ f.severity }}">{{ f.severity | upper }}</span></td>
+  </tr>
+  {% endfor %}
+</table>
+{% endif %}
+{% endfor %}
+
+<h2>Remediation Plan</h2>
+{% for f in findings %}
+{% if f.remediation %}
+<div class="finding" style="border-left-color: {{ '#dc2626' if f.severity == 'critical' else '#ea580c' if f.severity == 'high' else '#ca8a04' if f.severity == 'medium' else '#65a30d' if f.severity == 'low' else '#6b7280' }};">
+  <strong>{{ f.title }}</strong> &mdash; <span class="badge severity-{{ f.severity }}">{{ f.severity | upper }}</span>
+  <div class="remediation">{{ f.remediation }}</div>
+</div>
+{% endif %}
+{% endfor %}
+
+{% if ai_comment %}
+<h2>AI Compliance Analysis</h2>
+<p>{{ ai_comment }}</p>
+{% endif %}
+
+{% endblock %}

@@ -34,6 +34,13 @@ prometheus-client==0.19.0
 opentelemetry-api==1.23.0
 opentelemetry-sdk==1.23.0
 
+# Docker SDK (replaces subprocess docker calls)
+docker>=7.1.0
+
+# Report Engine
+Jinja2>=3.1.4
+WeasyPrint>=62.0
+
 # AI/LLM (optional - for future)
 # openai>=1.23.0
 # anthropic>=0.25.0

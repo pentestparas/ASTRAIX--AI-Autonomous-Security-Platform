@@ -99,7 +99,7 @@ export default function ReportsPage() {
         selectedFormat
       );
       if (res.success && res.data?.report) {
-        const ext = res.data.format === "json" ? "json" : "md";
+        const ext = ({ json: "json", html: "html", pdf: "pdf" } as Record<string, string>)[res.data.format] || "json";
         const filename = res.data.filename || `report_${selectedAssessment.slice(0, 8)}_${selectedTemplate}.${ext}`;
         downloadReport(res.data.report, filename);
         setSuccessMessage(`Report downloaded as ${filename}`);
