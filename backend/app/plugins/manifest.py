@@ -18,6 +18,8 @@ class PluginSchema(BaseModel):
 
 
 class PluginManifest(BaseModel):
+    model_config = {"populate_by_name": True}
+
     id: str = Field(pattern=r"^[a-zA-Z0-9_-]+/[a-zA-Z0-9_-]+$")
     name: str
     description: str
@@ -26,7 +28,7 @@ class PluginManifest(BaseModel):
     type: str = "scanner"
     runtime: str = "python3.12"
     entrypoint: str
-    schema: PluginSchema = Field(default_factory=PluginSchema)
+    plugin_schema: PluginSchema = Field(default_factory=PluginSchema, alias="schema")
     limits: PluginLimits = Field(default_factory=PluginLimits)
     environment: List[str] = []
     requirements: Dict[str, List[str]] = {}
