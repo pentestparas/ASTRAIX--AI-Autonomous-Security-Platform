@@ -55,6 +55,7 @@ services:
     volumes:
       - ./backend:/app
       - ./plugins:/app/plugins
+      - ./knowledge-base:/app/knowledge-base
       - /var/run/docker.sock:/var/run/docker.sock
     ports:
       - "8000:8000"

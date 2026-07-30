@@ -1,0 +1,6 @@
+{
+  "source": "AI-agents-for-cybersecurity/part3_prompt_chaining/parallel_chains.py",
+  "title": "We will create a parallel chain that combines two branches: reconnaissance and exploitation.",
+  "total_chars": 4168,
+  "chunks": 3
+}

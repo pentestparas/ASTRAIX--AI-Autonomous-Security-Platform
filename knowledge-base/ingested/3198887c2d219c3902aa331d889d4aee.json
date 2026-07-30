@@ -1,0 +1,6 @@
+{
+  "source": "AI-agents-for-cybersecurity/part4_rag_examples/web_scrape_basic.py",
+  "title": "This script demonstrates how to scrape a web page, split the content into chunks, create embeddings for the chunks,",
+  "total_chars": 3931,
+  "chunks": 3
+}

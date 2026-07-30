@@ -1,0 +1,6 @@
+{
+  "source": "AI-agents-for-cybersecurity/.windsurf/rules/codeguard-1-safe-c-functions.md",
+  "title": "Prioritize Safe Memory and String Functions in C/C++",
+  "total_chars": 12056,
+  "chunks": 7
+}

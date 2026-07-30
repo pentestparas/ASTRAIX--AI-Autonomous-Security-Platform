@@ -1,0 +1,6 @@
+{
+  "source": "AI-agents-for-cybersecurity/part2_prompt_templates/prompt_template_example.py",
+  "title": "This script demonstrates how to create a ChatPromptTemplate using a template string and a list of messages.",
+  "total_chars": 2335,
+  "chunks": 2
+}

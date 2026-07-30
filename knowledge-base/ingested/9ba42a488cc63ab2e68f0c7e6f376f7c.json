@@ -1,0 +1,6 @@
+{
+  "source": "AI-agents-for-cybersecurity/part4_rag_examples/basic_rag_part2.py",
+  "title": "This script demonstrates how to use the LangChain Community VectorStores module to retrieve relevant documents based on a user's question.",
+  "total_chars": 1718,
+  "chunks": 1
+}

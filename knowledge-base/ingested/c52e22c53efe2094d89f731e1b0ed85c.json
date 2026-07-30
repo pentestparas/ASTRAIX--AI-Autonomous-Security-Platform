@@ -1,0 +1,6 @@
+{
+  "source": "AI-agents-for-cybersecurity/part4_rag_examples/utils/embedding_cost_calculator.py",
+  "title": "This script calculates the cost of embedding a document using the OpenAI API.",
+  "total_chars": 1290,
+  "chunks": 1
+}

@@ -1,0 +1,6 @@
+{
+  "source": "AI-agents-for-cybersecurity/part3_prompt_chaining/branching_chains.py",
+  "title": "We will create a branching chain that classifies the severity of a vulnerability and generates a response based on the severity level.",
+  "total_chars": 3868,
+  "chunks": 3
+}

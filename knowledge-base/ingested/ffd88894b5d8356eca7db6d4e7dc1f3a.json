@@ -1,0 +1,6 @@
+{
+  "source": "AI-agents-for-cybersecurity/part1_foundational_topics/embeddings/embeddings.py",
+  "title": "This script demonstrates how to use the OpenAI API to generate embeddings for a given text string.",
+  "total_chars": 726,
+  "chunks": 1
+}
