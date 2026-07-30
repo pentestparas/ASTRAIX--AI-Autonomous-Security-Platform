@@ -14,6 +14,7 @@ import {
   Activity,
   Key,
   Users,
+  GitBranch,
 } from "lucide-react";
 import { useState } from "react";
 
@@ -23,6 +24,7 @@ const navigation = [
   { name: "Scans", href: "/scans", icon: Scan },
   { name: "Findings", href: "/findings", icon: ShieldAlert },
   { name: "Reports", href: "/reports", icon: FileText },
+  { name: "Attack Graph", href: "/graph", icon: GitBranch },
 ];
 
 const settingsNav = [

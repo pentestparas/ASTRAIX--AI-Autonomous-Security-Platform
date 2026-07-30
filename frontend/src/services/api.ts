@@ -239,6 +239,12 @@ export const healthApi = {
   ready: () => apiClient.get<{ status: string }>("/ready"),
 };
 
+// --- Attack Surface Graph ---
+export const graphApi = {
+  get: (scanId?: string) =>
+    apiClient.get<{ nodes: any[]; edges: any[] }>(`/graph${scanId ? `?scan_id=${scanId}` : ""}`),
+};
+
 // --- Reports ---
 export const reportsApi = {
   generate: (assessmentId: string, template: string, format: string) =>

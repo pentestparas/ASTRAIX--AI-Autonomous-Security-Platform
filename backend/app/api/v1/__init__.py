@@ -7,6 +7,7 @@ from app.api.v1.assets import router as assets_router
 from app.api.v1.findings import router as findings_router
 from app.api.v1.plugins import router as plugins_router
 from app.api.v1.reports import router as reports_router
+from app.api.v1.graph import router as graph_router
 from app.api.v1.auth import router as auth_router
 from app.vapt.routes import router as vapt_router
 from app.api.v1.organizations import (
@@ -144,3 +145,4 @@ api_router.include_router(findings_router, prefix="/findings", tags=["Findings"]
 api_router.include_router(plugins_router, prefix="/plugins", tags=["Plugins"])
 api_router.include_router(reports_router, prefix="/reports", tags=["Reports"])
 api_router.include_router(vapt_router, prefix="/vapt", tags=["VAPT"])
+api_router.include_router(graph_router, tags=["Attack Surface Graph"])

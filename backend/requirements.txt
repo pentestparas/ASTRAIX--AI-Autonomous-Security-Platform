@@ -37,6 +37,9 @@ opentelemetry-sdk==1.23.0
 # Docker SDK (replaces subprocess docker calls)
 docker>=7.1.0
 
+# Knowledge Graph (Neo4j)
+neo4j>=5.22.0
+
 # Report Engine
 Jinja2>=3.1.4
 WeasyPrint>=62.0

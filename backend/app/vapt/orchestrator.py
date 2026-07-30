@@ -11,6 +11,7 @@ from uuid import UUID, uuid4
 
 from app.vapt.models import VAPTFinding, VAPTSeverity, VAPTScanRequest, VAPTScanResult, VAPTScanType, VAPTTarget
 from app.vapt.executor import get_vapt_executor
+from app.recon_orchestrator.orchestrator import ReconOrchestrator
 
 
 class AIOrchestrator:
@@ -26,6 +27,7 @@ class AIOrchestrator:
 
     def __init__(self):
         self.executor = get_vapt_executor()
+        self.recon = ReconOrchestrator(self.executor)
 
     async def analyze_and_scan(self, target: str, scan_type: str = "auto") -> VAPTScanResult:
         """Analyze target and run appropriate scan."""
@@ -39,7 +41,7 @@ class AIOrchestrator:
             tools=tools,
         )
 
-        return await self.executor.execute_scan(request)
+        return await self.recon.execute_scan(request)
 
     def _analyze_target(self, target: str) -> Dict[str, Any]:
         """Analyze target to understand what it is."""
