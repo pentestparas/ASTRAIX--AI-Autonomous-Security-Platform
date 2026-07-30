@@ -21,9 +21,11 @@
 | `backend/app/vapt/normalizer.py` | Converts tool output → canonical SecurityFinding |
 | `backend/app/vapt/routes.py` | API endpoints: `/scan/quick`, `/scans`, etc. |
 | `backend/app/api/v1/auth.py` | Login at `/login` (OAuth2 form) and `/login/json` (JSON) |
-| `frontend/src/app/(main)/vapt/page.tsx` | VAPT scan UI (uses `projectsApi.list()` for auth'd project fetch) |
+| `frontend/src/app/(main)/vapt/page.tsx` | Redirect stub → `/scans` |
+| `frontend/src/app/(main)/scans/page.tsx` | Unified scans page (quick scan + history + findings) |
+| `frontend/src/app/api/v1/vapt/scan/route.ts` | Route handler proxy for VAPT scan (180s timeout, bypasses Next.js rewrite proxy) |
 | `docker/kali-tools.Dockerfile` | Custom Kali image with nmap, nikto, sqlmap, nuclei, gobuster, sslscan |
-| `docker-compose.yml` | Full stack: postgres, redis, backend, frontend |
+| `docker-compose.yml` | Full stack: postgres, redis, neo4j, backend, frontend |
 
 ## Demo Credentials
 
@@ -41,6 +43,7 @@
 
 1. **Project dropdown empty** — Fixed by changing VAPT page from plain `fetch()` to `projectsApi.list()` (includes auth header). See `frontend/src/app/(main)/vapt/page.tsx:116-138`.
 2. **gosu crash** — Removed `USER appuser` and gosu from backend Dockerfile; uvicorn runs as root directly.
+3. **VAPT scan proxy timeout (ECONNRESET)** — Next.js rewrite proxy had a ~30s timeout that killed long-running (~44s) VAPT scans. Fixed by creating `frontend/src/app/api/v1/vapt/scan/route.ts`, a Route Handler that proxies to the backend server-side with a configurable 180s AbortController timeout. Route Handlers in `app/api/` take precedence over `afterFiles` rewrites, so the Route Handler intercepts `POST /api/v1/vapt/scan` before the rewrite rule in `next.config.js` kicks in.
 
 ## VAPT API Flow
 
@@ -52,6 +55,12 @@ POST /api/v1/vapt/scan/quick
     → risk_engine: score findings
     → ai_gateway: Gemini summary
     → DB persist → return ScanResult
+```
+
+Or via the frontend proxy:
+```
+POST /api/v1/vapt/scan (frontend Route Handler, 180s timeout)
+  → server-side fetch to BACKEND_API_URL/api/v1/vapt/scan
 ```
 
 ## Environment Variables
@@ -88,5 +97,6 @@ cd backend && pip install -r requirements.txt && python -c "import app.main"
 
 ## Recent Commits
 
-1. `c62512e` — Add VAPT Docker executor with custom Kali image
-2. `73d735e` — Fix VAPT project dropdown auth - use projectsApi instead of plain fetch
+1. `ae00dbd` — Neo4j knowledge graph, parallel recon orchestrator, attack surface graph UI
+2. `c62512e` — Add VAPT Docker executor with custom Kali image
+3. `73d735e` — Fix VAPT project dropdown auth - use projectsApi instead of plain fetch
