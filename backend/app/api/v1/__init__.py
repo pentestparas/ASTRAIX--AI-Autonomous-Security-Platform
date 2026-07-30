@@ -44,6 +44,12 @@ async def list_capabilities():
     }
 
 
+@api_router.get("/dashboard/activity")
+async def get_dashboard_activity(organization_id: UUID = None, limit: int = 10):
+    """Get recent activity for dashboard."""
+    return []
+
+
 @api_router.get("/dashboard/stats")
 async def get_dashboard_stats(organization_id: UUID = None):
     """Get dashboard statistics for an organization."""

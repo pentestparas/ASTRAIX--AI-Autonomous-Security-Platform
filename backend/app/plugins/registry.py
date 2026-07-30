@@ -25,6 +25,7 @@ class PluginInstance(BaseModel):
 
     manifest: PluginManifest
     path: Path
+    enabled: bool = True
 
 
 class PluginRunResult(BaseModel):
@@ -201,6 +202,20 @@ class PluginRegistry:
             return None
         except Exception:
             return None
+
+    def enable_plugin(self, plugin_id: str) -> bool:
+        """Enable a plugin by ID. Returns True if found."""
+        if plugin_id not in self.plugins:
+            return False
+        self.plugins[plugin_id].enabled = True
+        return True
+
+    def disable_plugin(self, plugin_id: str) -> bool:
+        """Disable a plugin by ID. Returns True if found."""
+        if plugin_id not in self.plugins:
+            return False
+        self.plugins[plugin_id].enabled = False
+        return True
 
     def list_plugins(self) -> List[PluginManifest]:
         """Get manifests of all registered plugins."""

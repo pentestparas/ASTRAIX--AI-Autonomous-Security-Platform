@@ -1,4 +1,5 @@
 from fastapi import APIRouter, Depends, HTTPException, Query
+from pydantic import BaseModel
 from sqlalchemy.ext.asyncio import AsyncSession
 from typing import List, Optional
 from uuid import UUID
@@ -16,6 +17,12 @@ from app.core.logging import get_logger
 
 logger = get_logger(__name__)
 router = APIRouter()
+
+
+class BulkUpdateRequest(BaseModel):
+    ids: list[str]
+    status: Optional[str] = None
+    severity: Optional[str] = None
 
 
 @router.get("", response_model=ResponseSchema[PaginatedResponse[FindingRead]])
@@ -39,7 +46,7 @@ async def list_findings(
     total = await finding_repo.count(db, **filters)
     return ResponseSchema(
         data=PaginatedResponse(
-            items=[FindingRead.from_orm(i) for i in items],
+            items=[FindingRead.model_validate(i) for i in items],
             total=total,
             page=page,
             page_size=page_size,
@@ -57,7 +64,7 @@ async def get_finding(
     finding = await finding_repo.get(db, finding_id)
     if not finding:
         raise HTTPException(status_code=404, detail="Finding not found")
-    return ResponseSchema(data=FindingRead.from_orm(finding))
+    return ResponseSchema(data=FindingRead.model_validate(finding))
 
 
 @router.patch("/{finding_id}", response_model=ResponseSchema[FindingRead])
@@ -73,7 +80,30 @@ async def update_finding(
     for k, v in payload.dict(exclude_unset=True).items():
         setattr(finding, k, v)
     finding = await finding_repo.update(db, finding)
-    return ResponseSchema(data=FindingRead.from_orm(finding))
+    return ResponseSchema(data=FindingRead.model_validate(finding))
+
+
+@router.post("/bulk-update", response_model=ResponseSchema[dict])
+async def bulk_update_findings(
+    payload: BulkUpdateRequest,
+    db: AsyncSession = Depends(get_session),
+):
+    """Bulk update findings by IDs."""
+    updated = 0
+    for fid in payload.ids:
+        try:
+            finding = await finding_repo.get(db, UUID(fid))
+            if not finding:
+                continue
+            if payload.status is not None:
+                finding.status = payload.status
+            if payload.severity is not None:
+                finding.severity = payload.severity
+            await finding_repo.update(db, finding)
+            updated += 1
+        except Exception:
+            continue
+    return ResponseSchema(data={"updated": updated}, message=f"Updated {updated} findings")
 
 
 @router.delete("/{finding_id}")

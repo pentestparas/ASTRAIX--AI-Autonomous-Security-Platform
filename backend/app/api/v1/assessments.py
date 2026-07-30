@@ -43,7 +43,7 @@ async def list_assessments(
     total = await assessment_repo.count(db, **filters)
     result_items = []
     for i in items:
-        d = AssessmentRead.from_orm(i)
+        d = AssessmentRead.model_validate(i)
         d.asset_name = i.asset.name if hasattr(i, 'asset') and i.asset else None
         result_items.append(d)
     return ResponseSchema(

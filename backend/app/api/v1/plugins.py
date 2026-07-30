@@ -26,6 +26,7 @@ async def list_plugins(
             "version": p.version,
             "type": p.type,
             "author": p.author,
+            "enabled": registry.get_plugin(p.id).enabled if registry.get_plugin(p.id) else True,
         }
         for p in plugins
     ]
@@ -41,7 +42,32 @@ async def get_plugin(
     plugin = registry.get_plugin(plugin_id)
     if not plugin:
         raise HTTPException(status_code=404, detail="Plugin not found")
-    return ResponseSchema(data=plugin.manifest.dict())
+    return ResponseSchema(data={
+        **plugin.manifest.dict(),
+        "enabled": plugin.enabled,
+    })
+
+
+@router.post("/{plugin_id}/enable", response_model=ResponseSchema[dict])
+async def enable_plugin(
+    plugin_id: str,
+    registry: PluginRegistry = Depends(get_plugin_registry),
+):
+    """Enable a plugin."""
+    if not registry.enable_plugin(plugin_id):
+        raise HTTPException(status_code=404, detail="Plugin not found")
+    return ResponseSchema(message=f"Plugin {plugin_id} enabled")
+
+
+@router.post("/{plugin_id}/disable", response_model=ResponseSchema[dict])
+async def disable_plugin(
+    plugin_id: str,
+    registry: PluginRegistry = Depends(get_plugin_registry),
+):
+    """Disable a plugin."""
+    if not registry.disable_plugin(plugin_id):
+        raise HTTPException(status_code=404, detail="Plugin not found")
+    return ResponseSchema(message=f"Plugin {plugin_id} disabled")
 
 
 @router.post("/{plugin_id}/run", response_model=ResponseSchema[dict])

@@ -1,5 +1,6 @@
 from typing import Optional
 from uuid import UUID
+from pydantic import BaseModel
 from fastapi import APIRouter, Depends, HTTPException, status, Query
 from sqlalchemy.ext.asyncio import AsyncSession
 
@@ -402,10 +403,14 @@ async def get_api_key(
     return api_key
 
 
+class ApiKeyToggleRequest(BaseModel):
+    is_active: bool
+
+
 @apikey_router.patch("/{key_id}", response_model=ApiKeyRead)
 async def update_api_key(
     key_id: UUID,
-    is_active: bool,
+    body: ApiKeyToggleRequest,
     current_user: User = Depends(RequiresPermission(Permission.ORG_MANAGE_API_KEYS)),
     api_key_repo: ApiKeyRepository = Depends(get_api_key_repo),
 ):
@@ -414,7 +419,7 @@ async def update_api_key(
     if not api_key:
         raise HTTPException(status_code=404, detail="API key not found")
 
-    api_key.is_active = is_active
+    api_key.is_active = body.is_active
     return await api_key_repo.update(api_key)
 
 

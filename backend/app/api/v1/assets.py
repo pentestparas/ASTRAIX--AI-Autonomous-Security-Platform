@@ -34,7 +34,7 @@ async def list_assets(
     total = await asset_repo.count(db, **filters)
     return ResponseSchema(
         data=PaginatedResponse(
-            items=[AssetRead.from_orm(i) for i in items],
+            items=[AssetRead.model_validate(i) for i in items],
             total=total,
             page=page,
             page_size=page_size,
@@ -52,7 +52,7 @@ async def create_asset(
     asset = AssetModel(**payload.dict())
     asset = await asset_repo.create(db, asset)
     logger.info("asset.created", id=str(asset.id))
-    return ResponseSchema(data=AssetRead.from_orm(asset))
+    return ResponseSchema(data=AssetRead.model_validate(asset))
 
 
 @router.get("/{asset_id}", response_model=ResponseSchema[AssetRead])
@@ -64,7 +64,7 @@ async def get_asset(
     asset = await asset_repo.get(db, asset_id)
     if not asset:
         raise HTTPException(status_code=404, detail="Asset not found")
-    return ResponseSchema(data=AssetRead.from_orm(asset))
+    return ResponseSchema(data=AssetRead.model_validate(asset))
 
 
 @router.patch("/{asset_id}", response_model=ResponseSchema[AssetRead])
@@ -80,7 +80,7 @@ async def update_asset(
     for k, v in payload.dict(exclude_unset=True).items():
         setattr(asset, k, v)
     asset = await asset_repo.update(db, asset)
-    return ResponseSchema(data=AssetRead.from_orm(asset))
+    return ResponseSchema(data=AssetRead.model_validate(asset))
 
 
 @router.delete("/{asset_id}")
