@@ -11,6 +11,7 @@ from uuid import UUID, uuid4
 
 from app.vapt.models import VAPTFinding, VAPTSeverity, VAPTScanRequest, VAPTScanResult, VAPTScanType, VAPTTarget
 from app.vapt.executor import get_vapt_executor
+from app.vapt.agents import ResearcherAgent, VerifierAgent
 from app.recon_orchestrator.orchestrator import ReconOrchestrator
 
 
@@ -18,16 +19,15 @@ class AIOrchestrator:
     """
     AI orchestrator for VAPT.
     
-    Responsibilities:
-    - Analyze target to determine scan strategy
-    - Select appropriate tools
-    - Coordinate multi-tool scans
-    - Generate AI insights on findings
+    Multi-agent pipeline:
+    1. Recon → 2. Scan Tools → 3. Researcher Enrich → 4. Verifier Confirm
     """
 
     def __init__(self):
         self.executor = get_vapt_executor()
         self.recon = ReconOrchestrator(self.executor)
+        self.researcher = ResearcherAgent()
+        self.verifier = VerifierAgent()
 
     async def analyze_and_scan(self, target: str, scan_type: str = "auto") -> VAPTScanResult:
         """Analyze target and run appropriate scan."""
@@ -41,7 +41,13 @@ class AIOrchestrator:
             tools=tools,
         )
 
-        return await self.recon.execute_scan(request)
+        result = await self.recon.execute_scan(request)
+
+        result.findings = await self.researcher.enrich_findings(result.findings)
+
+        result.findings = await self.verifier.verify_findings(result.findings)
+
+        return result
 
     def _analyze_target(self, target: str) -> Dict[str, Any]:
         """Analyze target to understand what it is."""
@@ -130,6 +136,13 @@ class AIOrchestrator:
     def _generate_recommendations(self, result: VAPTScanResult, risk_level: str) -> List[str]:
         recommendations = []
         severity_counts = result.get_severity_counts()
+
+        kb_recommendations = set()
+        for f in result.findings:
+            if f.details.get("kb_context"):
+                for source in f.details.get("kb_sources", []):
+                    kb_recommendations.add(f"See {source} for remediation guidance")
+        recommendations.extend(sorted(kb_recommendations)[:3])
 
         if severity_counts.get(VAPTSeverity.CRITICAL, 0) > 0:
             recommendations.append("CRITICAL: Address critical vulnerabilities immediately")

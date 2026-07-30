@@ -445,6 +445,18 @@ class VAPTExecutor:
         return result
 
 
+    def run_tool_sync(self, tool_id: str, target: str, timeout: int = 120) -> str:
+        tool = get_tool(tool_id)
+        if not tool:
+            return ""
+        if tool.requires_url and not target.startswith(("http://", "https://")):
+            target = f"http://{target}"
+        cmd = self._build_docker_command(tool, target)
+        if not cmd:
+            return ""
+        return self._run_container_sync(self.KALI_IMAGE, cmd, f"astraix-vrfy-{uuid4().hex[:8]}", timeout)
+
+
 _executor: Optional[VAPTExecutor] = None
 
 
