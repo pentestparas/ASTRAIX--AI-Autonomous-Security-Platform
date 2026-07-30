@@ -26,6 +26,9 @@
 | `frontend/src/app/api/v1/vapt/scan/route.ts` | Route handler proxy for VAPT scan (180s timeout, bypasses Next.js rewrite proxy) |
 | `docker/kali-tools.Dockerfile` | Custom Kali image with nmap, nikto, sqlmap, nuclei, gobuster, sslscan |
 | `docker-compose.yml` | Full stack: postgres, redis, neo4j, backend, frontend |
+| `knowledge-base/` | Cybersecurity knowledge base (360+ sources, TF-IDF search) |
+| `backend/app/vapt/agents/researcher.py` | Researcher Agent — enriches findings via knowledge base |
+| `backend/app/vapt/agents/verifier.py` | Verifier Agent — re-exploits findings to eliminate FPs |
 
 ## Demo Credentials
 
@@ -50,17 +53,19 @@
 ```
 POST /api/v1/vapt/scan/quick
   → backend/app/vapt/routes.py:scan_quick()
-    → executor.py: execute_scan() → docker run astraix-kali:latest nmap/nikto/sqlmap/nuclei/gobuster/sslscan
-    → normalizer.py: tool_output → SecurityFinding[]
+    → orchestrator.py: analyze_and_scan()
+      → recon.execute_scan() → executor.py: docker run astraix-kali:latest nmap/nikto/sqlmap/nuclei/gobuster/sslscan
+      → researcher.enrich_findings() → knowledge base CVE lookup + context
+      → verifier.verify_findings() → re-run tools to confirm findings
     → risk_engine: score findings
     → ai_gateway: Gemini summary
     → DB persist → return ScanResult
 ```
 
-Or via the frontend proxy:
-```
-POST /api/v1/vapt/scan (frontend Route Handler, 180s timeout)
-  → server-side fetch to BACKEND_API_URL/api/v1/vapt/scan
+Multi-agent pipeline:
+1. **ReconOrchestrator** — parallel tool execution (3 phases: recon → web → deep)
+2. **ResearcherAgent** — enriches findings via 360-source knowledge base (CVEs, remediation, context)
+3. **VerifierAgent** — re-exploits findings; unverifiable findings get downgraded severity
 ```
 
 ## Environment Variables
@@ -97,6 +102,6 @@ cd backend && pip install -r requirements.txt && python -c "import app.main"
 
 ## Recent Commits
 
-1. `ae00dbd` — Neo4j knowledge graph, parallel recon orchestrator, attack surface graph UI
-2. `c62512e` — Add VAPT Docker executor with custom Kali image
-3. `73d735e` — Fix VAPT project dropdown auth - use projectsApi instead of plain fetch
+1. `8308141` — Multi-agent pipeline: Researcher + Verifier agents (PentAGI/Xalgorix patterns)
+2. `32e20ac` — Cybersecurity knowledge base (360+ sources, TF-IDF search API)
+3. `ae00dbd` — Neo4j knowledge graph, parallel recon orchestrator, attack surface graph UI
