@@ -311,12 +311,14 @@ class ApiKeyRepository:
 
     async def get_by_organization(self, organization_id: UUID) -> list[ApiKey]:
         result = await self.db.execute(
-            select(ApiKey).where(ApiKey.organization_id == organization_id)
+            select(ApiKey).where(ApiKey.organization_id == str(organization_id))
         )
         return list(result.scalars().all())
 
     async def get_by_user(self, user_id: UUID) -> list[ApiKey]:
-        result = await self.db.execute(select(ApiKey).where(ApiKey.user_id == user_id))
+        result = await self.db.execute(
+            select(ApiKey).where(ApiKey.user_id == str(user_id))
+        )
         return list(result.scalars().all())
 
     async def update_last_used(self, key_id: UUID) -> bool:

@@ -17,6 +17,8 @@ class FindingBase(BaseModel):
 
 class FindingRead(FindingBase, BaseSchema):
     id: UUID
+    organization_id: Optional[str] = None
+    project_id: Optional[str] = None
     asset_id: UUID
     assessment_id: UUID
     plugin_id: str

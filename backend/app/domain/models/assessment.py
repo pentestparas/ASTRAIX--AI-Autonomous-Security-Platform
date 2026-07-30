@@ -10,9 +10,9 @@ from app.domain.models.base import UUIDMixin, TimestampMixin
 class Assessment(UUIDMixin, TimestampMixin, Base):
     __tablename__ = "assessments"
 
-    organization_id: Mapped[UUID] = mapped_column(ForeignKey("organizations.id", ondelete="CASCADE"), nullable=False, index=True)
-    project_id: Mapped[UUID] = mapped_column(ForeignKey("projects.id", ondelete="CASCADE"), nullable=False, index=True)
-    asset_id: Mapped[UUID] = mapped_column(ForeignKey("assets.id", ondelete="CASCADE"), nullable=False, index=True)
+    organization_id: Mapped[str] = mapped_column(String(36), ForeignKey("organizations.id", ondelete="CASCADE"), nullable=False, index=True)
+    project_id: Mapped[str] = mapped_column(String(36), ForeignKey("projects.id", ondelete="CASCADE"), nullable=False, index=True)
+    asset_id: Mapped[str] = mapped_column(String(36), ForeignKey("assets.id", ondelete="CASCADE"), nullable=False, index=True)
     status: Mapped[str] = mapped_column(String(50), default="pending", nullable=False, index=True)
     type: Mapped[str] = mapped_column(String(50), nullable=False, index=True)
     config: Mapped[dict] = mapped_column(JSON, default=dict, nullable=False)

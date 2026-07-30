@@ -65,7 +65,7 @@ export default function ReportsPage() {
           organization_id: orgId ?? undefined,
         });
         if (res.success && res.data) {
-          setAssessments(res.data.items.filter((a) => a.status === "completed"));
+          setAssessments((res.data.items ?? []).filter((a) => a.status === "completed"));
         }
       } catch (e) {
         console.error("Failed to load assessments:", e);

@@ -32,6 +32,8 @@ class AssetUpdate(BaseModel):
 class AssetRead(AssetBase, BaseSchema):
     model_config = ConfigDict(from_attributes=True)
     id: UUID
+    organization_id: Optional[str] = None
+    project_id: Optional[str] = None
     last_scanned: Optional[datetime] = None
     created_at: datetime
     updated_at: datetime

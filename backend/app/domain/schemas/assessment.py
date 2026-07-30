@@ -19,6 +19,8 @@ class AssessmentCreate(AssessmentBase):
 
 class AssessmentRead(AssessmentBase, BaseSchema):
     id: UUID
+    organization_id: Optional[str] = None
+    project_id: Optional[str] = None
     started_at: Optional[datetime] = None
     completed_at: Optional[datetime] = None
     findings_count: int = 0

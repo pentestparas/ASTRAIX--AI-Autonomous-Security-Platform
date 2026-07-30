@@ -10,8 +10,8 @@ from app.domain.models.base import UUIDMixin, TimestampMixin
 class Asset(UUIDMixin, TimestampMixin, Base):
     __tablename__ = "assets"
 
-    organization_id: Mapped[UUID] = mapped_column(ForeignKey("organizations.id", ondelete="CASCADE"), nullable=False, index=True)
-    project_id: Mapped[UUID] = mapped_column(ForeignKey("projects.id", ondelete="CASCADE"), nullable=False, index=True)
+    organization_id: Mapped[str] = mapped_column(String(36), ForeignKey("organizations.id", ondelete="CASCADE"), nullable=False, index=True)
+    project_id: Mapped[str] = mapped_column(String(36), ForeignKey("projects.id", ondelete="CASCADE"), nullable=False, index=True)
     name: Mapped[str] = mapped_column(String(255), nullable=False)
     type: Mapped[str] = mapped_column(String(50), nullable=False, index=True)
     identifier: Mapped[str] = mapped_column(String(255), nullable=False, index=True)

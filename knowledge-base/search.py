@@ -1,14 +1,16 @@
-"""Simple TF-IDF search engine for cybersecurity knowledge base."""
+"""Hybrid search engine: FAISS vector (fastembed) + TF-IDF fallback."""
 import json
 import math
 import re
-import os
+import sys
 from pathlib import Path
-from typing import List, Dict
+from typing import List, Dict, Optional
 from collections import Counter
 
 KB_DIR = Path(__file__).parent
 CHUNKS_FILE = KB_DIR / "embeddings" / "chunks.json"
+INDEX_FILE = KB_DIR / "embeddings" / "faiss_index.bin"
+MAPPING_FILE = KB_DIR / "embeddings" / "index_mapping.json"
 
 
 class KnowledgeBase:
@@ -16,7 +18,12 @@ class KnowledgeBase:
         self.chunks: List[Dict] = []
         self.doc_freq: Dict[str, int] = {}
         self.num_docs = 0
+        self._faiss_index = None
+        self._faiss_mapping = None
+        self._has_faiss = False
+        self._embedder = None
         self._load()
+        self._try_load_faiss()
 
     def _load(self):
         if not CHUNKS_FILE.exists():
@@ -28,6 +35,29 @@ class KnowledgeBase:
             terms = set(self._tokenize(chunk["text"]))
             for term in terms:
                 self.doc_freq[term] = self.doc_freq.get(term, 0) + 1
+
+    def _try_load_faiss(self):
+        if not INDEX_FILE.exists() or not MAPPING_FILE.exists():
+            return
+        try:
+            import faiss
+            import numpy as np
+            self._faiss_index = faiss.read_index(str(INDEX_FILE))
+            with open(MAPPING_FILE, "r") as f:
+                self._faiss_mapping = json.load(f)
+            self._has_faiss = True
+        except Exception:
+            self._has_faiss = False
+
+    def _get_embedder(self):
+        if self._embedder is None and self._has_faiss:
+            try:
+                from fastembed import TextEmbedding
+                model_name = self._faiss_mapping.get("model", "BAAI/bge-small-en-v1.5")
+                self._embedder = TextEmbedding(model_name=model_name)
+            except Exception:
+                self._has_faiss = False
+        return self._embedder
 
     def _tokenize(self, text: str) -> List[str]:
         text = text.lower()
@@ -49,8 +79,40 @@ class KnowledgeBase:
         return [t for t in tokens if t not in stopwords and len(t) > 2]
 
     def search(self, query: str, top_k: int = 10) -> List[Dict]:
+        if not query.strip() or not self.chunks:
+            return []
+
+        if self._has_faiss:
+            result = self._search_faiss(query, top_k)
+            if result:
+                return result
+        return self._search_tfidf(query, top_k)
+
+    def _search_faiss(self, query: str, top_k: int) -> List[Dict]:
+        embedder = self._get_embedder()
+        if embedder is None:
+            return []
+        try:
+            import numpy as np
+            import faiss
+            embeddings = list(embedder.query_embed(query))
+            q_vec = np.array(embeddings, dtype=np.float32).reshape(1, -1)
+            faiss.normalize_L2(q_vec)
+            scores, indices = self._faiss_index.search(q_vec, min(top_k, len(self.chunks)))
+            results = []
+            for score, idx in zip(scores[0], indices[0]):
+                if idx < 0 or idx >= len(self.chunks):
+                    continue
+                chunk = dict(self.chunks[idx])
+                chunk["relevance"] = round(float(score), 4)
+                results.append(chunk)
+            return results
+        except Exception:
+            return []
+
+    def _search_tfidf(self, query: str, top_k: int) -> List[Dict]:
         query_terms = self._tokenize(query)
-        if not query_terms or not self.chunks:
+        if not query_terms:
             return []
 
         scores = []
@@ -81,10 +143,11 @@ class KnowledgeBase:
             "total_chunks": len(self.chunks),
             "total_sources": len(set(c["source"] for c in self.chunks)),
             "vocab_size": len(self.doc_freq),
+            "semantic_search": self._has_faiss,
         }
 
 
-_kb: KnowledgeBase = None
+_kb: Optional[KnowledgeBase] = None
 
 
 def get_knowledge_base() -> KnowledgeBase:

@@ -22,7 +22,8 @@ router = APIRouter()
 @router.get("", response_model=ResponseSchema[PaginatedResponse[AssessmentRead]])
 async def list_assessments(
     page: int = Query(1, ge=1),
-    page_size: int = Query(20, ge=1, le=200),
+    page_size: int = Query(20, ge=1, le=200, description="Page size (alias: limit)"),
+    limit: int = Query(None, ge=1, le=200, description="Page size (alias for page_size)"),
     status: Optional[str] = None,
     type: Optional[str] = None,
     project_id: Optional[UUID] = None,
@@ -30,6 +31,7 @@ async def list_assessments(
     db: AsyncSession = Depends(get_session),
 ):
     """List assessments with pagination."""
+    effective_limit = limit if limit is not None else page_size
     filters = {}
     if status:
         filters["status"] = status
@@ -39,7 +41,7 @@ async def list_assessments(
         filters["project_id"] = project_id
     if organization_id:
         filters["organization_id"] = organization_id
-    items = await assessment_repo.list(db, skip=(page - 1) * page_size, limit=page_size, **filters)
+    items = await assessment_repo.list(db, skip=(page - 1) * effective_limit, limit=effective_limit, **filters)
     total = await assessment_repo.count(db, **filters)
     result_items = []
     for i in items:
@@ -51,8 +53,8 @@ async def list_assessments(
             items=result_items,
             total=total,
             page=page,
-            page_size=page_size,
-            total_pages=(total + page_size - 1) // page_size,
+            page_size=effective_limit,
+            total_pages=(total + effective_limit - 1) // effective_limit,
         )
     )
 
@@ -64,7 +66,7 @@ async def create_assessment(
     orchestrator: Orchestrator = Depends(get_orchestrator),
 ):
     """Create and queue an assessment for execution."""
-    assessment = AssessmentModel(**payload.dict())
+    assessment = AssessmentModel(**payload.model_dump())
     assessment.status = AssessmentStatus.PENDING.value
     assessment = await assessment_repo.create(db, assessment)
     logger.info("assessment.queued", id=str(assessment.id))
@@ -72,7 +74,7 @@ async def create_assessment(
     # Execute
     try:
         result = await orchestrator.run_assessment(db, assessment.id)
-        return ResponseSchema(data=AssessmentRead.from_orm(result))
+        return ResponseSchema(data=AssessmentRead.model_validate(result))
     except Exception as exc:
         logger.error("assessment.error", id=str(assessment.id), exc=str(exc))
         raise HTTPException(status_code=500, detail=str(exc))
@@ -87,7 +89,7 @@ async def get_assessment(
     assessment = await assessment_repo.get(db, assessment_id)
     if not assessment:
         raise HTTPException(status_code=404, detail="Assessment not found")
-    d = AssessmentRead.from_orm(assessment)
+    d = AssessmentRead.model_validate(assessment)
     d.asset_name = assessment.asset.name if hasattr(assessment, 'asset') and assessment.asset else None
     return ResponseSchema(data=d)
 
@@ -103,7 +105,7 @@ async def start_assessment(
     if not assessment:
         raise HTTPException(status_code=404, detail="Assessment not found")
     result = await orchestrator.run_assessment(db, assessment_id)
-    return ResponseSchema(data=AssessmentRead.from_orm(result))
+    return ResponseSchema(data=AssessmentRead.model_validate(result))
 
 
 @router.delete("/{assessment_id}")

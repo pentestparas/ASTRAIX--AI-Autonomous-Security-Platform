@@ -30,18 +30,27 @@ async def list_findings(
     page: int = Query(1, ge=1),
     page_size: int = Query(20, ge=1, le=200),
     severity: Optional[str] = None,
+    status: Optional[str] = None,
     assessment_id: Optional[UUID] = None,
     asset_id: Optional[UUID] = None,
+    organization_id: Optional[str] = None,
+    project_id: Optional[str] = None,
     db: AsyncSession = Depends(get_session),
 ):
     """List findings with pagination."""
     filters = {}
     if severity:
         filters["severity"] = severity
+    if status:
+        filters["status"] = status
     if assessment_id:
         filters["assessment_id"] = assessment_id
     if asset_id:
         filters["asset_id"] = asset_id
+    if organization_id:
+        filters["organization_id"] = organization_id
+    if project_id:
+        filters["project_id"] = project_id
     items = await finding_repo.list(db, skip=(page - 1) * page_size, limit=page_size, **filters)
     total = await finding_repo.count(db, **filters)
     return ResponseSchema(
@@ -77,7 +86,7 @@ async def update_finding(
     finding = await finding_repo.get(db, finding_id)
     if not finding:
         raise HTTPException(status_code=404, detail="Finding not found")
-    for k, v in payload.dict(exclude_unset=True).items():
+    for k, v in payload.model_dump(exclude_unset=True).items():
         setattr(finding, k, v)
     finding = await finding_repo.update(db, finding)
     return ResponseSchema(data=FindingRead.model_validate(finding))

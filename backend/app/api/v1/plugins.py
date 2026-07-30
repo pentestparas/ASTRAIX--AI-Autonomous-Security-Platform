@@ -43,7 +43,7 @@ async def get_plugin(
     if not plugin:
         raise HTTPException(status_code=404, detail="Plugin not found")
     return ResponseSchema(data={
-        **plugin.manifest.dict(),
+        **plugin.manifest.model_dump(),
         "enabled": plugin.enabled,
     })
 
@@ -82,8 +82,8 @@ async def run_plugin(
         data={
             "success": result.success,
             "duration": result.duration,
-            "output": result.output.dict() if result.output else None,
-            "error": result.error.dict() if result.error else None,
+            "output": result.output.model_dump() if result.output else None,
+            "error": result.error.model_dump() if result.error else None,
         }
     )
 

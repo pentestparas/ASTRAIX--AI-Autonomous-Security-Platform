@@ -44,6 +44,11 @@ neo4j>=5.22.0
 Jinja2>=3.1.4
 WeasyPrint>=62.0
 
-# AI/LLM (optional - for future)
+# Vector Search (Knowledge Base)
+faiss-cpu>=1.8.0
+numpy>=1.26.0
+fastembed>=0.3.0
+
+# AI/LLM
 # openai>=1.23.0
 # anthropic>=0.25.0

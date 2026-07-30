@@ -24,12 +24,18 @@ async def list_assets(
     page: int = Query(1, ge=1),
     page_size: int = Query(20, ge=1, le=200),
     type: Optional[str] = None,
+    organization_id: Optional[str] = None,
+    project_id: Optional[str] = None,
     db: AsyncSession = Depends(get_session),
 ):
     """List assets with pagination."""
     filters = {}
     if type:
         filters["type"] = type
+    if organization_id:
+        filters["organization_id"] = organization_id
+    if project_id:
+        filters["project_id"] = project_id
     items = await asset_repo.list(db, skip=(page - 1) * page_size, limit=page_size, **filters)
     total = await asset_repo.count(db, **filters)
     return ResponseSchema(
@@ -49,7 +55,7 @@ async def create_asset(
     db: AsyncSession = Depends(get_session),
 ):
     """Create a new asset."""
-    asset = AssetModel(**payload.dict())
+    asset = AssetModel(**payload.model_dump())
     asset = await asset_repo.create(db, asset)
     logger.info("asset.created", id=str(asset.id))
     return ResponseSchema(data=AssetRead.model_validate(asset))
@@ -77,7 +83,7 @@ async def update_asset(
     asset = await asset_repo.get(db, asset_id)
     if not asset:
         raise HTTPException(status_code=404, detail="Asset not found")
-    for k, v in payload.dict(exclude_unset=True).items():
+    for k, v in payload.model_dump(exclude_unset=True).items():
         setattr(asset, k, v)
     asset = await asset_repo.update(db, asset)
     return ResponseSchema(data=AssetRead.model_validate(asset))

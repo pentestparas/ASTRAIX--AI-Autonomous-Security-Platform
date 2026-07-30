@@ -42,3 +42,14 @@ async def knowledge_stats():
     stats = _kb.stats()
     stats["loaded"] = True
     return ResponseSchema(data=stats)
+
+
+@router.post("/knowledge/rebuild")
+async def rebuild_knowledge_index():
+    """Rebuild FAISS vector index from chunks.json."""
+    if not _loaded or not _kb:
+        return ResponseSchema(success=False, message="Knowledge base not loaded")
+    success = _kb.rebuild_faiss()
+    if success:
+        return ResponseSchema(message="FAISS index rebuilt successfully")
+    return ResponseSchema(success=False, message="FAISS rebuild failed (check dependencies)")
