@@ -95,7 +95,6 @@ export default function GraphPage() {
             Object.entries(GROUP_STYLES).map(([k, v]) => [k, { shape: v.shape, color: v.color.background }])
           ),
           layout: { improvedLayout: true },
-          background: { color: "#0f172a" },
         };
 
         network = new Network(containerRef.current!, { nodes: nodeData as any, edges: edgeData as any }, options as any);
@@ -152,7 +151,7 @@ export default function GraphPage() {
       </div>
 
       <div className="flex-1 flex gap-4 min-h-0">
-        <div ref={containerRef} className="flex-1 bg-card border rounded-xl overflow-hidden relative">
+        <div ref={containerRef} className="flex-1 bg-card border rounded-xl overflow-hidden relative" style={{ backgroundColor: "#0f172a" }}>
           {loading && (
             <div className="absolute inset-0 flex items-center justify-center bg-card/80 z-10">
               <div className="flex flex-col items-center gap-3">
