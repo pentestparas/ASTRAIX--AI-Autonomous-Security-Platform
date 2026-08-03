@@ -1,4 +1,4 @@
-import axios, { AxiosInstance, InternalAxiosRequestConfig } from "axios";
+import axios, { AxiosInstance, AxiosRequestConfig, InternalAxiosRequestConfig } from "axios";
 import type {
   ApiResponse,
   PaginatedResponse,
@@ -64,8 +64,8 @@ class ApiClient {
     return response.data;
   }
 
-  async post<T>(url: string, data?: unknown) {
-    const response = await this.client.post<ApiResponse<T>>(url, data);
+  async post<T>(url: string, data?: unknown, config?: AxiosRequestConfig) {
+    const response = await this.client.post<ApiResponse<T>>(url, data, config);
     return response.data;
   }
 
@@ -173,7 +173,8 @@ export const assessmentsApi = {
 
 // --- Scan Engine ---
 export const scanApi = {
-  run: (data: ScanRequest) => apiClient.post<ScanResponse>("/assess", data),
+  run: (data: ScanRequest) =>
+    apiClient.post<ScanResponse>("/assess", data, { timeout: 300000 }),
   getCapabilities: () => apiClient.get<{ capability: string; status: string }[]>("/capabilities"),
 };
 
