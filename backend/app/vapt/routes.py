@@ -18,6 +18,7 @@ from app.core.auth import get_current_active_user
 from app.domain.models.organization import User
 from app.vapt.models import VAPTScanType, VAPTTarget
 from app.vapt.orchestrator import get_vapt_orchestrator
+from app.vapt.progress import get_progress_bus
 from app.vapt.tools import check_tool_availability, get_available_tools, TOOLS_REGISTRY
 from app.core.logging import get_logger
 from app.domain.models.asset import Asset
@@ -36,6 +37,7 @@ class ScanRequest(BaseModel):
     deep: bool = False
     organization_id: Optional[str] = None
     project_id: Optional[str] = None
+    client_scan_id: Optional[str] = None
 
 
 class ScanResponse(BaseModel):
@@ -75,9 +77,17 @@ async def run_scan(
 
     logger.info(f"Starting VAPT scan on {request.target}")
 
+    scan_id = None
+    if request.client_scan_id:
+        try:
+            scan_id = str(UUID(request.client_scan_id))
+        except ValueError:
+            raise HTTPException(status_code=400, detail="Invalid client_scan_id format")
+
     result = await orchestrator.analyze_and_scan(
         target=request.target,
         scan_type=request.scan_type,
+        scan_id=scan_id,
     )
 
     insights = orchestrator.generate_insights(result)
@@ -215,13 +225,32 @@ async def quick_scan(
 ) -> dict:
     """Quick scan with essential tools (no persistence)."""
     orchestrator = get_vapt_orchestrator()
-    result = await orchestrator.analyze_and_scan(request.target, request.scan_type or "auto")
+    scan_id = str(uuid4())
+    result = await orchestrator.analyze_and_scan(request.target, request.scan_type or "auto", scan_id=scan_id)
     return {
         "scan_id": str(result.id),
         "target": request.target,
         "status": result.status,
         "findings": [f.to_dict() for f in result.findings],
         "duration": result.duration,
+    }
+
+
+@router.get("/scan/{scan_id}/progress")
+async def get_scan_progress(
+    scan_id: str,
+    since: int = Query(0, ge=0, description="Event index to fetch from"),
+    current_user: User = Depends(get_current_active_user),
+) -> dict:
+    """Get live scan progress events since an index."""
+    bus = get_progress_bus()
+    events, total = await bus.events(scan_id, since=since)
+    status = await bus.status(scan_id)
+    return {
+        "scan_id": scan_id,
+        "events": events,
+        "total": total,
+        "status": status or {"status": "running"},
     }
 
 

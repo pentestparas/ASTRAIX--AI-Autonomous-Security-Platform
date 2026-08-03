@@ -158,6 +158,29 @@ export interface ScanRequest {
   config?: Record<string, unknown>;
 }
 
+export interface VaptScanRequest {
+  target: string;
+  scan_type: string;
+  tools?: string[];
+  deep?: boolean;
+  organization_id?: string;
+  project_id?: string;
+  client_scan_id?: string;
+}
+
+export interface ScanProgressEvent {
+  ts: number;
+  type: string;
+  data: Record<string, any>;
+}
+
+export interface ScanProgress {
+  scan_id: string;
+  events: ScanProgressEvent[];
+  total: number;
+  status: { status: string; findings_count?: number };
+}
+
 export interface ScanResponse {
   assessment_id: string;
   correlation_id: string;

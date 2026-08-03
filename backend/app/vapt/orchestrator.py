@@ -5,22 +5,31 @@ AI-powered tool selection and scan coordination.
 Analyzes target and selects appropriate tools.
 """
 
+import asyncio
 import hashlib
+import os
+import time
 from typing import Any, Dict, List, Optional
 from uuid import UUID, uuid4
 
 from app.vapt.models import VAPTFinding, VAPTSeverity, VAPTScanRequest, VAPTScanResult, VAPTScanType, VAPTTarget
 from app.vapt.executor import get_vapt_executor
 from app.vapt.agents import ResearcherAgent, VerifierAgent
+from app.vapt.agents.planner import get_planner
+from app.vapt.progress import publish_scan_event, get_progress_bus
 from app.recon_orchestrator.orchestrator import ReconOrchestrator
+from app.core.logging import get_logger
+
+logger = get_logger(__name__)
 
 
 class AIOrchestrator:
     """
     AI orchestrator for VAPT.
     
-    Multi-agent pipeline:
-    1. Recon → 2. Scan Tools → 3. Researcher Enrich → 4. Verifier Confirm
+    Full AI-first pipeline:
+    1. Plan (AI planner + knowledge base) → 2. Recon → 3. Enumerate →
+    4. Vulnerability Detect → 5. Verify → 6. Report
     """
 
     def __init__(self):
@@ -28,26 +37,156 @@ class AIOrchestrator:
         self.recon = ReconOrchestrator(self.executor)
         self.researcher = ResearcherAgent()
         self.verifier = VerifierAgent()
+        self.planner = get_planner()
 
-    async def analyze_and_scan(self, target: str, scan_type: str = "auto") -> VAPTScanResult:
-        """Analyze target and run appropriate scan."""
+    async def analyze_and_scan(
+        self,
+        target: str,
+        scan_type: str = "auto",
+        scan_id: Optional[str] = None,
+    ) -> VAPTScanResult:
+        """Analyze target and run the AI-planned scan with live progress events."""
+        scan_id = scan_id or str(uuid4())
+
+        await publish_scan_event(scan_id, "scan_started", {"target": target, "scan_type": scan_type})
+
         target_info = self._analyze_target(target)
-        scan_type = self._determine_scan_type(scan_type, target_info)
-        tools = self._select_tools(scan_type, target_info)
+        scan_type_enum = self._determine_scan_type(scan_type, target_info)
 
-        request = VAPTScanRequest(
-            target=VAPTTarget(value=target, type=target_info["type"]),
-            scan_type=scan_type,
-            tools=tools,
-        )
+        await publish_scan_event(scan_id, "ai_analyzing", {
+            "target": target,
+            "target_type": target_info["type"],
+            "message": f"Analyzing target: {target} ({target_info['type']})",
+        })
 
-        result = await self.recon.execute_scan(request)
+        watchdog = asyncio.create_task(self._stall_watchdog(scan_id))
+        try:
+            try:
+                plan = await asyncio.wait_for(
+                    self.planner.plan_scan(target, scan_type_enum, target_info),
+                    timeout=int(os.environ.get("VAPT_PLAN_TIMEOUT", "60")),
+                )
+            except asyncio.TimeoutError:
+                logger.warning("Planner timed out for %s - using KB fallback plan", target)
+                plan = {
+                    "target": target,
+                    "scan_type": scan_type_enum.value,
+                    "target_type": target_info["type"],
+                    "phases": [],
+                    "tool_count": 0,
+                    "strategy": "Planner timed out - knowledge-base fallback",
+                }
 
-        result.findings = await self.researcher.enrich_findings(result.findings)
+            await publish_scan_event(scan_id, "plan_ready", plan)
 
-        result.findings = await self.verifier.verify_findings(result.findings)
+            if not plan["phases"]:
+                fallback = self._select_tools(scan_type_enum, target_info)
+                plan["phases"] = [{
+                    "id": "recon",
+                    "name": "Reconnaissance",
+                    "description": "Fallback tool set",
+                    "tools": [{"id": t, "name": t, "description": "", "reason": "fallback"} for t in fallback],
+                }]
 
-        return result
+            tools = [t["id"] for p in plan["phases"] for t in p["tools"]]
+            tools = list(dict.fromkeys(tools))
+
+            await publish_scan_event(scan_id, "ai_decision", {
+                "message": f"AI selected {len(tools)} tools across {len(plan['phases'])} phases from knowledge base",
+                "tools": tools,
+                "strategy": plan["strategy"],
+            })
+
+            request = VAPTScanRequest(
+                target=VAPTTarget(value=target, type=target_info["type"]),
+                scan_type=scan_type_enum,
+                tools=tools,
+            )
+
+            async def publish(scan_id_: str, event_type: str, data: dict) -> None:
+                await publish_scan_event(scan_id_, event_type, data)
+
+            self.recon.set_progress_publisher(publish)
+
+            await publish_scan_event(scan_id, "phase_started", {
+                "phase": "execution",
+                "tools": tools,
+                "message": "Starting tool execution",
+            })
+
+            result = await self.recon.execute_scan(request, scan_id=scan_id)
+
+            await publish_scan_event(scan_id, "ai_research", {
+                "message": "Researcher agent enriching findings from knowledge base",
+            })
+            t0 = time.time()
+            result.findings = await asyncio.wait_for(
+                self.researcher.enrich_findings(result.findings),
+                timeout=int(os.environ.get("VAPT_RESEARCH_TIMEOUT", "90")),
+            )
+            await publish_scan_event(scan_id, "ai_research_done", {
+                "duration": round(time.time() - t0, 1),
+                "enriched_count": len(result.findings),
+            })
+
+            await publish_scan_event(scan_id, "ai_verification", {
+                "message": "Verifier agent re-confirming findings to eliminate false positives",
+            })
+            t0 = time.time()
+            result.findings = await asyncio.wait_for(
+                self.verifier.verify_findings(result.findings),
+                timeout=int(os.environ.get("VAPT_VERIFY_ALL_TIMEOUT", "240")),
+            )
+            await publish_scan_event(scan_id, "ai_verification_done", {
+                "duration": round(time.time() - t0, 1),
+                "confirmed_count": len(result.findings),
+            })
+
+            await publish_scan_event(scan_id, "report_generating", {
+                "message": "Generating executive summary and remediation plan",
+            })
+            insights = await asyncio.wait_for(
+                asyncio.to_thread(self.generate_insights, result),
+                timeout=int(os.environ.get("VAPT_REPORT_TIMEOUT", "60")),
+            )
+            await publish_scan_event(scan_id, "report_ready", insights)
+            await publish_scan_event(scan_id, "scan_completed", {
+                "status": result.status,
+                "findings_count": len(result.findings),
+                "duration": round(result.duration, 1),
+                "insights": insights,
+            })
+
+            bus = get_progress_bus()
+            await bus.set_status(scan_id, result.status, findings_count=len(result.findings))
+
+            return result
+        finally:
+            watchdog.cancel()
+
+    async def _stall_watchdog(self, scan_id: str) -> None:
+        """Detect when a running scan stops producing activity (stuck).
+
+        If no event was published for STALL_SECONDS while the scan is still
+        running, emit a scan_stalled event once so the UI can warn the user.
+        """
+        stall_seconds = int(os.environ.get("VAPT_STALL_SECONDS", "300"))
+        await asyncio.sleep(stall_seconds)
+        bus = get_progress_bus()
+        while True:
+            st = await bus.status(scan_id)
+            if not st or st.get("status") not in ("running", "planning", "pending", "queued"):
+                return
+            last_active = st.get("last_active") or st.get("ts") or 0
+            idle = time.time() - float(last_active)
+            if idle > stall_seconds:
+                logger.warning("Scan %s appears stalled (idle %.0fs)", scan_id, idle)
+                await publish_scan_event(scan_id, "scan_stalled", {
+                    "idle_for": round(idle, 1),
+                    "message": "No activity detected - check network connectivity or target responsiveness",
+                })
+                return
+            await asyncio.sleep(15)
 
     def _analyze_target(self, target: str) -> Dict[str, Any]:
         """Analyze target to understand what it is."""

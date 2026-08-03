@@ -14,6 +14,7 @@ import type {
   TokenResponse,
   ScanRequest,
   ScanResponse,
+  ScanProgress,
   DashboardStats,
   RecentActivity,
 } from "@/types";
@@ -176,6 +177,17 @@ export const scanApi = {
   run: (data: ScanRequest) =>
     apiClient.post<ScanResponse>("/assess", data, { timeout: 300000 }),
   getCapabilities: () => apiClient.get<{ capability: string; status: string }[]>("/capabilities"),
+};
+
+// --- VAPT Scan (AI-planned pipeline with live progress) ---
+export const vaptScanApi = {
+  run: (data: ScanRequest | any) =>
+    apiClient.post<ScanResponse>("/vapt/scan", data, { timeout: 600000 }),
+  progress: (scanId: string, since = 0) =>
+    apiClient.get<ScanProgress>(
+      `/vapt/scan/${scanId}/progress`,
+      { since }
+    ),
 };
 
 // --- Findings ---

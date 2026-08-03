@@ -128,6 +128,24 @@ def get_tools_for_scan_type(scan_type: VAPTScanType) -> List[VAPTTool]:
 
 
 def check_tool_availability() -> Dict[str, bool]:
+    """Tools run inside the astraix-kali container, not the backend process.
+
+    Availability is therefore determined by whether the Kali image exists.
+    Falls back to host `which` checks only when the image is missing.
+    """
+    from app.vapt.executor import VAPTExecutor
+
+    try:
+        result = subprocess.run(
+            ["docker", "image", "inspect", VAPTExecutor.KALI_IMAGE],
+            capture_output=True,
+            timeout=10,
+        )
+        if result.returncode == 0:
+            return {tool_id: True for tool_id in TOOLS_REGISTRY}
+    except Exception:
+        pass
+
     available = {}
     for tool_id, tool in TOOLS_REGISTRY.items():
         try:

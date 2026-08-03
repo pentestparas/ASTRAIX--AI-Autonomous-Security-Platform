@@ -168,8 +168,12 @@ class VAPTExecutor:
                 pass
 
             return logs
-        except docker.errors.TimeoutError:
-            raise asyncio.TimeoutError()
+        except Exception as e:
+            # docker-py 7.x removed the docker.errors.TimeoutError alias; the
+            # requests ReadTimeout surfaces directly. Normalize to asyncio.TimeoutError.
+            if type(e).__name__ in ("TimeoutError", "ReadTimeout", "ReadTimeoutError"):
+                raise asyncio.TimeoutError() from e
+            raise
         finally:
             if container:
                 try:

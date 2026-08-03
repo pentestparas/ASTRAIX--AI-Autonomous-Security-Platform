@@ -1,4 +1,5 @@
 import asyncio
+import os
 from typing import List, Optional
 from app.vapt.models import VAPTFinding, VAPTSeverity, VAPTTarget, VAPTScanRequest, VAPTScanType
 from app.vapt.executor import get_vapt_executor
@@ -25,7 +26,7 @@ class VerifierAgent:
 
         try:
             raw = await asyncio.to_thread(
-                self.executor.run_tool_sync, tool_id, target, timeout=120
+                self.executor.run_tool_sync, tool_id, target, timeout=60
             )
             if not raw or len(raw.strip()) < 10:
                 finding.confidence = "unverified"
@@ -42,10 +43,48 @@ class VerifierAgent:
         return finding
 
     async def verify_findings(self, findings: List[VAPTFinding]) -> List[VAPTFinding]:
-        verified = []
+        """Verify findings concurrently (bounded) so long-running re-exploits
+        (e.g. sqlmap) do not stall the scan for minutes.
+
+        Only HIGH/CRITICAL findings are re-exploited, and duplicate
+        (title, target) findings are verified once. This keeps the total
+        verification time in the low minutes instead of tens of minutes.
+        """
+        if not findings:
+            return findings
+
+        seen = set()
+        to_verify: List[VAPTFinding] = []
         for f in findings:
-            verified.append(await self.verify_finding(f))
-        return verified
+            if f.confidence == "unverified":
+                continue
+            key = (f.title, f.target or f.host)
+            if key in seen:
+                continue
+            seen.add(key)
+            if f.severity not in (VAPTSeverity.HIGH, VAPTSeverity.CRITICAL):
+                continue
+            to_verify.append(f)
+
+        if not to_verify:
+            return findings
+
+        sem = asyncio.Semaphore(3)
+        cap = int(os.environ.get("VAPT_VERIFY_TIMEOUT", "75"))
+
+        async def bounded(finding: VAPTFinding, seq: int) -> VAPTFinding:
+            async with sem:
+                try:
+                    res = await asyncio.wait_for(self.verify_finding(finding), timeout=cap)
+                except asyncio.TimeoutError:
+                    finding.details["verification"] = "Timed out during re-check"
+                    res = finding
+                if seq % 5 == 0:
+                    logger.info("Verifier progress: %d/%d", seq + 1, len(to_verify))
+                return res
+
+        await asyncio.gather(*(bounded(f, i) for i, f in enumerate(to_verify)))
+        return findings
 
     def _pick_verify_tool(self, finding: VAPTFinding) -> Optional[str]:
         title_lower = finding.title.lower()

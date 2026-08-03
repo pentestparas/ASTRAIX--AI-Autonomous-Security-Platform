@@ -52,11 +52,18 @@ services:
       VAPT_DEMO_MODE: "false"
       VAPT_USE_DOCKER: "true"
       NEO4J_URI: bolt://neo4j:7687
+      NVIDIA_API_KEY: ${NVIDIA_API_KEY:-}
+      NVIDIA_BASE_URL: ${NVIDIA_BASE_URL:-https://integrate.api.nvidia.com/v1}
+      AI_MODEL: ${AI_MODEL:-deepseek-ai/deepseek-v4-pro}
+      LLM_PROVIDER: ${LLM_PROVIDER:-ollama}
+      OLLAMA_BASE_URL: ${OLLAMA_BASE_URL:-http://host.docker.internal:11434}
+      OLLAMA_MODEL: ${OLLAMA_MODEL:-huihui_ai/qwen2.5-abliterate:7b-instruct}
     volumes:
       - ./backend:/app
       - ./plugins:/app/plugins
       - ./knowledge-base:/app/knowledge-base
       - /var/run/docker.sock:/var/run/docker.sock
+      - fastembed-cache:/root/.cache/fastembed
     ports:
       - "8000:8000"
     depends_on:
@@ -134,6 +141,8 @@ volumes:
   redis_data:
     driver: local
   neo4j_data:
+    driver: local
+  fastembed-cache:
     driver: local
 
 networks:

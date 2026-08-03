@@ -1,6 +1,7 @@
 """Hybrid search engine: FAISS vector (fastembed) + TF-IDF fallback."""
 import json
 import math
+import os
 import re
 import sys
 from pathlib import Path
@@ -52,9 +53,27 @@ class KnowledgeBase:
     def _get_embedder(self):
         if self._embedder is None and self._has_faiss:
             try:
+                import concurrent.futures
                 from fastembed import TextEmbedding
                 model_name = self._faiss_mapping.get("model", "BAAI/bge-small-en-v1.5")
-                self._embedder = TextEmbedding(model_name=model_name)
+                # The model may need downloading on first use. Bound it so a slow
+                # or offline HF Hub cannot block a scan; fall back to TF-IDF.
+                executor = concurrent.futures.ThreadPoolExecutor(max_workers=1)
+                fut = executor.submit(TextEmbedding, model_name=model_name)
+                try:
+                    self._embedder = fut.result(timeout=int(os.environ.get("KB_EMBEDDER_TIMEOUT", "25")))
+                except concurrent.futures.TimeoutError:
+                    import logging
+                    logging.getLogger("knowledge_base").warning(
+                        "fastembed model load timed out - using TF-IDF fallback"
+                    )
+                    self._has_faiss = False
+                    self._embedder = None
+                except Exception:
+                    self._has_faiss = False
+                    self._embedder = None
+                finally:
+                    executor.shutdown(wait=False)
             except Exception:
                 self._has_faiss = False
         return self._embedder

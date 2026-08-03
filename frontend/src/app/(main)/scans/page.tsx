@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useState, useRef } from "react";
-import { scanApi, projectsApi, apiClient, assessmentsApi } from "@/services/api";
+import { projectsApi, apiClient, assessmentsApi, vaptScanApi } from "@/services/api";
 import { Button } from "@/components/ui/button";
 import {
   Card,
@@ -58,9 +58,36 @@ import {
   Network,
   Code2,
   Cloud,
+  Brain,
+  ListChecks,
+  Terminal,
+  BookOpen,
+  ShieldCheck,
+  FileText,
+  Sparkles,
+  CheckCircle2,
+  Bug,
+  Search,
+  X,
+  Activity,
 } from "lucide-react";
 import { formatDistanceToNow } from "date-fns";
-import type { Project } from "@/types";
+import type { Project, ScanProgressEvent } from "@/types";
+
+interface PlanTool {
+  id: string;
+  name: string;
+  description: string;
+  reason: string;
+}
+
+interface PlanPhase {
+  id: string;
+  name: string;
+  description: string;
+  tools: PlanTool[];
+  kb_context?: string[];
+}
 
 interface ScanHistoryItem {
   id: string;
@@ -189,6 +216,354 @@ function getTypeIcon(type: string) {
   return typeIcons[type] || Shield;
 }
 
+function getSeverityBadge(severity: string) {
+  const colorMap: Record<string, string> = {
+    critical: "bg-red-500", high: "bg-orange-500", medium: "bg-yellow-500",
+    low: "bg-blue-500", info: "bg-gray-500",
+  };
+  return colorMap[severity] || "bg-gray-500";
+}
+
+const phaseIcons: Record<string, typeof Shield> = {
+  recon: Search,
+  enumeration: Globe,
+  vuln_scan: Bug,
+  crypto: Lock,
+  web: Globe,
+  deep: Bug,
+};
+
+type ToolState = "queued" | "running" | "done" | "failed";
+
+function LiveScanConsole({
+  events,
+  target,
+  scanType,
+  running,
+}: {
+  events: ScanProgressEvent[];
+  target: string;
+  scanType: string;
+  running: boolean;
+}) {
+  const planEvent = events.find((e) => e.type === "plan_ready");
+  const phases: PlanPhase[] = (planEvent?.data as { phases?: PlanPhase[] })?.phases || [];
+  const decisionEvent = events.find((e) => e.type === "ai_decision");
+  const strategy =
+    (decisionEvent?.data as { insights?: string })?.insights ||
+    (planEvent?.data as { strategy?: string })?.strategy ||
+    "";
+
+  const toolStarted = new Set<string>();
+  const toolFinished = new Set<string>();
+  const toolFailed = new Set<string>();
+  const toolCommands = new Map<string, string>();
+  events.forEach((e) => {
+    if (e.type === "tool_started") {
+      toolStarted.add(e.data?.tool);
+      if (e.data?.command) toolCommands.set(e.data.tool, e.data.command);
+    }
+    if (e.type === "tool_finished") toolFinished.add(e.data?.tool);
+    if (e.type === "tool_failed") toolFailed.add(e.data?.tool);
+  });
+
+  const toolState = (id: string): ToolState => {
+    if (toolFailed.has(id)) return "failed";
+    if (toolFinished.has(id)) return "done";
+    if (toolStarted.has(id)) return "running";
+    return "queued";
+  };
+
+  const findings = events
+    .filter((e) => e.type === "finding_found")
+    .map((e) => e.data as Record<string, unknown>);
+
+  const pipelineSteps = [
+    { id: "ai_analyzing", label: "AI Analyzing target", icon: Brain },
+    { id: "plan_ready", label: "AI plan ready — tools selected", icon: ListChecks },
+    { id: "tool_started", label: "Executing security tools", icon: Terminal },
+    { id: "ai_research", label: "Researcher Agent — knowledge base enrichment", icon: BookOpen },
+    { id: "ai_verification", label: "Verifier Agent — eliminating false positives", icon: ShieldCheck },
+    { id: "report_generating", label: "Generating executive report", icon: FileText },
+  ];
+
+  const typeCount = new Map<string, number>();
+  events.forEach((e) => typeCount.set(e.type, (typeCount.get(e.type) || 0) + 1));
+  let lastActiveStep = -1;
+  pipelineSteps.forEach((s, i) => {
+    if ((typeCount.get(s.id) || 0) > 0) lastActiveStep = i;
+  });
+
+  const totalTools = phases.reduce((n, p) => n + p.tools.length, 0);
+  const doneTools = toolFinished.size + toolFailed.size;
+  const progressPct = totalTools ? Math.round((doneTools / totalTools) * 100) : 0;
+
+  const [now, setNow] = useState(Date.now());
+  useEffect(() => {
+    if (!running) return;
+    const id = window.setInterval(() => setNow(Date.now()), 1000);
+    return () => window.clearInterval(id);
+  }, [running]);
+
+  const toolStartedAt = new Map<string, number>();
+  const toolFinishedAt = new Map<string, number>();
+  events.forEach((e) => {
+    if (e.type === "tool_started" && !toolStartedAt.has(e.data?.tool)) {
+      toolStartedAt.set(e.data?.tool, e.ts * 1000);
+    }
+    if (e.type === "tool_finished" && !toolFinishedAt.has(e.data?.tool)) {
+      toolFinishedAt.set(e.data?.tool, e.ts * 1000);
+    }
+  });
+
+  const phaseStartedAt = (phase: PlanPhase): number => {
+    const first = phase.tools
+      .map((t) => toolStartedAt.get(t.id))
+      .filter((v): v is number => v !== undefined);
+    if (first.length === 0) return Infinity;
+    // phase via its own start timestamp
+    const phaseStart = events
+      .filter((e) => e.type === "phase_started" && String(e.data?.phase) === phase.id)
+      .sort((a, b) => a.ts - b.ts)[0];
+    return phaseStart ? phaseStart.ts * 1000 : Math.min(...first);
+  };
+
+  const fmtClock = (tsMs: number) =>
+    new Date(tsMs).toLocaleTimeString([], { hour: "2-digit", minute: "2-digit", second: "2-digit" });
+
+  const fmtDur = (ms: number) => {
+    const s = Math.floor(ms / 1000);
+    if (s < 60) return `${s}s`;
+    return `${Math.floor(s / 60)}m ${s % 60}s`;
+  };
+
+  const lastActivityAt = events.length
+    ? Math.max(...events.map((e) => e.ts)) * 1000
+    : now;
+  const idleSec = running ? (now - lastActivityAt) / 1000 : 0;
+  const scanStalled = events.find((e) => e.type === "scan_stalled");
+  const stalled = running && (idleSec > 300 || !!scanStalled);
+
+  return (
+    <div className="space-y-4">
+      <div className="flex items-center justify-between">
+        <div>
+          <p className="text-sm font-semibold flex items-center gap-2">
+            {running ? (
+              <Loader2 className="w-4 h-4 animate-spin text-primary" />
+            ) : (
+              <CheckCircle2 className="w-4 h-4 text-green-500" />
+            )}
+            AI Security Scan
+          </p>
+          <p className="text-xs text-muted-foreground mt-0.5">
+            {target} · {getTypeLabel(scanType)}
+          </p>
+        </div>
+        <div className="flex items-center gap-2">
+          {running ? (
+            <>
+              <span
+                className={`w-2 h-2 rounded-full ${stalled ? "bg-amber-500 animate-ping" : "bg-green-500 animate-pulse"}`}
+                title={idleSec > 0 ? `Last activity ${Math.round(idleSec)}s ago` : "Active"}
+              />
+              <span className="text-[11px] text-muted-foreground">
+                {stalled ? "No activity for a while" : `active ${idleSec < 1 ? "now" : `${Math.round(idleSec)}s ago`}`}
+              </span>
+            </>
+          ) : null}
+          <Badge variant={stalled ? "destructive" : running ? "default" : "secondary"}>
+            {stalled ? "Possibly stalled" : running ? "Running" : "Completed"}
+          </Badge>
+          <span className="text-xs text-muted-foreground">{progressPct}%</span>
+        </div>
+      </div>
+
+      {scanStalled && (
+        <div className="p-3 rounded-lg border border-amber-500/40 bg-amber-500/10 text-sm">
+          <p className="text-xs font-semibold text-amber-600 mb-0.5 flex items-center gap-1">
+            <AlertTriangle className="w-3.5 h-3.5" /> Possible stall detected
+          </p>
+          <p className="text-xs text-amber-700">
+            {String(scanStalled.data?.message || "No activity detected - the target may be unresponsive.")}{" "}
+            The watchdog will keep the scan alive until it recovers.
+          </p>
+        </div>
+      )}
+
+      <div className="h-1.5 rounded-full bg-muted overflow-hidden">
+        <div
+          className="h-full bg-primary transition-all duration-500"
+          style={{ width: `${progressPct}%` }}
+        />
+      </div>
+
+      {strategy && (
+        <div className="p-3 rounded-lg bg-primary/10 border border-primary/30 text-sm">
+          <p className="text-xs font-semibold text-primary mb-1 flex items-center gap-1">
+            <Sparkles className="w-3 h-3" /> AI Strategy
+          </p>
+          {strategy}
+        </div>
+      )}
+
+      <div className="space-y-1.5">
+        {pipelineSteps.map((step, i) => {
+          const hasEvents = (typeCount.get(step.id) || 0) > 0;
+          const isActive = running && hasEvents && i === lastActiveStep;
+          const isDone = running ? hasEvents && i < lastActiveStep : hasEvents;
+          const StepIcon = step.icon;
+          return (
+            <div
+              key={step.id}
+              className={`flex items-center gap-2.5 px-2.5 py-1.5 rounded-md ${
+                isActive ? "bg-primary/10 border border-primary/20" : ""
+              }`}
+            >
+              {isActive ? (
+                <Loader2 className="w-3.5 h-3.5 text-primary animate-spin shrink-0" />
+              ) : isDone ? (
+                <Check className="w-3.5 h-3.5 text-green-500 shrink-0" />
+              ) : (
+                <Clock className="w-3.5 h-3.5 text-muted-foreground shrink-0" />
+              )}
+              <StepIcon className="w-3.5 h-3.5 text-muted-foreground shrink-0" />
+              <span className={`text-xs ${isDone || isActive ? "font-medium" : "text-muted-foreground"}`}>
+                {step.label}
+              </span>
+              {hasEvents && (
+                <span className="ml-auto text-[11px] text-muted-foreground font-mono">
+                  {fmtClock(
+                    typeCount.get(step.id) ? (events.find((e) => e.type === step.id)?.ts || 0) * 1000 : 0,
+                  )}
+                </span>
+              )}
+            </div>
+          );
+        })}
+      </div>
+
+      <div className="space-y-2">
+        {phases.map((phase) => {
+          const PhaseIcon = phaseIcons[phase.id] || Activity;
+          const tools = phase.tools || [];
+          const stateCounts = { done: 0, running: 0, failed: 0, queued: 0 };
+          tools.forEach((t) => {
+            stateCounts[toolState(t.id)]++;
+          });
+          const phaseState: ToolState =
+            stateCounts.failed > 0
+              ? "failed"
+              : stateCounts.running > 0
+                ? "running"
+                : stateCounts.done === tools.length && tools.length > 0
+                  ? "done"
+                  : "queued";
+
+          const runningTool = tools.find((t) => toolState(t.id) === "running");
+          return (
+            <div key={phase.id} className="p-3 rounded-lg border bg-card">
+              <div className="flex items-center justify-between mb-1.5">
+                <p className="text-sm font-medium flex items-center gap-1.5">
+                  <PhaseIcon className="w-4 h-4 text-primary" />
+                  {phase.name}
+                </p>
+                <span className="text-xs text-muted-foreground flex items-center gap-1.5">
+                  {Number.isFinite(phaseStartedAt(phase)) && (
+                    <span className="font-mono">{fmtClock(phaseStartedAt(phase))}</span>
+                  )}
+                  {phaseState === "done"
+                    ? "Completed"
+                    : phaseState === "running"
+                      ? "Running..."
+                      : phaseState === "failed"
+                        ? "Partial"
+                        : "Queued"}
+                </span>
+              </div>
+              <p className="text-xs text-muted-foreground mb-2">{phase.description}</p>
+              <div className="flex flex-wrap gap-1.5">
+                {tools.map((t) => {
+                  const state = toolState(t.id);
+                  const startMs = toolStartedAt.get(t.id);
+                  const durMs =
+                    state === "running" && startMs
+                      ? now - startMs
+                      : state === "done" && toolFinishedAt.has(t.id)
+                        ? (toolFinishedAt.get(t.id) || 0) - (startMs || 0)
+                        : 0;
+                  return (
+                    <span
+                      key={t.id}
+                      title={startMs ? `${t.name} started ${fmtClock(startMs)}` : t.description}
+                      className={`inline-flex items-center gap-1.5 px-2 py-1 rounded-md text-xs border ${
+                        state === "running"
+                          ? "bg-primary/10 border-primary/40 text-primary"
+                          : state === "done"
+                            ? "bg-green-500/10 border-green-500/40 text-green-600"
+                            : state === "failed"
+                              ? "bg-red-500/10 border-red-500/40 text-red-600"
+                              : "bg-muted/50 border-border text-muted-foreground"
+                      }`}
+                    >
+                      {state === "running" ? (
+                        <Loader2 className="w-3 h-3 animate-spin" />
+                      ) : state === "done" ? (
+                        <Check className="w-3 h-3" />
+                      ) : state === "failed" ? (
+                        <X className="w-3 h-3" />
+                      ) : (
+                        <Clock className="w-3 h-3" />
+                      )}
+                      <span className="font-mono">{t.name}</span>
+                      {durMs > 0 && (
+                        <span className="ml-1 text-[10px] opacity-80">{fmtDur(durMs)}</span>
+                      )}
+                    </span>
+                  );
+                })}
+              </div>
+              {runningTool && toolCommands.get(runningTool.id) && (
+                <p className="mt-2 text-[11px] font-mono text-muted-foreground truncate">
+                  $ {toolCommands.get(runningTool.id)}
+                </p>
+              )}
+            </div>
+          );
+        })}
+      </div>
+
+      {findings.length > 0 && (
+        <div>
+          <p className="text-xs font-semibold mb-1.5 flex items-center gap-1.5">
+            <Bug className="w-3.5 h-3.5 text-red-500" />
+            Live findings ({findings.length})
+          </p>
+          <div className="max-h-44 overflow-y-auto space-y-1.5 pr-1">
+            {findings.map((f, i) => (
+              <div
+                key={i}
+                className="flex items-start gap-2 p-2 rounded-lg border bg-card"
+              >
+                <Badge className={getSeverityBadge(String(f.severity || "info").toLowerCase())}>
+                  {String(f.severity || "info").toUpperCase()}
+                </Badge>
+                <div className="min-w-0 flex-1">
+                  <p className="text-sm truncate">{String(f.title || "Finding")}</p>
+                  <p className="text-xs text-muted-foreground">
+                    {String(f.tool_name || "unknown")}
+                    {f.target ? ` · ${String(f.target)}` : ""}
+                  </p>
+                </div>
+              </div>
+            ))}
+          </div>
+        </div>
+      )}
+    </div>
+  );
+}
+
 export default function ScansPage() {
   const [scanResults, setScanResults] = useState<ScanHistoryItem[]>([]);
   const [projects, setProjects] = useState<Project[]>([]);
@@ -208,6 +583,37 @@ export default function ScansPage() {
   const [showResults, setShowResults] = useState(false);
   const [selectedProject, setSelectedProject] = useState<string>("");
   const [loadingProjects, setLoadingProjects] = useState(false);
+
+  const [liveEvents, setLiveEvents] = useState<ScanProgressEvent[]>([]);
+  const [liveScanId, setLiveScanId] = useState<string | null>(null);
+  const [liveRunning, setLiveRunning] = useState(false);
+  const liveActiveRef = useRef(false);
+
+  async function pollProgress(scanId: string) {
+    let since = 0;
+    while (liveActiveRef.current) {
+      try {
+        const res = (await vaptScanApi.progress(scanId, since)) as any;
+        const events: ScanProgressEvent[] = res?.events || [];
+        if (events.length) {
+          setLiveEvents((prev) => [...prev, ...events]);
+          since = res?.total ?? since + events.length;
+          if (events.some((e) => e.type === "scan_completed")) {
+            liveActiveRef.current = false;
+            return;
+          }
+        }
+        const status = res?.status?.status;
+        if (status && !["running", "pending", "queued", "planning"].includes(status)) {
+          liveActiveRef.current = false;
+          return;
+        }
+      } catch {
+        // transient poll errors are ignored; scan request itself reports failure
+      }
+      await new Promise((r) => setTimeout(r, 2000));
+    }
+  }
 
   const initialProjectSet = useRef(false);
 
@@ -276,6 +682,10 @@ export default function ScansPage() {
       setLoading(false);
       setLoadingProjects(false);
     });
+
+    return () => {
+      liveActiveRef.current = false;
+    };
   }, []);
 
   function toggleScanType(typeId: string) {
@@ -310,16 +720,26 @@ export default function ScansPage() {
           cloud: "cloud_posture", code: "code_audit",
         };
 
-        await scanApi.run({
-          target: dialogTarget.trim(),
-          capability_id: capabilityMap[scanTypeId] || "web_vapt",
-          config: {
+        const scanId = crypto.randomUUID();
+        setLiveEvents([]);
+        setLiveScanId(scanId);
+        setLiveRunning(true);
+        liveActiveRef.current = true;
+        void pollProgress(scanId);
+
+        try {
+          await vaptScanApi.run({
+            target: dialogTarget.trim(),
+            scan_type: capabilityMap[scanTypeId] || "web_vapt",
             organization_id: orgId,
             project_id: selectedProjectDialog || undefined,
-            scan_type: scanTypeId,
-          },
-        });
+            client_scan_id: scanId,
+          });
+        } finally {
+          liveActiveRef.current = false;
+        }
       }
+      setLiveRunning(false);
 
       setSuccessMessage(`${selectedScanTypes.length} scan(s) started successfully!`);
       await refreshHistory();
@@ -348,18 +768,25 @@ export default function ScansPage() {
     setShowResults(false);
     setResult(null);
     setFindings([]);
+    setLiveEvents([]);
+
+    const scanId = crypto.randomUUID();
+    setLiveScanId(scanId);
+    setLiveRunning(true);
+    liveActiveRef.current = true;
+    void pollProgress(scanId);
 
     try {
       const orgId = localStorage.getItem("organization_id");
 
-      const res = await apiClient.post("/vapt/scan", {
+      const data = (await vaptScanApi.run({
         target: target.trim(),
         scan_type: scanType,
         organization_id: orgId,
         project_id: selectedProject,
-      }) as any;
+        client_scan_id: scanId,
+      })) as any as VaptScanResult;
 
-      const data: VaptScanResult = res.data || res;
       setResult(data);
 
       const rawFindings: Record<string, unknown>[] = data.findings || [];
@@ -383,6 +810,8 @@ export default function ScansPage() {
       alert(error instanceof Error ? error.message : "Scan failed");
     } finally {
       setScanning(false);
+      liveActiveRef.current = false;
+      setTimeout(() => setLiveRunning(false), 2500);
     }
   }
 
@@ -395,14 +824,6 @@ export default function ScansPage() {
         {cfg.label}
       </Badge>
     );
-  }
-
-  function getSeverityBadge(severity: string) {
-    const colorMap: Record<string, string> = {
-      critical: "bg-red-500", high: "bg-orange-500", medium: "bg-yellow-500",
-      low: "bg-blue-500", info: "bg-gray-500",
-    };
-    return colorMap[severity] || "bg-gray-500";
   }
 
   const totalScans = scanResults.length;
@@ -565,7 +986,14 @@ export default function ScansPage() {
             </CardTitle>
           </CardHeader>
           <CardContent>
-            {scanning ? (
+            {liveRunning && liveScanId ? (
+              <LiveScanConsole
+                events={liveEvents}
+                target={target}
+                scanType={scanType}
+                running={liveRunning}
+              />
+            ) : scanning ? (
               <div className="flex flex-col items-center justify-center py-8">
                 <Loader2 className="w-12 h-12 animate-spin text-primary mb-4" />
                 <p className="text-muted-foreground">Running security scan...</p>

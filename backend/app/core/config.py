@@ -58,6 +58,20 @@ class Settings(BaseSettings):
     ANTHROPIC_API_KEY: Optional[str] = None
     OLLAMA_BASE_URL: str = "http://localhost:11434"
 
+    # NVIDIA NIM (OpenAI-compatible)
+    NVIDIA_API_KEY: Optional[str] = None
+    NVIDIA_BASE_URL: str = "https://integrate.api.nvidia.com/v1"
+    AI_MODEL: str = "deepseek-ai/deepseek-v4-pro"
+
+    # LLM provider selection: "auto" (ollama -> nvidia), "nvidia", "ollama"
+    # Ollama is preferred by default to avoid third-party API latency.
+    LLM_PROVIDER: str = "ollama"
+    LLM_TIMEOUT: int = 45
+
+    # Local Ollama fallback
+    OLLAMA_BASE_URL: str = "http://host.docker.internal:11434"
+    OLLAMA_MODEL: str = "huihui_ai/qwen2.5-abliterate:7b-instruct"
+
     # Security tools
     NMAP_PATH: str = "/usr/bin/nmap"
     NUCLEI_PATH: str = "/usr/local/bin/nuclei"

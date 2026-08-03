@@ -2,7 +2,7 @@ import asyncio
 import time
 from collections import defaultdict
 from datetime import datetime
-from typing import Any, Dict, List, Optional
+from typing import Any, Callable, Dict, List, Optional
 from uuid import uuid4
 
 from app.core.logging import get_logger
@@ -32,23 +32,33 @@ class ReconOrchestrator:
     def __init__(self, executor: VAPTExecutor):
         self._executor = executor
         self._graph: KnowledgeGraph = get_knowledge_graph()
+        self._publish: Optional[Callable[[str, str, dict], Any]] = None
 
-    async def execute_scan(self, request: VAPTScanRequest) -> VAPTScanResult:
-        result = VAPTScanResult(
-            id=uuid4(),
-            request=request,
-            status="running",
-            started_at=datetime.utcnow(),
-        )
+    def set_progress_publisher(self, publish: Callable[[str, str, dict], Any]) -> None:
+        """Attach a callback for live progress events (scan_id, event_type, data)."""
+        self._publish = publish
+
+    async def _emit(self, scan_id: str, event_type: str, data: dict = None) -> None:
+        if self._publish:
+            try:
+                await self._publish(scan_id, event_type, data or {})
+            except Exception as e:
+                logger.warning("progress publish failed: %s", e)
+
+    async def execute_scan(self, request: VAPTScanRequest, scan_id: Optional[str] = None) -> VAPTScanResult:
+        result = VAPTScanResult(request=request, status="running", started_at=datetime.utcnow())
+        if scan_id:
+            from uuid import UUID as _UUID
+            result.id = _UUID(scan_id)
 
         tools = self._resolve_tools(request)
-        scan_id = str(result.id)
+        result.tool_results = {t: {"status": "queued"} for t in tools}
 
         target_id = request.target.value
         await self._graph.upsert_target(
             target_id=target_id,
             name=target_id,
-            scan_id=scan_id,
+            scan_id=str(result.id),
             scan_type=request.scan_type.value if request.scan_type else "",
         )
 
@@ -61,9 +71,14 @@ class ReconOrchestrator:
                 continue
 
             logger.info("Orchestrator phase=%s tools=%s", phase_name, phase_tools)
+            await self._emit(str(result.id), "phase_started", {
+                "phase": phase_name,
+                "tools": phase_tools,
+            })
+
             phase_results = await asyncio.gather(
                 *[
-                    self._run_tool_phase(tool_id, request, result)
+                    self._run_tool_phase(tool_id, request, result, str(result.id))
                     for tool_id in phase_tools
                 ],
                 return_exceptions=True,
@@ -76,7 +91,13 @@ class ReconOrchestrator:
                     all_findings.extend(r)
                     for f in r:
                         result.add_finding(f)
-                        await self._write_finding_to_graph(target_id, f, scan_id)
+                        await self._emit(str(result.id), "finding_found", f.to_dict())
+                        await self._write_finding_to_graph(target_id, f, str(result.id))
+
+            await self._emit(str(result.id), "phase_completed", {
+                "phase": phase_name,
+                "findings": len(all_findings),
+            })
 
         if result.findings:
             result.status = "completed"
@@ -86,9 +107,15 @@ class ReconOrchestrator:
             result.message = "Scan completed, no vulnerabilities found"
 
         result.finalize(result.status, result.message)
+        await self._emit(str(result.id), "scan_completed", {
+            "status": result.status,
+            "findings_count": len(result.findings),
+            "duration": result.duration,
+            "message": result.message,
+        })
         return result
 
-    async def _run_tool_phase(self, tool_id: str, request: VAPTScanRequest, result: VAPTScanResult) -> list:
+    async def _run_tool_phase(self, tool_id: str, request: VAPTScanRequest, result: VAPTScanResult, scan_id: str) -> list:
         tool = get_tool(tool_id)
         if not tool:
             return []
@@ -99,40 +126,69 @@ class ReconOrchestrator:
 
         cmd = self._executor._build_docker_command(tool, target)
         if not cmd:
+            await self._emit(scan_id, "tool_failed", {"tool": tool_id, "reason": "no command"})
             return []
 
         self._executor._check_rate_limit(tool_id)
 
         container_name = f"astraix-vapt-{uuid4().hex[:8]}"
+        await self._emit(scan_id, "tool_started", {
+            "tool": tool_id,
+            "name": tool.name,
+            "description": tool.description,
+            "command": cmd,
+        })
         output = ""
+        started = time.time()
         try:
-            output = await asyncio.wait_for(
+            task = asyncio.ensure_future(
                 asyncio.to_thread(
                     self._executor._run_container_sync,
                     self._executor.KALI_IMAGE,
                     cmd,
                     container_name,
                     tool.timeout,
-                ),
-                timeout=tool.timeout + 30,
+                )
             )
+            while True:
+                try:
+                    output = await asyncio.wait_for(asyncio.shield(task), timeout=30)
+                    if not isinstance(output, str):
+                        output = str(output)
+                    break
+                except asyncio.TimeoutError:
+                    await self._emit(scan_id, "tool_ping", {
+                        "tool": tool_id,
+                        "name": tool.name,
+                        "elapsed": round(time.time() - started, 1),
+                    })
 
+            duration = round(time.time() - started, 1)
             result.tool_results[tool_id] = {
-                "duration": tool.timeout,
+                "duration": duration,
                 "return_code": 0,
                 "success": True,
             }
 
             findings = self._executor._parse_output(output, tool, request.target.value)
+            await self._emit(scan_id, "tool_finished", {
+                "tool": tool_id,
+                "name": tool.name,
+                "duration": duration,
+                "findings_count": len(findings),
+            })
             for f in findings:
                 result.add_finding(f)
+                await self._emit(scan_id, "finding_found", f.to_dict())
             return findings
 
         except asyncio.TimeoutError:
             self._executor._kill_container(container_name)
             result.errors.append(f"{tool_id}: timeout")
+            await self._emit(scan_id, "tool_failed", {"tool": tool_id, "reason": "timeout"})
         except Exception as e:
             result.errors.append(f"{tool_id}: {str(e)}")
+            await self._emit(scan_id, "tool_failed", {"tool": tool_id, "reason": str(e)})
         return []
 
     async def _write_finding_to_graph(self, target_id: str, finding: VAPTFinding, scan_id: str) -> None:
