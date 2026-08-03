@@ -22,7 +22,9 @@ class Asset(UUIDMixin, TimestampMixin, Base):
 
     # Relationships
     project: Mapped["Project"] = relationship(back_populates="assets", lazy="selectin")
-    assessments: Mapped[list["Assessment"]] = relationship(back_populates="asset", lazy="selectin")
+    assessments: Mapped[list["Assessment"]] = relationship(
+        back_populates="asset", lazy="selectin", passive_deletes=True
+    )
 
     __table_args__ = (
         Index("ix_assets_identifier_type", "identifier", "type", unique=True),

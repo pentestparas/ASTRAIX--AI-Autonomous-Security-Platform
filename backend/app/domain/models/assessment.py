@@ -24,7 +24,9 @@ class Assessment(UUIDMixin, TimestampMixin, Base):
     # Relationships
     asset: Mapped["Asset"] = relationship(lazy="joined", viewonly=True)
     project: Mapped["Project"] = relationship(back_populates="assessments", lazy="selectin")
-    findings: Mapped[list["Finding"]] = relationship(back_populates="assessment", lazy="selectin")
+    findings: Mapped[list["Finding"]] = relationship(
+        back_populates="assessment", lazy="selectin", passive_deletes=True
+    )
 
     __table_args__ = (
         Index("ix_assessments_org_project_status", "organization_id", "project_id", "status"),

@@ -67,9 +67,9 @@ class Organization(UUIDMixin, TimestampMixin, Base):
     # Relationships
     projects: Mapped[list["Project"]] = relationship(back_populates="organization", lazy="selectin", cascade="all, delete-orphan")
     memberships: Mapped[list["Membership"]] = relationship(back_populates="organization", lazy="selectin", cascade="all, delete-orphan")
-    assets: Mapped[list["Asset"]] = relationship(lazy="selectin")
-    assessments: Mapped[list["Assessment"]] = relationship(lazy="selectin")
-    findings: Mapped[list["Finding"]] = relationship(lazy="selectin")
+    assets: Mapped[list["Asset"]] = relationship(lazy="selectin", passive_deletes=True)
+    assessments: Mapped[list["Assessment"]] = relationship(lazy="selectin", passive_deletes=True)
+    findings: Mapped[list["Finding"]] = relationship(lazy="selectin", passive_deletes=True)
 
 
 class Project(UUIDMixin, TimestampMixin, Base):
@@ -85,8 +85,8 @@ class Project(UUIDMixin, TimestampMixin, Base):
     # Relationships
     organization: Mapped["Organization"] = relationship(back_populates="projects", lazy="selectin")
     assets: Mapped[list["Asset"]] = relationship(back_populates="project", lazy="selectin", cascade="all, delete-orphan")
-    assessments: Mapped[list["Assessment"]] = relationship(back_populates="project", lazy="selectin")
-    findings: Mapped[list["Finding"]] = relationship(lazy="selectin")
+    assessments: Mapped[list["Assessment"]] = relationship(back_populates="project", lazy="selectin", passive_deletes=True)
+    findings: Mapped[list["Finding"]] = relationship(lazy="selectin", passive_deletes=True)
     memberships: Mapped[list["Membership"]] = relationship(back_populates="project", lazy="selectin", cascade="all, delete-orphan")
 
     __table_args__ = (

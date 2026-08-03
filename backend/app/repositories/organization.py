@@ -2,7 +2,7 @@ from typing import Optional
 from uuid import UUID
 from datetime import datetime, timedelta
 from fastapi import Depends
-from sqlalchemy import select, func
+from sqlalchemy import select, func, delete as sql_delete
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.database.session import get_session
@@ -99,11 +99,9 @@ class OrganizationRepository:
         return org
 
     async def delete(self, org_id: UUID) -> bool:
-        org = await self.get(org_id)
-        if org:
-            await self.db.delete(org)
-            return True
-        return False
+        result = await self.db.execute(sql_delete(Organization).where(Organization.id == str(org_id)))
+        await self.db.commit()
+        return result.rowcount > 0
 
 
 class ProjectRepository:
@@ -170,11 +168,9 @@ class ProjectRepository:
         return project
 
     async def delete(self, project_id: UUID) -> bool:
-        project = await self.get(project_id)
-        if project:
-            await self.db.delete(project)
-            return True
-        return False
+        result = await self.db.execute(sql_delete(Project).where(Project.id == str(project_id)))
+        await self.db.commit()
+        return result.rowcount > 0
 
 
 class MembershipRepository:

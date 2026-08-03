@@ -26,7 +26,7 @@ async def list_assessments(
     limit: int = Query(None, ge=1, le=200, description="Page size (alias for page_size)"),
     status: Optional[str] = None,
     type: Optional[str] = None,
-    project_id: Optional[UUID] = None,
+    project_id: Optional[str] = None,
     organization_id: Optional[str] = None,
     db: AsyncSession = Depends(get_session),
 ):
