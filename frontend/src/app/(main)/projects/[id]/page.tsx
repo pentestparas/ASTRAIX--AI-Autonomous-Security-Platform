@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { Fragment, useEffect, useMemo, useState } from "react";
 import { useParams } from "next/navigation";
 import { projectsApi, assessmentsApi, assetsApi, findingsApi } from "@/services/api";
 import { Button } from "@/components/ui/button";
@@ -16,14 +16,23 @@ import {
 } from "@/components/ui/table";
 import {
   ArrowLeft,
-  Plus,
   Activity,
   ShieldAlert,
   Server,
   Play,
+  ChevronDown,
+  ChevronRight,
 } from "lucide-react";
 import Link from "next/link";
 import type { Project, Assessment, Asset, Finding } from "@/types";
+
+function registrableDomain(host: string): string {
+  const clean = host.trim().replace(/^https?:\/\//, "").replace(/\/.*$/, "");
+  if (/^\d{1,3}(\.\d{1,3}){3}$/.test(clean) || clean === "localhost") return clean;
+  const labels = clean.split(".");
+  if (labels.length <= 2) return clean;
+  return labels.slice(-2).join(".");
+}
 
 export default function ProjectDetailPage() {
   const params = useParams();
@@ -35,6 +44,7 @@ export default function ProjectDetailPage() {
   const [findings, setFindings] = useState<Finding[]>([]);
   const [loading, setLoading] = useState(true);
   const [activeTab, setActiveTab] = useState<"assessments" | "assets" | "findings">("assessments");
+  const [expandedDomains, setExpandedDomains] = useState<Set<string>>(new Set());
 
   useEffect(() => {
     async function load() {
@@ -46,7 +56,10 @@ export default function ProjectDetailPage() {
           findingsApi.list({ project_id: projectId, limit: 50 }),
         ]);
 
-        if (projRes.success && projRes.data) setProject(projRes.data as Project);
+        if (projRes) {
+          const projectData = (projRes as any).data ?? projRes;
+          setProject(projectData as Project);
+        }
         if (assessRes.success && assessRes.data)
           setAssessments(
             Array.isArray(assessRes.data)
@@ -73,6 +86,71 @@ export default function ProjectDetailPage() {
     }
     if (projectId) load();
   }, [projectId]);
+
+  const groupedAssessments = useMemo(() => {
+    const map = new Map<string, Assessment[]>();
+    assessments.forEach((a) => {
+      const domain =
+        registrableDomain(a.asset_name ?? a.asset?.name ?? "") || "Unknown";
+      if (!map.has(domain)) map.set(domain, []);
+      map.get(domain)!.push(a);
+    });
+    return [...map.entries()]
+      .map(([domain, list]) => {
+        const sorted = [...list].sort((a, b) =>
+          (b.started_at ?? "").localeCompare(a.started_at ?? "")
+        );
+        const latest = sorted[0];
+        return {
+          domain,
+          scans: sorted,
+          count: list.length,
+          totalFindings: list.reduce(
+            (sum, a) => sum + (a.findings_count ?? 0),
+            0
+          ),
+          latest,
+        };
+      })
+      .sort((a, b) =>
+        (b.latest?.started_at ?? "").localeCompare(a.latest?.started_at ?? "")
+      );
+  }, [assessments]);
+
+  const groupedAssets = useMemo(() => {
+    const map = new Map<string, Asset[]>();
+    assets.forEach((a) => {
+      const domain = registrableDomain(a.identifier || a.name || "");
+      if (!map.has(domain)) map.set(domain, []);
+      map.get(domain)!.push(a);
+    });
+    const severityRank = ["critical", "high", "medium", "low", "info"];
+    return [...map.entries()]
+      .map(([domain, list]) => ({
+        domain,
+        count: list.length,
+        types: [...new Set(list.map((a) => a.type))],
+        criticality:
+          severityRank.find((s) => list.some((a) => a.criticality === s)) ||
+          "low",
+        lastScanned:
+          Math.max(
+            ...list.map((a) =>
+              a.last_scanned ? Date.parse(a.last_scanned) : 0
+            )
+          ) || null,
+      }))
+      .sort((a, b) => (b.lastScanned ?? 0) - (a.lastScanned ?? 0));
+  }, [assets]);
+
+  function toggleDomain(domain: string) {
+    setExpandedDomains((prev) => {
+      const next = new Set(prev);
+      if (next.has(domain)) next.delete(domain);
+      else next.add(domain);
+      return next;
+    });
+  }
 
   if (loading) {
     return (
@@ -118,10 +196,6 @@ export default function ProjectDetailPage() {
             {project.description || "No description"}
           </p>
         </div>
-        <Button>
-          <Plus className="w-4 h-4 mr-2" />
-          Add Asset
-        </Button>
       </div>
 
       <div className="grid gap-4 md:grid-cols-4">
@@ -130,7 +204,7 @@ export default function ProjectDetailPage() {
             <div className="flex items-center gap-3">
               <Server className="w-8 h-8 text-blue-500" />
               <div>
-                <div className="text-2xl font-bold">{assets.length}</div>
+                <div className="text-2xl font-bold">{project.assets_count ?? assets.length}</div>
                 <div className="text-sm text-muted-foreground">Assets</div>
               </div>
             </div>
@@ -141,7 +215,7 @@ export default function ProjectDetailPage() {
             <div className="flex items-center gap-3">
               <Activity className="w-8 h-8 text-purple-500" />
               <div>
-                <div className="text-2xl font-bold">{assessments.length}</div>
+                <div className="text-2xl font-bold">{project.assessments_count ?? assessments.length}</div>
                 <div className="text-sm text-muted-foreground">Scans</div>
               </div>
             </div>
@@ -152,8 +226,8 @@ export default function ProjectDetailPage() {
             <div className="flex items-center gap-3">
               <ShieldAlert className="w-8 h-8 text-red-500" />
               <div>
-                <div className="text-2xl font-bold">{findings.length}</div>
-                <div className="text-sm text-muted-foreground">Findings</div>
+                <div className="text-2xl font-bold">{project.open_findings_count ?? findings.length}</div>
+                <div className="text-sm text-muted-foreground">Open Findings</div>
               </div>
             </div>
           </CardContent>
@@ -164,7 +238,7 @@ export default function ProjectDetailPage() {
               <ShieldAlert className="w-8 h-8 text-orange-500" />
               <div>
                 <div className="text-2xl font-bold">
-                  {findings.filter((f) => f.severity === "critical" || f.severity === "high").length}
+                  {project.critical_findings_count ?? findings.filter((f) => f.severity === "critical" || f.severity === "high").length}
                 </div>
                 <div className="text-sm text-muted-foreground">Critical/High</div>
               </div>
@@ -195,49 +269,115 @@ export default function ProjectDetailPage() {
             <Table>
               <TableHeader>
                 <TableRow>
-                  <TableHead>Asset</TableHead>
-                  <TableHead>Type</TableHead>
-                  <TableHead>Status</TableHead>
+                  <TableHead>Domain</TableHead>
+                  <TableHead>Scans</TableHead>
                   <TableHead>Findings</TableHead>
-                  <TableHead>Started</TableHead>
+                  <TableHead>Status</TableHead>
+                  <TableHead>Last Scan</TableHead>
                 </TableRow>
               </TableHeader>
               <TableBody>
-                {assessments.length === 0 ? (
+                {groupedAssessments.length === 0 ? (
                   <TableRow>
                     <TableCell colSpan={5} className="text-center py-8 text-muted-foreground">
                       No scans yet for this project
                     </TableCell>
                   </TableRow>
                 ) : (
-                  assessments.map((a) => (
-                    <TableRow key={a.id}>
-                      <TableCell className="font-medium">
-                        {a.asset?.name ?? "—"}
-                      </TableCell>
-                      <TableCell className="capitalize">{a.type}</TableCell>
-                      <TableCell>
-                        <Badge
-                          variant={
-                            a.status === "completed"
-                              ? "secondary"
-                              : a.status === "running"
-                                ? "default"
-                                : "outline"
-                          }
-                        >
-                          {a.status}
-                        </Badge>
-                      </TableCell>
-                      <TableCell>
-                        <Badge variant="secondary">{a.findings_count}</Badge>
-                      </TableCell>
-                      <TableCell className="text-muted-foreground text-sm">
-                        {a.started_at
-                          ? new Date(a.started_at).toLocaleString()
-                          : "—"}
-                      </TableCell>
-                    </TableRow>
+                  groupedAssessments.map((group) => (
+                    <Fragment key={group.domain}>
+                      <TableRow
+                        className="cursor-pointer hover:bg-muted/50"
+                        onClick={() => toggleDomain(group.domain)}
+                      >
+                        <TableCell className="font-medium">
+                          <span className="inline-flex items-center gap-2">
+                            {expandedDomains.has(group.domain) ? (
+                              <ChevronDown className="w-4 h-4 text-muted-foreground" />
+                            ) : (
+                              <ChevronRight className="w-4 h-4 text-muted-foreground" />
+                            )}
+                            {group.domain}
+                          </span>
+                        </TableCell>
+                        <TableCell>
+                          <Badge variant="secondary">{group.count}</Badge>
+                        </TableCell>
+                        <TableCell>
+                          <Badge variant="secondary">{group.totalFindings}</Badge>
+                        </TableCell>
+                        <TableCell>
+                          <Badge
+                            variant={
+                              group.latest?.status === "completed"
+                                ? "secondary"
+                                : group.latest?.status === "running"
+                                  ? "default"
+                                  : "outline"
+                            }
+                            className="capitalize"
+                          >
+                            {group.latest?.status ?? "—"}
+                          </Badge>
+                        </TableCell>
+                        <TableCell className="text-muted-foreground text-sm">
+                          {group.latest?.started_at
+                            ? new Date(group.latest.started_at).toLocaleString()
+                            : "—"}
+                        </TableCell>
+                      </TableRow>
+                      {expandedDomains.has(group.domain) && (
+                        <TableRow className="bg-muted/40">
+                          <TableCell colSpan={5} className="p-0">
+                            <div className="px-6 py-3">
+                              <Table>
+                                <TableHeader>
+                                  <TableRow>
+                                    <TableHead>Asset</TableHead>
+                                    <TableHead>Type</TableHead>
+                                    <TableHead>Status</TableHead>
+                                    <TableHead>Findings</TableHead>
+                                    <TableHead>Started</TableHead>
+                                  </TableRow>
+                                </TableHeader>
+                                <TableBody>
+                                  {group.scans.map((a) => (
+                                    <TableRow key={a.id}>
+                                      <TableCell className="font-medium">
+                                        {a.asset_name ?? a.asset?.name ?? "—"}
+                                      </TableCell>
+                                      <TableCell className="capitalize">{a.type}</TableCell>
+                                      <TableCell>
+                                        <Badge
+                                          variant={
+                                            a.status === "completed"
+                                              ? "secondary"
+                                              : a.status === "running"
+                                                ? "default"
+                                                : "outline"
+                                          }
+                                          className="capitalize"
+                                        >
+                                          {a.status}
+                                        </Badge>
+                                      </TableCell>
+                                      <TableCell>
+                                        <Badge variant="secondary">{a.findings_count}</Badge>
+                                      </TableCell>
+                                      <TableCell className="text-muted-foreground text-sm">
+                                        {a.started_at
+                                          ? new Date(a.started_at).toLocaleString()
+                                          : "—"}
+                                      </TableCell>
+                                    </TableRow>
+                                  ))}
+                                </TableBody>
+                              </Table>
+                            </div>
+                          </TableCell>
+                        </TableRow>
+                      )}
+                    </Fragment>
                   ))
                 )}
               </TableBody>
@@ -252,45 +392,47 @@ export default function ProjectDetailPage() {
             <Table>
               <TableHeader>
                 <TableRow>
-                  <TableHead>Name</TableHead>
-                  <TableHead>Type</TableHead>
-                  <TableHead>Identifier</TableHead>
+                  <TableHead>Domain</TableHead>
+                  <TableHead>Subdomains</TableHead>
+                  <TableHead>Types</TableHead>
                   <TableHead>Criticality</TableHead>
                   <TableHead>Last Scanned</TableHead>
                 </TableRow>
               </TableHeader>
               <TableBody>
-                {assets.length === 0 ? (
+                {groupedAssets.length === 0 ? (
                   <TableRow>
                     <TableCell colSpan={5} className="text-center py-8 text-muted-foreground">
                       No assets yet. Add an asset to start scanning.
                     </TableCell>
                   </TableRow>
                 ) : (
-                  assets.map((asset) => (
-                    <TableRow key={asset.id}>
-                      <TableCell className="font-medium">{asset.name}</TableCell>
-                      <TableCell className="capitalize">{asset.type}</TableCell>
-                      <TableCell className="font-mono text-sm text-muted-foreground">
-                        {asset.identifier}
+                  groupedAssets.map((group) => (
+                    <TableRow key={group.domain}>
+                      <TableCell className="font-medium">{group.domain}</TableCell>
+                      <TableCell>
+                        <Badge variant="secondary">{group.count}</Badge>
+                      </TableCell>
+                      <TableCell className="capitalize text-muted-foreground">
+                        {group.types.join(", ")}
                       </TableCell>
                       <TableCell>
                         <Badge
                           variant={
-                            asset.criticality === "critical"
+                            group.criticality === "critical"
                               ? "destructive"
-                              : asset.criticality === "high"
+                              : group.criticality === "high"
                                 ? "default"
                                 : "secondary"
                           }
                           className="capitalize"
                         >
-                          {asset.criticality}
+                          {group.criticality}
                         </Badge>
                       </TableCell>
                       <TableCell className="text-muted-foreground text-sm">
-                        {asset.last_scanned
-                          ? new Date(asset.last_scanned).toLocaleString()
+                        {group.lastScanned
+                          ? new Date(group.lastScanned).toLocaleString()
                           : "Never"}
                       </TableCell>
                     </TableRow>

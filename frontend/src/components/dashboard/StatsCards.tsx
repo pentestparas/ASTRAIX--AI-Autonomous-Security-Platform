@@ -129,11 +129,11 @@ export function StatsCards() {
         loading={loading}
       />
       <StatCard
-        title="Critical Findings"
-        value={stats?.critical_findings ?? 0}
-        change="Requires immediate attention"
+        title="Total Findings"
+        value={stats?.total_findings ?? 0}
+        change="All findings detected"
         changeType={
-          (stats?.critical_findings ?? 0) > 0 ? "increase" : "decrease"
+          (stats?.total_findings ?? 0) > 0 ? "increase" : "decrease"
         }
         icon={<AlertTriangle className="w-5 h-5" />}
         iconColor="text-red-500"

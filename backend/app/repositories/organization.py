@@ -122,6 +122,46 @@ class ProjectRepository:
         result = await self.db.execute(select(Project).where(Project.id == str(project_id)))
         return result.scalar_one_or_none()
 
+    async def get_with_stats(self, project_id: UUID) -> Optional[Project]:
+        """Get a project with real asset/assessment/finding counts attached."""
+        project = await self.get(project_id)
+        if not project:
+            return None
+        await self._attach_stats(project)
+        return project
+
+    async def _attach_stats(self, project: Project) -> None:
+        from sqlalchemy import func, select
+        from app.domain.models.asset import Asset as AssetModel
+        from app.domain.models.assessment import Assessment as AssessmentModel
+        from app.domain.models.finding import Finding as FindingModel
+
+        pid = str(project.id)
+        project.assets_count = (
+            await self.db.execute(
+                select(func.count()).select_from(AssetModel).where(AssetModel.project_id == pid)
+            )
+        ).scalar_one()
+        project.assessments_count = (
+            await self.db.execute(
+                select(func.count()).select_from(AssessmentModel).where(AssessmentModel.project_id == pid)
+            )
+        ).scalar_one()
+        project.open_findings_count = (
+            await self.db.execute(
+                select(func.count()).select_from(FindingModel).where(
+                    FindingModel.project_id == pid, FindingModel.status == "open"
+                )
+            )
+        ).scalar_one()
+        project.critical_findings_count = (
+            await self.db.execute(
+                select(func.count()).select_from(FindingModel).where(
+                    FindingModel.project_id == pid, FindingModel.severity == "critical"
+                )
+            )
+        ).scalar_one()
+
     async def get_by_slug(self, organization_id: UUID, slug: str) -> Optional[Project]:
         result = await self.db.execute(
             select(Project).where(Project.organization_id == str(organization_id), Project.slug == slug)

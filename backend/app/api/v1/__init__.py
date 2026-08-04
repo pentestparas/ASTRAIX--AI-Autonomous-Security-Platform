@@ -162,7 +162,7 @@ async def get_dashboard_stats(organization_id: UUID = None):
         "scans_this_month": 0,
     }
     if not organization_id:
-        return base
+        return ResponseSchema(data=base)
 
     try:
         from app.repositories import finding_repo, assessment_repo, asset_repo
@@ -204,22 +204,24 @@ async def get_dashboard_stats(organization_id: UUID = None):
 
             active_scans = len(await get_progress_bus().active_scans())
 
-            return {
-                "total_projects": total_projects,
-                "active_scans": active_scans,
-                "critical_findings": critical,
-                "high_findings": high,
-                "medium_findings": medium,
-                "low_findings": low,
-                "open_findings": open_f,
-                "resolved_findings": resolved,
-                "assets_discovered": assets,
-                "total_findings": findings,
-                "scans_this_week": scans_week,
-                "scans_this_month": scans_month,
-            }
+            return ResponseSchema(
+                data={
+                    "total_projects": total_projects,
+                    "active_scans": active_scans,
+                    "critical_findings": critical,
+                    "high_findings": high,
+                    "medium_findings": medium,
+                    "low_findings": low,
+                    "open_findings": open_f,
+                    "resolved_findings": resolved,
+                    "assets_discovered": assets,
+                    "total_findings": findings,
+                    "scans_this_week": scans_week,
+                    "scans_this_month": scans_month,
+                }
+            )
     except Exception:
-        return base
+        return ResponseSchema(data=base)
 
 
 @api_router.post("/assess")

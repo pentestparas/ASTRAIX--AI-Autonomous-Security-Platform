@@ -188,6 +188,8 @@ async def list_projects(
     if not organization_id:
         return []
     projects = await project_repo.list(organization_id, skip, limit, active_only)
+    for project in projects:
+        await project_repo._attach_stats(project)
     return projects
 
 
@@ -198,7 +200,7 @@ async def get_project(
     project_repo: ProjectRepository = Depends(get_project_repo),
 ):
     """Get project details with stats."""
-    project = await project_repo.get(project_id)
+    project = await project_repo.get_with_stats(project_id)
     if not project:
         raise HTTPException(status_code=404, detail="Project not found")
     return project
