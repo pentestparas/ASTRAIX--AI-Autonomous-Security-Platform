@@ -5,19 +5,56 @@ Entry point for the FastAPI application.
 """
 
 from contextlib import asynccontextmanager
+from datetime import datetime, timedelta, timezone
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import ORJSONResponse
+from sqlalchemy import select, update
 
 from app.config import get_settings
 from app.api.v1 import api_router
 from app.core.logging import get_logger, setup_logging
-from app.database.session import init_db, close_db
+from app.database.session import init_db, close_db, async_session_maker
+from app.domain.models.assessment import Assessment
 from app.plugins import get_plugin_registry
 
 settings = get_settings()
 setup_logging()
 logger = get_logger(__name__)
+
+
+async def _recover_orphaned_assessments():
+    """Mark running assessments orphaned by a service restart as failed."""
+    try:
+        cutoff = datetime.now(timezone.utc) - timedelta(minutes=2)
+        async with async_session_maker() as session:
+            orphaned = (
+                await session.execute(
+                    select(Assessment.id).where(
+                        Assessment.status == "running",
+                        Assessment.started_at.isnot(None),
+                        Assessment.started_at < cutoff,
+                    )
+                )
+            ).scalars().all()
+            if orphaned:
+                await session.execute(
+                    update(Assessment)
+                    .where(Assessment.id.in_(orphaned))
+                    .values(
+                        status="failed",
+                        error="Interrupted by service restart",
+                        completed_at=datetime.now(timezone.utc),
+                    )
+                )
+                await session.commit()
+                logger.warning(
+                    "assessments.orphaned_recovered",
+                    count=len(orphaned),
+                    ids=[str(i) for i in orphaned],
+                )
+    except Exception as exc:
+        logger.warning("assessments.orphan_recovery_failed", error=str(exc))
 
 
 @asynccontextmanager
@@ -40,6 +77,9 @@ async def lifespan(app: FastAPI):
     # Initialize database
     await init_db()
     logger.info("database.initialized")
+
+    # Recover assessments orphaned by a previous process exit
+    await _recover_orphaned_assessments()
 
     yield
 
