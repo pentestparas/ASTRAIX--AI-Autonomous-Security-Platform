@@ -84,17 +84,14 @@ async def run_scan(
         except ValueError:
             raise HTTPException(status_code=400, detail="Invalid client_scan_id format")
 
-    result = await orchestrator.analyze_and_scan(
-        target=request.target,
-        scan_type=request.scan_type,
-        scan_id=scan_id,
-    )
-
-    insights = orchestrator.generate_insights(result)
-
+    # --- Persist Assessment row at START (status running) so the scan shows up
+    # --- under its project immediately and survives page navigation. ----------
     assessment_id = None
     org_id = None
     proj_id = None
+    asset_uuid = None
+    assessment_uuid = None
+    persisted = False
 
     if request.organization_id and request.project_id:
         try:
@@ -102,7 +99,13 @@ async def run_scan(
             proj_id = request.project_id
 
             asset_uuid = uuid4()
-            assessment_uuid = uuid4()
+            if scan_id:
+                try:
+                    assessment_uuid = UUID(scan_id)
+                except ValueError:
+                    assessment_uuid = uuid4()
+            else:
+                assessment_uuid = uuid4()
 
             existing_asset = await session.execute(
                 select(Asset).where(
@@ -133,25 +136,73 @@ async def run_scan(
                 organization_id=str(org_id),
                 project_id=str(proj_id),
                 asset_id=str(asset_uuid),
-                status=result.status,
+                status="running",
                 type="vapt",
                 config={"scan_type": request.scan_type, "tools": request.tools},
-                started_at=result.started_at,
-                completed_at=result.completed_at,
-                findings_count=len(result.findings),
+                started_at=datetime.utcnow(),
+                findings_count=0,
             )
             session.add(assessment)
+            await session.commit()
+            assessment_id = str(assessment_uuid)
+            persisted = True
+            logger.info(f"VAPT scan persisted as running: {assessment_id}")
+        except Exception as e:
+            logger.error(f"Failed to persist VAPT scan start: {e}")
+            await session.rollback()
+            assessment_id = None
+            persisted = False
 
+    try:
+        result = await orchestrator.analyze_and_scan(
+            target=request.target,
+            scan_type=request.scan_type,
+            scan_id=scan_id,
+        )
+    except Exception as e:
+        logger.error(f"VAPT scan failed: {e}")
+        if persisted and assessment_id:
+            try:
+                assessment = await session.get(Assessment, assessment_id)
+                if assessment:
+                    assessment.status = "failed"
+                    assessment.error = str(e)[:500]
+                    assessment.completed_at = datetime.utcnow()
+                    await session.commit()
+            except Exception:
+                await session.rollback()
+        raise
+
+    insights = orchestrator.generate_insights(result)
+
+    if persisted and assessment_id:
+        try:
+            assessment = await session.get(Assessment, assessment_id)
+            if assessment:
+                assessment.status = result.status
+                assessment.started_at = result.started_at
+                assessment.completed_at = result.completed_at
+                assessment.findings_count = len(result.findings)
+                cfg = dict(assessment.config or {})
+                cfg["insights"] = insights
+                cfg["tool_results"] = result.tool_results
+                assessment.config = cfg
+
+            seen_fingerprints: set[str] = set()
             for finding in result.findings:
-                fingerprint = f"{finding.title}:{request.target}:{finding.severity.value}"
+                fingerprint = f"{finding.title}:{request.target}:{finding.severity.value}"[:64]
+                if fingerprint in seen_fingerprints:
+                    continue
 
                 existing_finding = await session.execute(
-                    select(Finding).where(Finding.fingerprint == fingerprint[:64]).limit(1)
+                    select(Finding).where(Finding.fingerprint == fingerprint).limit(1)
                 )
                 existing_finding = existing_finding.scalar_one_or_none()
                 if existing_finding:
+                    seen_fingerprints.add(fingerprint)
                     continue
 
+                seen_fingerprints.add(fingerprint)
                 domain_finding = Finding(
                     id=str(uuid4()),
                     organization_id=str(org_id),
@@ -166,19 +217,59 @@ async def run_scan(
                     cvss_score=finding.cvss_score,
                     remediation=finding.remediation or "",
                     reference=finding.reference or "",
-                    fingerprint=fingerprint[:64],
+                    fingerprint=fingerprint,
                     status="open",
                     created_at=datetime.utcnow(),
                     updated_at=datetime.utcnow(),
                 )
                 session.add(domain_finding)
 
-            await session.commit()
-            assessment_id = str(assessment_uuid)
-            logger.info(f"VAPT scan persisted: {assessment_id}")
+            try:
+                await session.commit()
+            except IntegrityError:
+                # Duplicate fingerprint slipped through (e.g. pending rows not
+                # visible to SELECT) - insert findings one by one, skipping
+                # rows that already exist, and persist the rest.
+                await session.rollback()
+                assessment = await session.get(Assessment, assessment_id)
+                if assessment:
+                    assessment.status = result.status
+                    assessment.started_at = result.started_at
+                    assessment.completed_at = result.completed_at
+                    assessment.findings_count = len(result.findings)
+                    assessment.config = dict(assessment.config or {})
+                for finding in result.findings:
+                    fingerprint = f"{finding.title}:{request.target}:{finding.severity.value}"[:64]
+                    existing_finding = await session.execute(
+                        select(Finding).where(Finding.fingerprint == fingerprint).limit(1)
+                    )
+                    if existing_finding.scalar_one_or_none():
+                        continue
+                    session.add(Finding(
+                        id=str(uuid4()),
+                        organization_id=str(org_id),
+                        project_id=str(proj_id),
+                        asset_id=str(asset_uuid),
+                        assessment_id=str(assessment_uuid),
+                        plugin_id=f"vapt/{finding.tool_name}",
+                        severity=finding.severity.value,
+                        title=finding.title,
+                        description=finding.description,
+                        details=finding.details or {},
+                        cvss_score=finding.cvss_score,
+                        remediation=finding.remediation or "",
+                        reference=finding.reference or "",
+                        fingerprint=fingerprint,
+                        status="open",
+                        created_at=datetime.utcnow(),
+                        updated_at=datetime.utcnow(),
+                    ))
+                    await session.commit()
+                    await session.rollback()
+            logger.info(f"VAPT scan completed and persisted: {assessment_id}")
 
         except Exception as e:
-            logger.error(f"Failed to persist VAPT scan: {e}")
+            logger.error(f"Failed to persist VAPT scan completion: {e}")
             await session.rollback()
 
     return ScanResponse(
@@ -259,11 +350,13 @@ async def get_assessment(assessment_id: UUID, session: AsyncSession = Depends(ge
     """Get assessment details with findings."""
     from app.repositories import assessment_repo, finding_repo
 
-    assessment = await assessment_repo.get(session, assessment_id)
+    assessment_id_str = str(assessment_id)
+    assessment = await assessment_repo.get(session, assessment_id_str)
     if not assessment:
         raise HTTPException(status_code=404, detail="Assessment not found")
 
-    findings = await finding_repo.list(session, assessment_id=assessment_id)
+    findings = await finding_repo.list(session, assessment_id=assessment_id_str)
+    config = assessment.config or {}
     return {
         "assessment": {
             "id": str(assessment.id),
@@ -272,6 +365,10 @@ async def get_assessment(assessment_id: UUID, session: AsyncSession = Depends(ge
             "findings_count": assessment.findings_count,
             "started_at": assessment.started_at.isoformat() if assessment.started_at else None,
             "completed_at": assessment.completed_at.isoformat() if assessment.completed_at else None,
+            "error": assessment.error,
+            "insights": config.get("insights"),
+            "tool_results": config.get("tool_results"),
+            "scan_type": config.get("scan_type"),
         },
         "findings": [
             {
@@ -280,6 +377,10 @@ async def get_assessment(assessment_id: UUID, session: AsyncSession = Depends(ge
                 "severity": f.severity,
                 "status": f.status,
                 "description": f.description,
+                "cvss_score": f.cvss_score,
+                "remediation": f.remediation,
+                "cve": (f.details or {}).get("cve"),
+                "cwe": (f.details or {}).get("cwe"),
             }
             for f in findings
         ],

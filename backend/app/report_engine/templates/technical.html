@@ -1,8 +1,9 @@
 {% extends "base.html" %}
 {% block content %}
 
-<h2>Executive Summary</h2>
-<p>{{ total_findings }} finding(s) identified during the assessment.</p>
+<h2>1. Executive Summary</h2>
+<p>During the {{ assessment_type }} assessment of <strong>{{ asset_name }}</strong> for <strong>{{ client_name }}</strong>,
+{{ total_findings }} finding(s) were identified. The severity distribution is shown below.</p>
 
 <div class="summary-cards">
   {% set counts = severity_counts %}
@@ -13,15 +14,25 @@
   <div class="card card-info"><div class="card-num">{{ counts.get("info", 0) }}</div><div class="card-label">Info</div></div>
 </div>
 
-<h2>Detailed Findings</h2>
+{% if top_risks %}
+<h3>Top Risks</h3>
+<table>
+  <tr><th>Asset</th><th>Risk Score</th></tr>
+  {% for r in top_risks %}
+  <tr><td>{{ r.asset }}</td><td>{{ "%.1f"|format(r.score) }}</td></tr>
+  {% endfor %}
+</table>
+{% endif %}
+
+<h2>2. Detailed Findings</h2>
 {% for f in findings %}
 <div class="finding" style="border-left-color: {{ '#dc2626' if f.severity == 'critical' else '#ea580c' if f.severity == 'high' else '#ca8a04' if f.severity == 'medium' else '#65a30d' if f.severity == 'low' else '#6b7280' }};">
-  <strong>{{ f.title }}</strong><br>
+  <strong>Finding {{ loop.index }}: {{ f.title }}</strong><br>
   <span class="badge severity-{{ f.severity }}">{{ f.severity | upper }}</span>
   {% if f.cvss %}&nbsp;CVSS: {{ "%.1f"|format(f.cvss) }}{% endif %}
   {% if f.risk_score %}&nbsp;Risk: {{ "%.1f"|format(f.risk_score) }}{% endif %}
   <p>{{ f.description }}</p>
-  {% if f.asset %}<p><strong>Asset:</strong> {{ f.asset }}</p>{% endif %}
+  {% if f.asset %}<p><strong>Affected Asset:</strong> {{ f.asset }}</p>{% endif %}
   {% if f.plugin %}<p><strong>Detected by:</strong> {{ f.plugin }}</p>{% endif %}
   {% if f.cwe %}<p><strong>CWE:</strong> {{ f.cwe | join(", ") }}</p>{% endif %}
   {% if f.cve %}<p><strong>CVE:</strong> {{ f.cve | join(", ") }}</p>{% endif %}
@@ -30,5 +41,10 @@
   {% endif %}
 </div>
 {% endfor %}
+
+<h2>3. Methodology</h2>
+<p>Assessment was executed with the AstraIX autonomous VAPT pipeline: recon (nmap), web analysis (nikto, gobuster, nuclei),
+and deep checks (sslscan) inside isolated Kali containers. Findings were normalized, scored by CVSS/risk engine,
+enriched via the cybersecurity knowledge base, and verified by re-exploitation.</p>
 
 {% endblock %}

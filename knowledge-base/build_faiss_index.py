@@ -33,7 +33,7 @@ def main():
     texts = [c["text"] for c in chunks]
     print(f"Generating embeddings (BAAI/bge-small-en-v1.5)...")
     model = TextEmbedding(model_name="BAAI/bge-small-en-v1.5")
-    embeddings_list = list(model.embed(texts, batch_size=64, parallel=0))
+    embeddings_list = list(model.embed(texts, batch_size=64, parallel=None))
     embeddings = np.array(embeddings_list, dtype=np.float32)
     print(f"Generated {len(embeddings)} embeddings, dim={embeddings.shape[1]}")
 

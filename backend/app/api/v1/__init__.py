@@ -1,5 +1,6 @@
 from fastapi import APIRouter, HTTPException, Depends
 from uuid import UUID
+from datetime import datetime
 from sqlalchemy.ext.asyncio import AsyncSession
 from app.database.session import get_session
 from app.schemas.base import ResponseSchema
@@ -54,6 +55,95 @@ async def get_dashboard_activity(organization_id: UUID = None, limit: int = 10):
     return []
 
 
+@api_router.get("/system/status")
+async def system_status():
+    """Real component health: postgres, redis, neo4j, docker/Kali, KB."""
+    from app.core.logging import get_logger
+    logger = get_logger(__name__)
+    components = {}
+
+    # Postgres
+    try:
+        from app.database.session import async_session_maker
+        from sqlalchemy import text
+        async with async_session_maker() as session:
+            await session.execute(text("SELECT 1"))
+        components["postgres"] = {"status": "operational", "details": "connected"}
+    except Exception as e:
+        components["postgres"] = {"status": "down", "details": str(e)[:200]}
+
+    # Redis
+    try:
+        from app.vapt.progress import get_progress_bus
+        bus = get_progress_bus()
+        if hasattr(bus, "_redis") and bus._redis is not None:
+            await bus._redis.ping()
+            components["redis"] = {"status": "operational", "details": "connected"}
+        else:
+            components["redis"] = {"status": "operational", "details": "in-memory fallback (no redis configured)"}
+    except Exception as e:
+        components["redis"] = {"status": "degraded", "details": str(e)[:200]}
+
+    # Neo4j knowledge graph
+    try:
+        from app.recon_orchestrator.graph_db import get_knowledge_graph
+        graph = get_knowledge_graph()
+        if graph._enabled:
+            components["neo4j"] = {"status": "operational", "details": "knowledge graph connected"}
+        else:
+            components["neo4j"] = {"status": "unavailable", "details": "knowledge graph disabled"}
+    except Exception as e:
+        components["neo4j"] = {"status": "unavailable", "details": str(e)[:200]}
+
+    # Docker + Kali image
+    try:
+        from app.vapt.tools import check_tool_availability
+        from app.vapt.executor import VAPTExecutor
+        import subprocess
+        availability = check_tool_availability()
+        image_check = subprocess.run(
+            ["docker", "image", "inspect", VAPTExecutor.KALI_IMAGE],
+            capture_output=True, timeout=10,
+        )
+        kali_ok = image_check.returncode == 0
+        components["docker"] = {
+            "status": "operational" if kali_ok or availability else "degraded",
+            "details": {
+                "kali_image_available": kali_ok,
+                "tools": {k: bool(v) for k, v in availability.items()},
+            },
+        }
+    except Exception as e:
+        components["docker"] = {"status": "down", "details": str(e)[:200]}
+
+    # Knowledge base
+    try:
+        from app.api.v1 import knowledge as kb_mod
+        if getattr(kb_mod, "_loaded", False) and kb_mod._kb is not None:
+            stats = kb_mod._kb.stats()
+            components["knowledge_base"] = {
+                "status": "operational",
+                "details": {
+                    "chunks": stats.get("total_chunks", stats.get("chunks", 0)),
+                    "sources": stats.get("total_sources", stats.get("sources", 0)),
+                    "vocab_size": stats.get("vocab_size", 0),
+                    "semantic_search": stats.get("semantic_search", False),
+                },
+            }
+        else:
+            components["knowledge_base"] = {"status": "unavailable", "details": "not loaded"}
+    except Exception as e:
+        components["knowledge_base"] = {"status": "unavailable", "details": str(e)[:200]}
+
+    all_ok = all(c.get("status") == "operational" for c in components.values())
+    return {
+        "success": True,
+        "status": "operational" if all_ok else "degraded",
+        "components": components,
+        "generated_at": datetime.utcnow().isoformat() + "Z",
+    }
+
+
 @api_router.get("/dashboard/stats")
 async def get_dashboard_stats(organization_id: UUID = None):
     """Get dashboard statistics for an organization."""
@@ -76,11 +166,22 @@ async def get_dashboard_stats(organization_id: UUID = None):
 
     try:
         from app.repositories import finding_repo, assessment_repo, asset_repo
+        from app.domain.models.organization import Project as ProjectModel
+        from app.domain.models.assessment import Assessment as AssessmentModel
+        from app.vapt.progress import get_progress_bus
+        from sqlalchemy import func, select
+        from datetime import datetime, timedelta
         from app.database.session import async_session_maker
         async with async_session_maker() as session:
             findings = await finding_repo.count(session, organization_id=str(organization_id))
             assessments = await assessment_repo.count(session, organization_id=str(organization_id))
             assets = await asset_repo.count(session, organization_id=str(organization_id))
+            projects = await session.execute(
+                select(func.count()).select_from(ProjectModel).where(
+                    ProjectModel.organization_id == str(organization_id)
+                )
+            )
+            total_projects = projects.scalar_one()
             critical = await finding_repo.count(session, organization_id=str(organization_id), severity="critical")
             high = await finding_repo.count(session, organization_id=str(organization_id), severity="high")
             medium = await finding_repo.count(session, organization_id=str(organization_id), severity="medium")
@@ -88,9 +189,24 @@ async def get_dashboard_stats(organization_id: UUID = None):
             open_f = await finding_repo.count(session, organization_id=str(organization_id), status="open")
             resolved = await finding_repo.count(session, organization_id=str(organization_id), status="resolved")
 
+            now = datetime.utcnow()
+            week_ago = now - timedelta(days=7)
+            month_ago = now - timedelta(days=30)
+            async def period_count(since):
+                return (await session.execute(
+                    select(func.count()).select_from(AssessmentModel).where(
+                        AssessmentModel.organization_id == str(organization_id),
+                        AssessmentModel.started_at >= since,
+                    )
+                )).scalar_one()
+            scans_week = await period_count(week_ago)
+            scans_month = await period_count(month_ago)
+
+            active_scans = len(await get_progress_bus().active_scans())
+
             return {
-                "total_projects": 0,
-                "active_scans": 0,
+                "total_projects": total_projects,
+                "active_scans": active_scans,
                 "critical_findings": critical,
                 "high_findings": high,
                 "medium_findings": medium,
@@ -99,8 +215,8 @@ async def get_dashboard_stats(organization_id: UUID = None):
                 "resolved_findings": resolved,
                 "assets_discovered": assets,
                 "total_findings": findings,
-                "scans_this_week": 0,
-                "scans_this_month": assessments,
+                "scans_this_week": scans_week,
+                "scans_this_month": scans_month,
             }
     except Exception:
         return base

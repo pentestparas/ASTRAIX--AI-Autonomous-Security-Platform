@@ -34,13 +34,40 @@ class VerifierAgent:
                 finding.details["verification"] = "Could not reproduce"
                 logger.info("Verifier: %s not reproducible on %s", finding.title, target)
             else:
+                finding.confidence = "confirmed"
                 finding.details["verification"] = "Confirmed via re-check"
                 logger.info("Verifier: %s confirmed on %s", finding.title, target)
+                kb_context = await self._kb_exploit_context(finding)
+                if kb_context:
+                    finding.details["kb_exploit_context"] = kb_context
         except Exception as e:
             finding.details["verification_error"] = str(e)
             logger.warning("Verifier: error checking %s: %s", finding.title, e)
 
         return finding
+
+    async def _kb_exploit_context(self, finding: VAPTFinding) -> Optional[str]:
+        """Best-effort lookup of exploitation/technique guidance in the
+        knowledge base for a confirmed finding. Non-blocking - never fails
+        the verification step."""
+        try:
+            import sys
+            from app.vapt.agents.planner import KB_PATH
+
+            if KB_PATH not in sys.path:
+                sys.path.insert(0, KB_PATH)
+            from search import get_knowledge_base
+
+            kb = get_knowledge_base()
+            query = f"{finding.title} {finding.tool_name} exploit technique CVE"
+            hits = kb.search(query, top_k=3)
+            if hits:
+                return " | ".join(
+                    str(h.get("source", "") or h.get("title", "")) for h in hits
+                )
+        except Exception:
+            pass
+        return None
 
     async def verify_findings(self, findings: List[VAPTFinding]) -> List[VAPTFinding]:
         """Verify findings concurrently (bounded) so long-running re-exploits

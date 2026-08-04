@@ -17,6 +17,8 @@ import type {
   ScanProgress,
   DashboardStats,
   RecentActivity,
+  SystemStatus,
+  VaptAssessmentDetail,
 } from "@/types";
 
 const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || "/api/v1";
@@ -188,6 +190,8 @@ export const vaptScanApi = {
       `/vapt/scan/${scanId}/progress`,
       { since }
     ),
+  detail: (assessmentId: string) =>
+    apiClient.get<VaptAssessmentDetail>(`/vapt/assessments/${assessmentId}`),
 };
 
 // --- Findings ---
@@ -250,6 +254,11 @@ export const dashboardApi = {
 export const healthApi = {
   check: () => apiClient.get<{ status: string; service: string; version: string }>("/health"),
   ready: () => apiClient.get<{ status: string }>("/ready"),
+};
+
+// --- System Status (real component checks) ---
+export const systemApi = {
+  status: () => apiClient.get<SystemStatus>("/system/status"),
 };
 
 // --- Attack Surface Graph ---

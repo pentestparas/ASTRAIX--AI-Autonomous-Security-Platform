@@ -273,6 +273,36 @@ export interface RecentActivity {
   metadata?: Record<string, unknown>;
 }
 
+// --- System Status ---
+
+export interface SystemComponent {
+  status: string;
+  details: unknown;
+}
+
+export interface SystemStatus {
+  success: boolean;
+  status: string;
+  components: {
+    postgres: SystemComponent;
+    redis: SystemComponent;
+    neo4j: SystemComponent;
+    docker: SystemComponent;
+    knowledge_base: SystemComponent;
+  };
+  generated_at: string;
+}
+
+export interface VaptAssessmentDetail {
+  assessment: Assessment & {
+    insights?: Record<string, unknown> | null;
+    tool_results?: Record<string, unknown> | null;
+    scan_type?: string | null;
+    error?: string | null;
+  };
+  findings: Finding[];
+}
+
 // --- Report Types ---
 
 export interface ReportTemplate {

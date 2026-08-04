@@ -1,8 +1,9 @@
 {% extends "base.html" %}
 {% block content %}
 
-<h2>Compliance Assessment Summary</h2>
-<p>{{ total_findings }} finding(s) identified during the compliance assessment.</p>
+<h2>1. Executive Summary</h2>
+<p>This compliance assessment of <strong>{{ asset_name }}</strong> for <strong>{{ client_name }}</strong>
+identified <strong>{{ total_findings }}</strong> finding(s) relevant to SOC 2, PCI DSS, and ISO 27001 control frameworks.</p>
 
 <div class="summary-cards">
   {% set counts = severity_counts %}
@@ -13,13 +14,23 @@
   <div class="card card-info"><div class="card-num">{{ counts.get("info", 0) }}</div><div class="card-label">Info</div></div>
 </div>
 
-<h2>Findings by Severity</h2>
+{% if top_risks %}
+<h3>Top Risks</h3>
+<table>
+  <tr><th>Asset</th><th>Risk Score</th></tr>
+  {% for r in top_risks %}
+  <tr><td>{{ r.asset }}</td><td>{{ "%.1f"|format(r.score) }}</td></tr>
+  {% endfor %}
+</table>
+{% endif %}
+
+<h2>2. Findings by Severity</h2>
 {% for severity_level in ["critical", "high", "medium", "low", "info"] %}
 {% set level_findings = findings | selectattr("severity", "equalto", severity_level) | list %}
 {% if level_findings %}
 <h3>{{ severity_level | upper }} ({{ level_findings | length }})</h3>
 <table>
-  <tr><th>ID</th><th>Title</th><th>Asset</th><th>CVSS</th><th>Status</th></tr>
+  <tr><th>ID</th><th>Title</th><th>Asset</th><th>CVSS</th><th>Severity</th></tr>
   {% for f in level_findings %}
   <tr>
     <td>{{ f.id | truncate(8, true, "") }}</td>
@@ -33,7 +44,73 @@
 {% endif %}
 {% endfor %}
 
-<h2>Remediation Plan</h2>
+<h2>3. Detailed Findings &amp; Control Mapping</h2>
+{% for f in findings %}
+<div class="finding" style="border-left-color: {{ '#dc2626' if f.severity == 'critical' else '#ea580c' if f.severity == 'high' else '#ca8a04' if f.severity == 'medium' else '#65a30d' if f.severity == 'low' else '#6b7280' }};">
+  <strong>Finding {{ loop.index }}: {{ f.title }}</strong><br>
+  <span class="badge severity-{{ f.severity }}">{{ f.severity | upper }}</span>
+  {% if f.cvss %}&nbsp;CVSS: {{ "%.1f"|format(f.cvss) }}{% endif %}
+  {% if f.risk_score %}&nbsp;Risk: {{ "%.1f"|format(f.risk_score) }}{% endif %}
+  <p>{{ f.description }}</p>
+  {% if f.asset %}<p><strong>Affected Asset:</strong> {{ f.asset }}</p>{% endif %}
+  {% if f.plugin %}<p><strong>Detected by:</strong> {{ f.plugin }}</p>{% endif %}
+  {% if f.cwe %}<p><strong>CWE:</strong> {{ f.cwe | join(", ") }}</p>{% endif %}
+  {% if f.cve %}<p><strong>CVE:</strong> {{ f.cve | join(", ") }}</p>{% endif %}
+  {% if f.remediation %}
+  <div class="remediation"><strong>Remediation:</strong> {{ f.remediation }}</div>
+  {% endif %}
+</div>
+{% endfor %}
+
+<h2>4. Compliance Control Mapping</h2>
+<h3>4.1 SOC 2 Trust Services Criteria</h3>
+<table>
+  <tr><th>Control</th><th>Description</th><th>Relevant Findings</th></tr>
+  {% for control in soc2_controls %}
+  <tr>
+    <td><strong>{{ control[0] }}</strong></td>
+    <td>{{ control[1] }}</td>
+    <td>
+      {% set matched = [] %}
+      {% for f in findings %}
+        {% if f.severity in ["critical", "high"] %}
+          {{ f.title }}{% if not loop.last %}; {% endif %}
+        {% endif %}
+      {% endfor %}
+    </td>
+  </tr>
+  {% endfor %}
+</table>
+
+<h3>4.2 ISO 27001 Annex A Controls</h3>
+<table>
+  <tr><th>Control</th><th>Description</th><th>Relevant Findings</th></tr>
+  {% for control in iso27001_controls %}
+  <tr>
+    <td><strong>{{ control[0] }}</strong></td>
+    <td>{{ control[1] }}</td>
+    <td>
+      {% set matched = [] %}
+      {% for f in findings %}
+        {% if f.severity in ["critical", "high"] %}
+          {{ f.title }}{% if not loop.last %}; {% endif %}
+        {% endif %}
+      {% endfor %}
+    </td>
+  </tr>
+  {% endfor %}
+</table>
+
+<h3>4.3 PCI DSS 4.0 Requirements</h3>
+<table>
+  <tr><th>Requirement</th><th>Area</th><th>Relevant Findings</th></tr>
+  <tr><td><strong>6.2</strong></td><td>Vulnerability management program</td><td>{% for f in findings %}{% if f.severity in ["critical", "high"] %}{{ f.title }}{% if not loop.last %}; {% endif %}{% endif %}{% endfor %}</td></tr>
+  <tr><td><strong>6.3</strong></td><td>Secure software development (OWASP)</td><td>{% for f in findings %}{% if f.plugin and f.plugin|lower in ["nuclei", "nikto", "sqlmap"] %}{{ f.title }}{% if not loop.last %}; {% endif %}{% endif %}{% endfor %}</td></tr>
+  <tr><td><strong>8.2</strong></td><td>Strong authentication</td><td>{% for f in findings %}{% if "auth" in f.title|lower or "login" in f.title|lower %}{{ f.title }}{% if not loop.last %}; {% endif %}{% endif %}{% endfor %}</td></tr>
+  <tr><td><strong>4.2</strong></td><td>Encryption of PAN in transit</td><td>{% for f in findings %}{% if "ssl" in f.title|lower or "tls" in f.title|lower or "cipher" in f.title|lower %}{{ f.title }}{% if not loop.last %}; {% endif %}{% endif %}{% endfor %}</td></tr>
+</table>
+
+<h2>5. Remediation Plan</h2>
 {% for f in findings %}
 {% if f.remediation %}
 <div class="finding" style="border-left-color: {{ '#dc2626' if f.severity == 'critical' else '#ea580c' if f.severity == 'high' else '#ca8a04' if f.severity == 'medium' else '#65a30d' if f.severity == 'low' else '#6b7280' }};">
@@ -44,7 +121,7 @@
 {% endfor %}
 
 {% if ai_comment %}
-<h2>AI Compliance Analysis</h2>
+<h2>6. AI Compliance Analysis</h2>
 <p>{{ ai_comment }}</p>
 {% endif %}
 

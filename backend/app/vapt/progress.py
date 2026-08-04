@@ -104,6 +104,45 @@ class ScanProgressBus:
                 logger.warning("Redis status read failed, using memory: %s", e)
         return self._memory_status.get(scan_id)
 
+    async def active_scans(self) -> List[Dict[str, Any]]:
+        """List scans that are still running (non-terminal status)."""
+        terminal = {"completed", "failed", "cancelled", "error", "scan_completed"}
+        scans: List[Dict[str, Any]] = []
+        if self._redis is not None:
+            try:
+                pattern = _STATUS_KEY_PREFIX.format(scan_id="*")
+                async for key in self._redis.scan_iter(match=pattern, count=100):
+                    data = await self._redis.hgetall(key)
+                    if not data:
+                        continue
+                    if data.get("status", "running") in terminal:
+                        continue
+                    parts = key.split(":")
+                    scan_id = parts[2] if len(parts) >= 3 else key
+                    scans.append({
+                        "scan_id": scan_id,
+                        "status": data.get("status", "running"),
+                        "ts": float(data.get("ts", 0) or 0),
+                        "last_active": float(data.get("last_active", 0) or 0),
+                        "target": data.get("target"),
+                        "scan_type": data.get("scan_type"),
+                    })
+                return scans
+            except Exception as e:
+                logger.warning("Redis active_scans failed, using memory: %s", e)
+        for scan_id, st in self._memory_status.items():
+            if st.get("status") in terminal:
+                continue
+            scans.append({
+                "scan_id": scan_id,
+                "status": st.get("status", "running"),
+                "ts": float(st.get("ts", 0) or 0),
+                "last_active": float(st.get("last_active", 0) or 0),
+                "target": st.get("target"),
+                "scan_type": st.get("scan_type"),
+            })
+        return scans
+
 
 _bus: Optional[ScanProgressBus] = None
 

@@ -24,6 +24,7 @@ import { formatDistanceToNow } from "date-fns";
 import { useEffect, useState } from "react";
 import { assessmentsApi } from "@/services/api";
 import type { Assessment } from "@/types";
+import { useActiveScansStore } from "@/store/activeScans";
 
 const statusConfig = {
   running: {
@@ -56,6 +57,7 @@ const statusConfig = {
 export function RecentAssessments() {
   const [assessments, setAssessments] = useState<Assessment[]>([]);
   const [loading, setLoading] = useState(true);
+  const runningScans = useActiveScansStore((s) => s.runningCount());
 
   useEffect(() => {
     async function load() {
@@ -76,7 +78,29 @@ export function RecentAssessments() {
       }
     }
     load();
-  }, []);
+  }, [runningScans]);
+
+  useEffect(() => {
+    if (runningScans === 0) return;
+    const id = window.setInterval(() => {
+      (async () => {
+        try {
+          const orgId = localStorage.getItem("organization_id");
+          const res = await assessmentsApi.list({
+            page: 1,
+            limit: 10,
+            organization_id: orgId ?? undefined,
+          });
+          if (res.success && res.data) {
+            setAssessments(res.data.items.slice(0, 5));
+          }
+        } catch {
+          // ignore transient errors
+        }
+      })();
+    }, 8000);
+    return () => window.clearInterval(id);
+  }, [runningScans]);
 
   return (
     <Card>

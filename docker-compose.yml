@@ -61,7 +61,10 @@ services:
     volumes:
       - ./backend:/app
       - ./plugins:/app/plugins
-      - ./knowledge-base:/app/knowledge-base
+      # Knowledge base lives in a Docker-managed named volume (seeded from the
+      # baked image copy on first boot), NOT on the host filesystem — so host
+      # antivirus / file sync cannot delete or quarantine it.
+      - kb-data:/app/knowledge-base
       - /var/run/docker.sock:/var/run/docker.sock
       - fastembed-cache:/root/.cache/fastembed
     ports:
@@ -140,9 +143,11 @@ volumes:
     driver: local
   redis_data:
     driver: local
-  neo4j_data:
-    driver: local
   fastembed-cache:
+    driver: local
+  kb-data:
+    driver: local
+  neo4j_data:
     driver: local
 
 networks:

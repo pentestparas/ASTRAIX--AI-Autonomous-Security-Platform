@@ -41,6 +41,8 @@
 - Docker socket mounted at `/var/run/docker.sock`
 - `VAPT_USE_DOCKER=true`, `VAPT_DEMO_MODE=false`
 - Kali image: `astraix-kali:latest` (NOT `kalilinux/kali-rolling:latest` which has zero tools)
+- **Knowledge base lives INSIDE Docker**: baked into the image at `/opt/astraix-kb` (via `COPY knowledge-base` in `docker/Dockerfile.backend`) and seeded on first boot by `docker/entrypoint.sh` into the named volume `kb-data` mounted at `/app/knowledge-base`. The host folder is NOT bind-mounted — host AV (Bitdefender) cannot delete/quarantine it. Seed condition: `/app/knowledge-base/embeddings/chunks.json` missing → reseed (edit sources inside the volume with `docker cp` or remove `kb-data` volume + restart to reseed from image).
+- Knowledge base is accessible over HTTP (no direct FS access needed): `GET /api/v1/knowledge/search?q=...`, `/knowledge/stats`, `/knowledge/sources`, `/knowledge/source?path=sources/...` (path-traversal safe). AI agents consume it: planner (`KB_PATH=/app/knowledge-base`, TF-IDF/FAISS grounding), researcher (enrichment), verifier (best-effort `kb_exploit_context` on confirmed findings).
 
 ## Known Issues (Fixed)
 

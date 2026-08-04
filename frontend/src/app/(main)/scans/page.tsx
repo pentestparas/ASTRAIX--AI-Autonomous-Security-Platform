@@ -73,6 +73,7 @@ import {
 } from "lucide-react";
 import { formatDistanceToNow } from "date-fns";
 import type { Project, ScanProgressEvent } from "@/types";
+import { useActiveScansStore } from "@/store/activeScans";
 
 interface PlanTool {
   id: string;
@@ -588,6 +589,9 @@ export default function ScansPage() {
   const [liveScanId, setLiveScanId] = useState<string | null>(null);
   const [liveRunning, setLiveRunning] = useState(false);
   const liveActiveRef = useRef(false);
+  const addScan = useActiveScansStore((s) => s.addScan);
+  const updateScan = useActiveScansStore((s) => s.updateScan);
+  const removeScan = useActiveScansStore((s) => s.removeScan);
 
   async function pollProgress(scanId: string) {
     let since = 0;
@@ -599,12 +603,16 @@ export default function ScansPage() {
           setLiveEvents((prev) => [...prev, ...events]);
           since = res?.total ?? since + events.length;
           if (events.some((e) => e.type === "scan_completed")) {
+            updateScan(scanId, { status: "completed" });
+            removeScan(scanId);
             liveActiveRef.current = false;
             return;
           }
         }
         const status = res?.status?.status;
         if (status && !["running", "pending", "queued", "planning"].includes(status)) {
+          if (status === "failed") updateScan(scanId, { status: "failed" });
+          removeScan(scanId);
           liveActiveRef.current = false;
           return;
         }
@@ -688,6 +696,19 @@ export default function ScansPage() {
     };
   }, []);
 
+  useEffect(() => {
+    const restored = useActiveScansStore.getState().scans;
+    const running = Object.values(restored).filter((s) => s.status === "running");
+    if (running.length === 0) return;
+    const first = running[0];
+    setLiveScanId(first.id);
+    setLiveRunning(true);
+    setTarget(first.target);
+    setScanType(first.scanType);
+    liveActiveRef.current = true;
+    void pollProgress(first.id);
+  }, []);
+
   function toggleScanType(typeId: string) {
     setSelectedScanTypes((prev) => {
       if (prev.includes(typeId)) {
@@ -725,6 +746,13 @@ export default function ScansPage() {
         setLiveScanId(scanId);
         setLiveRunning(true);
         liveActiveRef.current = true;
+        addScan({
+          id: scanId,
+          target: dialogTarget.trim(),
+          scanType: capabilityMap[scanTypeId] || "web_vapt",
+          startedAt: Date.now(),
+          status: "running",
+        });
         void pollProgress(scanId);
 
         try {
@@ -774,6 +802,13 @@ export default function ScansPage() {
     setLiveScanId(scanId);
     setLiveRunning(true);
     liveActiveRef.current = true;
+    addScan({
+      id: scanId,
+      target: target.trim(),
+      scanType,
+      startedAt: Date.now(),
+      status: "running",
+    });
     void pollProgress(scanId);
 
     try {

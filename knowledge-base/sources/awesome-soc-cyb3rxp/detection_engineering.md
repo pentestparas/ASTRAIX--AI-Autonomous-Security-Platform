@@ -1,0 +1,469 @@
+# SOC detection engineering
+
+This page deals with SOC detection engineering and management (detection use case creation, detection capabilities assessment, etc.)
+
+# ToC
+
+* [Must read](https://github.com/cyb3rxp/awesome-soc/blob/main/detection_engineering.md#must-read)
+* [Generic recommended approach](https://github.com/cyb3rxp/awesome-soc/blob/main/detection_engineering.md#generic-recommended-approach)
+* [PDCA applied to SOC](https://github.com/cyb3rxp/awesome-soc/blob/main/detection_engineering.md#pdca-being-applied-to-soc)
+* [How to feed the Plan phase (detection engineering)](https://github.com/cyb3rxp/awesome-soc/blob/main/detection_engineering.md#how-to-feed-the-plan-phase)
+* [Common detection use cases](https://github.com/cyb3rxp/awesome-soc/blob/main/detection_engineering.md#common-detection-use-cases)
+* [Everything-as-code](https://github.com/cyb3rxp/awesome-soc/blob/main/detection_engineering.md#everything-as-code)
+* [To go further](https://github.com/cyb3rxp/awesome-soc/blob/main/detection_engineering.md#to-go-further)
+
+
+# Must read
+
+## Threat statistics/trends 
+* MITRE, [top TTP for ransomwares](https://center-for-threat-informed-defense.github.io/top-attack-techniques/#/top-10-lists)
+* MITRE, [Top 25 CWE for 2025](https://www.securityweek.com/mitre-releases-2025-list-of-top-25-most-dangerous-software-vulnerabilities/)
+* RecordedFuture [2025 Cloud Threat hunting landscape](https://www.recordedfuture.com/research/2025-cloud-threat-hunting-defense-landscape)
+* Splunk, [Top 50 cybersecurity threats](https://www.splunk.com/en_us/pdfs/gated/ebooks/top-50-cybersecurity-threats.pdf)
+* Graylog, [Critical Windows events to monitor](https://graylog.org/post/critical-windows-event-ids-to-monitor/)
+* Known exploited vulnerabilities: 
+  * CISA [KEV catalog](https://www.cisa.gov/known-exploited-vulnerabilities-catalog)
+  * OWASP [Top 10 Web Application Security Risks](https://owasp.org/www-project-top-ten/)
+  * OWASP [top 10 for Agentic Applications](https://genai.owasp.org/resource/owasp-top-10-for-agentic-applications-for-2026/)
+* NIST [AI 800-4](https://nvlpubs.nist.gov/nistpubs/ai/NIST.AI.800-4.pdf): Challenges to the Monitoring of Deployed AI Systems
+* CyberSecurityForMe, [Microsoft Copilot Security vulnerabilities and countermeasures](https://cybersecurityforme.com/copilot-security-vulnerabilities-and-safety-measures-for-enterprises/)
+* My [recommended list of sources](https://github.com/cyb3rxp/awesome-soc/blob/main/watch.md)
+
+## SIEM rules publications
+  * [Clankerusecase (threat-led detection library)](https://clankerusecase.com/) — free, ATT&CK-mapped detections in Defender/Sentinel KQL, Sigma, Splunk SPL, Datadog, Falcon and CloudWatch, generated from public threat intel.
+  * [Sigma HQ (detection rules)](https://github.com/SigmaHQ/sigma/tree/master/rules) 
+  * Splunk [Detections (free detection rules for Splunk)](https://research.splunk.com/detections/)
+  * Splunk [Stories for Office 365](https://research.splunk.com/stories/office_365_collection_techniques/)
+  * [Michel De Crevoisier's Git](https://github.com/mdecrevoisier/SIGMA-detection-rules)
+  * [SOC Prime](https://socprime.com/)
+
+## SIEM standards
+* Yogosha, [SIGMA Rules: how to standardize detections for any SIEM](https://yogosha.com/blog/sigma-rules/)
+* UncoderIO, [RootA](https://github.com/UncoderIO/RootA)
+
+## Purple teaming activities
+* Group-IB, [Purple teaming](https://www.group-ib.com/services/purple-teaming/)
+* Ch33r10, [Enterprise purple teaming](https://github.com/ch33r10/EnterprisePurpleTeaming)
+
+## Detection engineering
+### Frameworks
+* MITRE [D3FEND](https://d3fend.mitre.org/)
+* MITRE [ATLAS](https://atlas.mitre.org/)
+* [CVE2CAPEC](https://github.com/Galeax/CVE2CAPEC)
+* MITRE [EMB3D](https://emb3d.mitre.org/assets/EMB3D_Paper_09-23-24.pdf) 
+* F. Roth, [Detection engineering cheat sheet](https://mobile.twitter.com/cyb3rops/status/1592879894396293121/photo/1)
+* Ke0xes, [Detection engineering framework](https://github.com/Ke0xes/Detection-Engineering-Framework)
+### Best practices
+* Medium, ['About detection engineering'](https://cyb3rops.medium.com/about-detection-engineering-44d39e0755f0)
+* NCSC, [Detection Practices](https://www.ncsc.gov.uk/collection/building-a-security-operations-centre/detection/detection-practices)
+* Intrinsec, ['Limitations of MITRE ATT&CK' (in FR)](https://www.intrinsec.com/pilotage-dun-soc-interets-et-limites-de-la-matrice-attck/)
+* PECB, [ISO 27001:2022, what are the changes?](https://pecb.com/past-webinars/isoiec-270012022--what-are-the-changes)
+### Security solutions watch
+* Tsale, [EDR telemetry](https://github.com/tsale/EDR-Telemetry)
+* MITRE [ATT&CK Evaluations: Enterprise, 2025](https://www.withsecure.com/en/about-us/achievements-certification/industry-recognitions/mitre-attck-enterprise-evaluations/)
+* Microsoft [Security Stack Mappings](https://center-for-threat-informed-defense.github.io/security-stack-mappings/Azure/README.html)
+* AWS [Security Stack Mappings](https://center-for-threat-informed-defense.github.io/security-stack-mappings/AWS/README.html)
+### Link to risk management
+* ANSSI, [EBIOS RM methodology](https://messervices.cyber.gouv.fr/guides/en-ebios-risk-manager-method)
+* LinkedIn, [Risk assessment with ISO 27005](https://www.linkedin.com/pulse/iso-27005-risk-management-aron-lange/?trackingId=oRjjiIdY9BNjne1ALRq02A%3D%3D)
+
+### Audit policy / forensics
+* OWASP, [logging cheat sheet](https://cheatsheetseries.owasp.org/cheatsheets/Logging_Cheat_Sheet.html)
+* Microsoft, [Monitoring Active Directory for signs of compromise](https://learn.microsoft.com/en-us/windows-server/identity/ad-ds/plan/security-best-practices/monitoring-active-directory-for-signs-of-compromise)
+* TheCloudTechnologist, [Microsoft 365 audit & logging](https://thecloudtechnologist.com/2021/10/15/everything-you-wanted-to-know-about-security-and-audit-logging-in-office-365/)
+* Michel de Crevoisier, [Mapping MITRE ATT&CK with Window Event Log IDs](https://www.socinvestigation.com/mapping-mitre-attck-with-window-event-log-ids/)
+* Mhtcht, [Windows DFIR artifacts collection mindmap](https://github.com/mthcht/awesome-lists/blob/a0d64850bb79902f3e3518489288eb0b62c5d9d8/Lists/CheatSheets/mthcht/windows_dfir_artifacts_collection_mindmap_high_resolution.jpg)
+* Picus Security [Active Directory Security Guide](https://www.picussecurity.com/hubfs/Threat%20Readiness%20-%20Active%20Directory%20Ebook%20-%20Q123/Picus-The-Complete-Active-Directory-Security-Handbook.pdf)
+* NXLog, [Windows event IDs for threat detection](https://nxlog.co/news-and-blog/posts/windows-event-ids-threat-detection)
+* Splunk, [Using Sysmon & Event Codes for Threat Hunting](https://www.splunk.com/en_us/blog/security/threat-hunting-sysmon-event-codes.html)
+* [EventLog Compendium](https://eventlog-compendium.streamlit.app/)
+* Michel de Crevoisier, [Microsoft Eventlog mindmap](https://github.com/mdecrevoisier/Microsoft-eventlog-mindmap)
+* RULER project, [forensics tracks of common security tools](https://ruler-project.github.io/)
+
+## IT best practices for SOC engineering
+* Atlassian, [CI/CD/CD](https://www.atlassian.com/continuous-delivery/principles/continuous-integration-vs-delivery-vs-deployment)
+
+## Offensive activity/tools watch
+* David J. Bianco, [Pyramid of pain](https://detect-respond.blogspot.com/2013/03/the-pyramid-of-pain.html)
+* DarkOperator, [Mimikatz missing manual](https://github.com/darkoperator/mimikatz-missing-manual)
+* Medium, [Named pipe impersonation abuse](https://bherunda.medium.com/hunting-named-pipe-token-impersonation-abuse-573dcca36ae0)
+* Synaktiv, [Azure Entra ID pentesting mindmap](https://github.com/synacktiv/Mindmaps?s=03)
+* Rootkit POC in Rust, [MemN0ps](https://github.com/memN0ps/rootkit-rs/?tab=readme-ov-file)
+* Enaqx, [Awesome Pentest](https://github.com/enaqx/awesome-pentest?tab=readme-ov-file)
+* Frank Heat, [OffSec Notes](https://github.com/frankheat/offsecnotes)
+* A Poc, [Red Team tools](https://github.com/A-poc/RedTeam-Tools)
+* HardSoftSecuirty, [Offensive Security Tools](https://github.com/hardsoftsecurity/Offensive-Security-Tools)
+* Syslifters, [OffSec tools](https://github.com/Syslifters/offsec-tools)
+* Technics [Unprotect.it](https://unprotect.it/techniques/)
+* VVSwift, [EDR killers list](https://github.com/vvswift/Bypass-Protection0x00)
+* Mandiant, [Net-NTLM v1 rainbow tables](https://cloud.google.com/blog/topics/threat-intelligence/net-ntlmv1-deprecation-rainbow-tables?hl=en)
+* Mandiant, [vSphere Brickstorm defender guide](https://cloud.google.com/blog/topics/threat-intelligence/vsphere-brickstorm-defender-guide?hl=en)
+* HackingArticles, [Windows Privilege Escalation SeTcbPrivilege](https://www.hackingarticles.in/windows-privilege-escalation-setcbprivilege/)
+* Moond4rk, [HackBrowserData](https://github.com/moond4rk/HackBrowserData)
+* CheckPoint, [Sandbox evasion techniques](https://evasions.checkpoint.com/src/Evasions/techniques/timing.html)
+* [LOLBAS](https://lolbas-project.github.io/): Living Off The Land Binaries, Scripts and Libraries
+* [GTFOBins](https://gtfobins.org/): curated list of Unix-like executables that can be used to bypass local security restrictions in misconfigured systems
+
+
+## Operating systems knowledge
+* List of the expected legit system services to be found on a Windows 10/11 box, [my Git page](https://github.com/cyb3rxp/awesome-soc/blob/main/legit_Windows_services.md)
+* Windows events documentation, [Ultimate Windows Security](https://www.ultimatewindowssecurity.com/securitylog/encyclopedia/event.aspx)
+
+# Generic recommended approach
+
+## PDCA multi-loop
+
+As per [Wikipedia](https://en.wikipedia.org/wiki/PDCA#/media/File:PDCA-Multi-Loop.png)
+![image](https://user-images.githubusercontent.com/16035152/197550801-47f57a99-8d3b-45b1-9c97-be4355a4d9f0.png)
+
+
+
+# PDCA being applied to SOC
+
+## Plan
+
+### Sensors:
+* Determine which sensors or endpoint/app logs, you miss in terms of detection capabilities.
+* Determine how to generate and ingest their logs in the SIEM.
+* Build a project agenda.
+
+### SIEM rules:
+* Determine which detection logic you miss, directly in the SIEM.
+* Build a project agenda (deployment).
+
+### Detection automation playbooks:
+* Determine which automation you miss, based on feedback from previous alerts and incidents handling.
+* Build a project agenda (deployment).
+
+### Response automation playbooks:
+* Determine which automation you miss, based on feedback from previous alerts and incidents handling.
+* Build a project agenda (deployment).
+
+### Documentation:
+* Double check which Standard Operating Procedures (SOP), and global processes, you may miss or need to update.
+
+## Do
+
+### Sensors:
+* Ingest the logs of the security sensor, or endpoint/app logs, that you previously identified.
+* Make sure your data ingestion is compliant with the datamodel you use.
+
+### SIEM rules:
+* Create the detection rules (SIEM searches) that match your previously identified needs.
+* Create the alert objects in the SIEM or SIRP, to contain the contents of the SIEM searches in case something is found.
+
+### Detection automation playbooks:
+* Implement the needed automation, first by drawing the process and procedures (my recommendation is to use [BPMN](https://www.bpmn.org/));
+* and then by implementing it in the SOA.
+
+### Response automation playbooks:
+* Implement the needed automation, first by drawing the process and procedures (my recommendation is to use [BPMN](https://www.bpmn.org/));
+* and then by implementing it in the SOA.
+
+### Handling procedure (SOP):
+* If it does not exist already, create the handling procedure for the newly created detection rule.
+  * My recommendation: take the french [CERT-SG IRM procedures](https://github.com/certsocietegenerale/IRM) as templates.
+
+
+## Check
+
+### Logs:
+* Make sure your data ingestion is compliant with the datamodel you use (or, at least, the SIEM one).
+* Make sure there is no data source (sensor/logs) that do not send their data to the SIEM/XDR with no validated reason.
+
+### Already existing use cases
+* If there are already existing detection use cases, double check those who never trigerred detection (or since a long time).
+* Double check the most verbose existing detection use cases, and try to fine tune them to lower the detection rate (if possible).
+
+### Handling procedures (SOP):
+* Make sure that the handling process and procedures are clear and working fine, for the tested alerts.
+
+### Automations:
+* Make sure that the automations capabilities to help in the **detection** phase, work as expected (ie.: observables enrichment in the SIRP with queries to the TIP).
+* Make sure that the automations capabilities to help in the **response** phase, work as expected (ie.: containment steps), by assessing it with [purpleteaming](https://github.com/cyb3rxp/awesome-soc/blob/main/soc_basics.md#what-is-purpleredblue-team).
+
+### SIEM rules [first run for the assessed detection capabilities]:
+* Test the detection logics with narrowed use cases (specific events, that are generated on demand).
+
+### SIEM rules [following runs for the assessed detection capabilities]:
+* Assess your detection capabilities with [purpleteaming](https://github.com/cyb3rxp/awesome-soc/blob/main/soc_basics.md#what-is-purpleredblue-team).
+* Report your results and findings in a purpose-built app like Vectr.
+
+### SIEM objects:
+* Assess the relevance and freshness of inclusion lists, aka whitelists (that are supposed to be synced with Git)
+* Assess the relevance and freshness of exclusion lists, aka blacklists (that are supposed to be synced with Git)
+* Assess the relevance and freshness of IOC lists (that are supposed to be synced with the TIP).
+* Assess the relevance and freshness of assets lists (that are supposed to be synced with Git), for instance groups, VIP/VOP, particular endpoints, etc.
+
+### AI/LLM embedded in cybersecurity solutions assessment
+* [CyberSecEval 4 is an extensive benchmark suite designed to assess the cybersecurity vulnerabilities and defensive capabilities of Large Language Models (LLMs)](https://github.com/meta-llama/PurpleLlama/tree/main/CybersecurityBenchmarks)
+
+## Act
+* Fix everything that was previously identified as not working, missing, or not matching your needs.
+
+
+# How to feed the "Plan" phase
+
+## Standard maturity and needs
+
+### Implement an XDR-like approach:
+
+* Leverage threat intel;
+* Leverage built-in detection capabilities of your security solutions/sensors;
+* Implement correlations between those security sensors alerts, within the SIEM.
+
+Here is a suggested global overview of it, through [Open-XDR approach of Stellar Cyber](https://stellarcyber.ai/platform/what-is-open-xdr/):
+
+![image](https://user-images.githubusercontent.com/16035152/206029068-f724cb5c-2d7e-4e7e-b260-7d16e5f7bfc8.png)
+
+
+### TTP detection priorities identification:
+* Use [MITRE Engenuity calculator](https://center-for-threat-informed-defense.github.io/top-attack-techniques/#/calculator):
+  * Calculate your top 10 TTP, based on your existing logging and detection capabilities.
+  * Focus on the [top TTP for ransomwares](https://center-for-threat-informed-defense.github.io/top-attack-techniques/#/top-10-lists): 
+    * T1486: Data Encrypted for Impact, T1490: Inhibit System Recovery, T1027: Obfuscated Files or Information, T1047: Windows Management Instrumentation, T1036: Masquerading, T1059: Command and Scripting Interpreter, T1562: Impair Defenses, T1112: Modify Registry, T1204: User Execution, T1055: Process Injection.
+* Leverage daily watch to maintain your knowledge about current most commonly used TTP:
+  * for instance: [Recorded Future 2021 top TTP report](https://www.recordedfuture.com/research/2021-malware-and-ttp-threat-landscape) and [Recorded Future H1 2025 Malware and vuln trends](https://www.recordedfuture.com/research/h1-2025-malware-and-vulnerability-trends): 
+    * T1486 (Data Encrypted for Impact), T1082 (System Information Discovery), T1055 (Process Injection), T1027 (Obfuscated Files or Information), T1005 (Data from Local System).
+  * and also [RecordedFuture 2025 Cloud Threat hunting landscape](https://www.recordedfuture.com/research/2025-cloud-threat-hunting-defense-landscape)
+
+### Leverage the native detection coverage of IT environments:
+
+* Refer to [Security Stack Mappings](https://github.com/center-for-threat-informed-defense/security-stack-mappings)
+  * for [AWS](https://mitre-attack.github.io/attack-navigator/#layerURL=https://center-for-threat-informed-defense.github.io/security-stack-mappings/AWS/layers/platform.json);
+  * for [Azure](https://mitre-attack.github.io/attack-navigator/#layerURL=https://center-for-threat-informed-defense.github.io/security-stack-mappings/Azure/layers/platform.json);
+  * for [GCP](https://mitre-attack.github.io/attack-navigator/#layerURL=https://center-for-threat-informed-defense.github.io/security-stack-mappings/AWS/layers/platform.json).
+
+### Leverage the documented detection coverage of security solutions:
+
+* Refer to [Security Stack Mappings](https://github.com/center-for-threat-informed-defense/security-stack-mappings)
+  * For instance, regarding Vectra: [Vectra's coverage of MITRE ATT&CK](https://docs.vectra.ai/reference/vectras-coverage-of-mitre-att-and-ck-and-d3fend).
+
+### Cyber watch:
+
+* SIEM rules publications to keep an eye on:
+  * [Sigma HQ (detection rules)](https://github.com/SigmaHQ/sigma/tree/master/rules).
+  * [Splunk Security Essentials (free detection rules for Splunk)](https://docs.splunksecurityessentials.com/content-detail/).
+  * [Elastic rules](https://github.com/elastic/detection-rules/tree/main/rules).
+  * [Michel De Crevoisier's Git](https://github.com/mdecrevoisier/SIGMA-detection-rules).
+  * [SOC Prime](https://socprime.com/).
+  * [ThreatHunterPLaybook](https://threathunterplaybook.com/hunts/windows/intro.html).
+  * [CAR](https://car.mitre.org/analytics/), MITRE Cyber Analytics Repository.
+  * [Elastic prebuilt rules](https://www.elastic.co/guide/en/security/current/prebuilt-rules.html).
+
+### Focus on top relevant vulnerabilities:
+* Vulnerabilities that are confirmed commonly exploited in the wild (see [CISA KEV](https://www.cisa.gov/known-exploited-vulnerabilities-catalog));
+
+**AND** 
+
+- that are confirmed as valid (unpatched) within your organization.
+
+Then try to implement detection rules that are specific to those carefully selected 0days.
+
+My recommendation, still, is to make sure not to spend all your time running after latest 0days, as it is time consuming and not that efficient in the end in terms of working SOC detection capabilities.
+
+
+## Advanced maturity and needs
+
+### Precisely define your needs and the SOC priorities:
+
+* Leverage a risk management-based approach, to determine:
+  * threat actors (if possible);
+  * critical assets;
+  * attack scenarios (somewhat, kill chains and TTP).
+
+### Risks identification and their treatment:
+
+* Here is a [simplified drawing](https://www.linkedin.com/pulse/iso-27005-risk-management-aron-lange/?trackingId=oRjjiIdY9BNjne1ALRq02A%3D%3D) of the global process, leveraging ISO 27005 approach:
+
+![image](https://user-images.githubusercontent.com/16035152/197557946-7bc27c7a-6aee-48f4-a013-2ac20d6b5c76.png)
+
+### Define risk prioritization as per BIA:
+
+* Here is a drawing of this approach, from NIST, leveraging a Business Impact Analysis to determine risk prioritization (from NIST IR 8286A, see [To Go Further / Must Read](https://github.com/cyb3rxp/awesome-soc/blob/main/detection_engineering.md#to-go-further)):
+
+ ![image](https://user-images.githubusercontent.com/16035152/204857046-198c1f10-cbd4-4e66-8407-6927ed2ffbbf.png)
+ 
+> The completion of the risk description column is composed of four activities that are detailed in NIST IR 8286A, Subsections 2.2.1 through 2.2.4. The activities include:
+> • Part A – Identification of the organization’s relevant assets and their valuation
+> • Part B – Determination of potential intentional/unintentional threats that might jeopardize the confidentiality, integrity, and availability of those assets
+> • Part C – Consideration of vulnerabilities or other predisposing conditions of assets that make a threat event possible
+> • Part D – High-level evaluation of the potential consequences if the threat source (part B) exploits the weakness (part C) against the organizational asset (part A)
+
+> Information learned while developing the loss scenarios helps to complete Part D of the risk scenario development, as depicted in Figure 4. By determining the various adverse impacts that might occur – whether by intentional attacks, natural events, or inadvertent errors – the enterprise will be able to support effective assessment, response, communications, and monitoring of information security risks. Notably, the goal is not to determine the probability that such a risk 
+could occur since that exercise is part of risk analysis. Rather, the analysis of business impact is to determine what the various effects might be in order to enable risk managers to decide how critical and sensitive a particular business system is. Similar considerations apply to cyber-physical systems and operational technologies. 
+> The risk management process relies on this foundation of asset categorization, enabling a tailored and cost-effective approach to balancing risk and reward. Business impact drives categorization (sometimes called asset classification), which drives risk identification, which will later inform risk response, risk monitoring, and communication.
+
+My recommendation is to follow the [EBIOS RM methodology](https://messervices.cyber.gouv.fr/guides/en-ebios-risk-manager-method), from French ANSSI. The fourth workshop will aim at defining the "offensive scenarios" that are relevant for the environment for which you are running the risk management methodology. Those offensive scenarios should be considered as TTP (even if they are not directly referenced in MITRE ATT&CK Enterprise matrix), to be monitored by the SOC.
+
+
+### Focus your SOC detection engineering taskforce on priorities:
+
+* Set as priority the detection of confirmed attack scenarios (and the corresponding TTP), as per risk management analysis.
+  
+
+
+# Common detection use cases
+On top of community SIEM rules, I wanted to highlight the following ones, that I consider as efficient based on experience. Threshold may need to be adapted to every context, obviously.
+
+## Detection logics
+
+### XDR-like detection logics:
+
+* Correlation between EDR alert and CASB alert for the same endpoint, per timeframe.
+* Correlation between EDR alert and CASB alert for the same user, per timeframe.
+* Correlation between EDR alert and NDR alert for the same endpoint, per timeframe.
+* Correlation between EDR alert and NDR alert for the same user per timeframe.
+* Correlation between EDR alert and proxy SaaS alert for the same endpoint, per timeframe.
+* Correlation between EDR alert and proxy SaaS alert for the same user, per timeframe.
+* Correlation between EDR alert and identity management (AD, AAD, etc.) alert for the same user, per timeframe.
+
+### Threat intel-based detections:
+
+* IOC match (C&C intel) on proxy SaaS logs, firewall logs, EDR logs (telemetry).
+* IOC match on outgoing blocked traffic (FW, proxy, CASB), potentially indicating C&C traffic.
+
+
+### Unblocked infection vector:
+* X EDR/antimalware detections for the same user, per timeframe (trying to detect an unblocked infection vector).
+  * for instance, X > 2.
+* X EDR/antimalware detections for the same workstation, per timeframe (trying to detect an unblocked infection vector).
+  * for instance, X > 2.
+* X EDR/antimalware detections for the same server, per timeframe (trying to detect an unblocked infection vector).
+  * for instance, X > 9 (NB: might need to be higher for file sharing servers).
+
+
+### Persistance or protection bypass capabilities of threat:
+* EDR/antimalware cleaning error.
+* EDR/antimalware detection during scheduled scan (meaning the threat has bypassed realtime protection).
+* A phishing URL has been clicked on before it was detected (Eg.: MS 365 Defender and ProofPoint UrlDefense offer this detection capability).
+
+### Successful vulnerability exploitation detection:
+* Correlation of firewall logs (outgoing traffic) and a list of IP addresses that are sources of detected attacks by WAF and NIDS;
+   * NB: this is most likely a hint that a vulnerability has successfully been exploited and there is a callback to an attacker's machine.
+
+### Impossible travel scenarios:
+* Same user authenticating within X min of timeframe, on two different endpoints (workstations/mobiles, not being located in the same place);
+   * for instance, X < 2min.
+* Same user (except admins, to begin with) authenticating on more than X endpoints (workstations/mobiles), per timeframe (eg.: 10 min);
+   * for instance, X > 2.
+* You may want to leverage "risky users" detections in Azure Entra ID.   
+ 
+### Successful bruteforce [MITRE T1110]:
+* Same user having X wrong passwords followed by successful authentication;
+  * for instance, X > 100
+  * See [this Splunk Webinar](https://on24static.akamaized.net/event/39/91/78/5/rt/1/documents/resourceList1669214675158/splunkwebinarslidesdetectiondeepdive1669214674061.pdf), page 38.
+
+### Password (or session cookie) compromised  [MITRE T1078]
+* X Failed MFA attempts after successfull authentication;
+  * for instance, X > 2.
+
+### Lateral movement [MITRE T1021.001]:
+* Multiple RDP servers to which an user connects over RDP for the first time;
+  * See [this Splunk Webinar](https://on24static.akamaized.net/event/39/91/78/5/rt/1/documents/resourceList1669214675158/splunkwebinarslidesdetectiondeepdive1669214674061.pdf),  page 33.
+
+### C&C activity [MITRE T1071.004]:
+* C2 beaconing over DNS:
+  * See [this Splunk article](https://lantern.splunk.com/Security/Use_Cases/Threat_Hunting/Monitoring_a_network_for_DNS_exfiltration/Signs_of_beaconing_activity), and [this one](https://www.splunk.com/en_us/blog/security/hunting-your-dns-dragons.html);
+  * See [this blog article](http://findingbad.blogspot.com/2018/03/c2-hunting.html);
+  * See [this presentation](http://web.archive.org/web/20240704124951/https://www.x33fcon.com/archive/2019/slides/x33fcon19_Hunting_Beacons_Bartek.pdf), hypothesis #2.
+
+### Newly accessed domains:
+* Typically landing page for infection, or C&C;
+  * See [this Splunk article](https://www.splunk.com/en_us/blog/security/finding-new-evil-detecting-new-domains-with-splunk.html) 
+  * NB: you may want to query all of the query results onto your TIP, leveraging automation capabilities (SOA). Thus, you will prioritize the handling of those network traffic logs.
+
+### Potential information leak:
+* Detect abnormal traffic peaks, within the outgoing traffic logs (FW, proxies):
+  * See [this Splunk presentation](https://conf.splunk.com/files/2022/slides/SEC1428B.pdf)
+* Detect sensitive (PII, passwords, etc.) shared with anybody on cloud services:
+  * With [Cyera DSPM](https://www.cyera.com/platform/dspm) on Google workspace or Microsoft 365 :
+    * leverage the generated issues named "Publicly shared sensitive Google Drive files" or "Publicly shared sensitive Microsoft 365 files":
+      * confirm, based on filename/filepath, that the detection seems to be consistent with file properties (eg. filename being "health_data.gdoc"), to qualify the alert as an incident;
+      * if not possible to qualify the alert based on filename/filepath, then that will be up to relevant business/production managers to confirm the detection.
+    * leverage the generated issues named "Credentials in plain text":
+      * confirm, based on filename/filepath, that the detection seems to be consistent with file properties (eg. filename being "passwords.gsheet"),, to qualify the alert as an incident;
+      * if not possible to qualify the alert based on filename/filepath, then that will be up to relevant business/production managers to confirm the detection.
+
+
+### Obfuscated script [MITRE T1027, T1059]:
+* Typically obfuscated PowerShell with base64;
+  * See [the Splunk's Git](https://github.com/splunk/security_content/blob/develop/detections/endpoint/powershell_fileless_script_contains_base64_encoded_content.yml)
+  * If you wanna go further, see [this Splunk article](https://www.splunk.com/en_us/blog/security/hunting-for-malicious-powershell-using-script-block-logging.html)
+
+
+## Advanced detection logics
+
+### Athentications attempts from known threat actor  [MITRE TA0001]
+* Detect VPN / Entra ID, etc. authentication attempts from IP addresses that are known to be malicious and associated to a defined threat actor;
+  * Correlate authentication logs with curated and up-to-date threat intel (IOC).
+
+### Named pipe abuse
+* Detect anonymous named pipe
+  * See: [WithSecure's article about Cobalt Strike and named pipes](https://labs.withsecure.com/publications/detecting-cobalt-strike-default-modules-via-named-pipe-analysis)
+
+### Legitimate process abuse (code injection / hollowing)
+* Detect abnormal execution parameters of legit binaries (you may want to double check with their MD5/SHA1 hash, as well as their execution path)
+  * rundll32.exe running without any parameter in the command line (while we should see the DLL and the function to be instanciated, in the arguments)
+* Detect abnormal network trafic of system components
+  * explorer.exe connecting to public IP addresses (that do not belong to the organisation's IT env).
+
+### Legitimate process abuse (copycats)
+* Detect suspicious execution of an executable with a legit name, but that sits in %temp% or %programdata% instead of "c:\program files" or "C:\program files (x86)\"
+  * ex : c:\programdata\chrome.exe
+
+## Augmenting detection with automation
+ 
+See [threat intel page](https://github.com/cyb3rxp/awesome-soc/blob/main/threat_intelligence.md)
+
+
+# Everything-as-code (DevSecOps)
+
+The idea here is to follow the 'as-code' approach, wherever possible, with a central repository as a versioning system and source of truth. This, in order to achieve automation, quality controls, resilience (restore previous version in case something breaks), R&D with PDCA, etc. For instance, based on experience, this is applicable to SIEM rules, SOA playbooks, SOP, etc. 
+
+## Required tools
+* My recommendation: [GitLab](https://about.gitlab.com/) (or equivalent)
+* KQLab [Self-hosted KQL/SPL/ELK query manager for SOC teams](https://github.com/vinsk0h/KQLab)
+
+## Detection-as-code
+* Implement CI/CD/CD between the SIEM rules and an internal Git repository;
+  * My recommendation: use YAML to declare and store your SIEM rules.
+  * See [example](https://www.tines.com/blog/automating-detection-as-code) here with Elastic and Git
+![image](https://user-images.githubusercontent.com/16035152/202756061-2a9d4cc8-ffb9-4e44-a38a-08774af22483.png)
+* Implement CI/CD/CD between the SIEM apps and an internal Git repository.
+* Implement CI/CD/CD between the SIEM objects templates (if any) and an internal Git repository.
+* Implement CI/CD between the audit policies (e.g.: Sysmon XML files, Linux AuditD conf, ...) and an internal Git repository.
+
+## Response-as-code
+* Implement CI/CD/CD between the SOA and an internal Git repository, for the playbooks;
+  * Store the playbooks on the Git repo.
+  * Version them thanks to Git (test / preprod / prod / disabled).
+  * Deploy them from the Git, as a point of reference, onto the SOA.
+
+## SOP-as-code
+* Implement CI/CD/CD between the SOP (Standard Operating Procedures) hosted on a Wiki (or equivalent) and and internal Git repository;
+  * My recommendation, to host the documentation and SOP: [GitLab Docs](https://gitlab.com/gitlab-org/gitlab-docs).
+
+
+# To go further
+
+## Must read
+
+* SANS, [Purple teaming threat informed detection engineering](https://www.sans.org/blog/purple-teaming-threat-informed-detection-engineering)
+* InfosecB, [Awesome Detection Engineering](https://github.com/infosecB/awesome-detection-engineering)
+* 0xsyr0, [Awesome Cybersecurity handbook: SIEM](https://github.com/0xsyr0/Awesome-Cybersecurity-Handbooks/blob/main/handbooks/siem.md)
+* [MAGMA](https://www.betaalvereniging.nl/wp-content/uploads/FI-ISAC-use-case-framework-verkorte-versie.pdf), use case management framework.
+* Palantir, [ADS Framework](https://github.com/palantir/alerting-detection-strategy-framework), Alerting and Detection Strategies framework.
+* Naksyn, [Operating into EDRs blindspot](https://www.naksyn.com/edr%20evasion/2022/09/01/operating-into-EDRs-blindspot.html)
+* Splunk, [Detection Deep dive](https://on24static.akamaized.net/event/39/91/78/5/rt/1/documents/resourceList1669214675158/splunkwebinarslidesdetectiondeepdive1669214674061.pdf).
+* NIST, [IR 8286D: BIA and Risk Prioritization](https://nvlpubs.nist.gov/nistpubs/ir/2022/NIST.IR.8286D.pdf)
+* BrightTalk/Lacework, [CSPM comparison](https://www.brighttalk.com/webcast/18905/540127?player-preauth=xF5kcx%2FJ1zQGynPog7QyfHEnVg7fUDuwzbjCLWvJ75U%3D&utm_source=brighttalk-promoted&utm_medium=email&utm_term=Audience579476&utm_campaign=AUD-14239&utm_content=2023-05-17)
+* Synaktiv, [Traces of Windows Remote Command Execution](https://www.synacktiv.com/en/publications/traces-of-windows-remote-command-execution.html)
+* Mthcht, [Detection of C2 hiding in legit API services](https://github.com/mthcht/Purpleteam/blob/main/Detection/Threat%20Hunting/generic/C2_abusing_API_services.md)
+* Soteria-Security, [365Inspect](https://github.com/soteria-security/365Inspect)
+* Quest, [9 best practices to improve AD security](https://www.quest.com/docs/nine-best-practices-to-improve-active-directory-security-and-cyber-resilience-ebook-25678.pdf)
+* Politoinc, [LDAP queries for offensive and defensive OPS](https://www.politoinc.com/post/ldap-queries-for-offensive-and-defensive-operations)
+ 
+# End
+Go to [main page](https://github.com/cyb3rxp/awesome-soc/blob/main/README.md).
+

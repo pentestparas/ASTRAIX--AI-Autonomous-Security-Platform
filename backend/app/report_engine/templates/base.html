@@ -31,6 +31,18 @@
   h3 { font-size: 12pt; color: #2c5282; margin-top: 16px; margin-bottom: 8px; }
   p { margin-bottom: 8px; }
   .meta { color: #666; font-size: 10pt; margin-bottom: 20px; }
+  .cover {
+    text-align: center;
+    padding: 60px 20px 40px;
+    border-bottom: 3px solid #1a3a5c;
+    margin-bottom: 24px;
+  }
+  .cover .doc-type {
+    font-size: 11pt; letter-spacing: 2px; text-transform: uppercase;
+    color: #2c5282; margin-bottom: 16px;
+  }
+  .cover h1 { font-size: 26pt; margin-bottom: 6px; }
+  .cover .sub { color: #666; font-size: 12pt; }
   table {
     width: 100%; border-collapse: collapse;
     margin: 12px 0; font-size: 10pt;
@@ -60,16 +72,43 @@
   .card-label { font-size: 9pt; opacity: 0.9; }
   .finding { margin: 12px 0; padding: 10px; border-left: 4px solid #cbd5e1; background: #f8fafc; border-radius: 0 4px 4px 0; }
   .remediation { margin-top: 8px; padding: 8px; background: #f0fdf4; border: 1px solid #bbf7d0; border-radius: 4px; font-size: 10pt; }
+  .control-tag {
+    display: inline-block; padding: 1px 6px; margin: 1px 2px;
+    border: 1px solid #cbd5e1; border-radius: 3px;
+    background: #f1f5f9; font-size: 8.5pt; color: #334155;
+  }
   .footer { margin-top: 40px; padding-top: 12px; border-top: 1px solid #e0e7ef; font-size: 9pt; color: #666; }
 </style>
 </head>
 <body>
+  {% if template_name == "compliance" or template_name == "technical" %}
+  <div class="cover">
+    <div class="doc-type">Confidential — Vulnerability Assessment &amp; Penetration Testing Report</div>
+    <h1>{{ client_name }}</h1>
+    <p class="sub">{{ asset_name }} — {{ assessment_type }} Assessment</p>
+    <p class="meta">Report Date: {{ report_date }} · Engagement {{ engagement_ref }} · v{{ report_version }}</p>
+  </div>
+  <table>
+    <tr><th>Document Details</th><th>Value</th></tr>
+    <tr><td>Client</td><td>{{ client_name }}</td></tr>
+    <tr><td>Asset / Scope</td><td>{{ asset_name }}</td></tr>
+    <tr><td>Assessment Type</td><td>{{ assessment_type }}</td></tr>
+    <tr><td>Environment</td><td>{{ environment }}</td></tr>
+    <tr><td>Assessment Start</td><td>{{ started_at }}</td></tr>
+    <tr><td>Assessment End</td><td>{{ completed_at }}</td></tr>
+    <tr><td>Report Date</td><td>{{ report_date }}</td></tr>
+    <tr><td>Engagement Ref</td><td>{{ engagement_ref }}</td></tr>
+    <tr><td>Version</td><td>{{ report_version }}</td></tr>
+  </table>
+  <p class="meta">This document contains confidential and proprietary information. Neither this document nor the information herein shall be copied, used, or disclosed to any third party without written permission.</p>
+  {% else %}
   <h1>{{ title }}</h1>
   <div class="meta">
     <strong>Assessment:</strong> {{ assessment_id }}<br>
     <strong>Generated:</strong> {{ generated_at }}<br>
     <strong>Template:</strong> {{ template_name }}
   </div>
+  {% endif %}
 
   {% block content %}{% endblock %}
 

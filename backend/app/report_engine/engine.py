@@ -96,6 +96,8 @@ class Jinja2ReportEngine:
             if s.kind == "ai_comment":
                 ai_comment = s.body
 
+        extras = request.extras or {}
+
         ctx = {
             "title": f"{request.template.id}@{request.template.version}",
             "assessment_id": request.correlation_id,
@@ -105,6 +107,18 @@ class Jinja2ReportEngine:
             "severity_counts": severity_counts,
             "top_risks": risky[:5],
             "ai_comment": ai_comment,
+            "client_name": extras.get("client_name", "AstraIX Client"),
+            "asset_name": extras.get("asset_name", "Unknown Asset"),
+            "assessment_type": extras.get("assessment_type", "VAPT"),
+            "assessment_status": extras.get("assessment_status", ""),
+            "started_at": extras.get("started_at", ""),
+            "completed_at": extras.get("completed_at", ""),
+            "report_date": extras.get("report_date", ""),
+            "report_version": extras.get("report_version", "1.0"),
+            "engagement_ref": extras.get("engagement_ref", ""),
+            "environment": extras.get("environment", "Production"),
+            "soc2_controls": extras.get("soc2_controls", []),
+            "iso27001_controls": extras.get("iso27001_controls", []),
             "findings": [
                 {
                     "id": str(f.id),
@@ -116,8 +130,8 @@ class Jinja2ReportEngine:
                     "plugin": f.plugin,
                     "cvss": f.cvss,
                     "risk_score": f.risk_score,
-                    "cwe": f.cwe,
-                    "cve": f.cve,
+                    "cwe": f.cwe or [],
+                    "cve": f.cve or [],
                     "confidence": f.confidence,
                 }
                 for f in request.findings
