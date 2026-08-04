@@ -7,6 +7,8 @@ from app.core.logging import get_logger
 logger = get_logger(__name__)
 
 NEO4J_URI = os.environ.get("NEO4J_URI", "bolt://neo4j:7687")
+NEO4J_USER = os.environ.get("NEO4J_USER", "neo4j")
+NEO4J_PASSWORD = os.environ.get("NEO4J_PASSWORD", "")
 
 _graph_data_cache: dict = {}
 
@@ -24,7 +26,10 @@ class KnowledgeGraph:
     def _init(self) -> None:
         try:
             from neo4j import AsyncGraphDatabase
-            self._driver = AsyncGraphDatabase.driver(NEO4J_URI)
+            auth = None
+            if NEO4J_PASSWORD:
+                auth = (NEO4J_USER, NEO4J_PASSWORD)
+            self._driver = AsyncGraphDatabase.driver(NEO4J_URI, auth=auth)
             self._enabled = True
             logger.info("KnowledgeGraph connected to %s", NEO4J_URI)
         except Exception as exc:

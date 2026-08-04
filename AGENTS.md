@@ -72,6 +72,15 @@ Multi-agent pipeline:
 
 ## Environment Variables
 
+> **Secrets policy**: Never hardcode secrets. Real values live only in the
+> gitignored `.env` (compose reads it automatically). `.env.example` is the
+> tracked template — keep secrets blank there. Generate keys with
+> `openssl rand -hex 32` (SECRET_KEY) or `openssl rand -base64 24` (passwords).
+> Git credentials are stored via `git credential-helper osxkeychain` (no
+> tokens in remote URLs / `.git/config`). GitHub Push Protection is enforced
+> on this repo — a blocked push means a real secret is in the diff; find it
+> before retrying.
+
 | Variable | Value | Notes |
 |----------|-------|-------|
 | `VAPT_USE_DOCKER` | `true` | Real Docker exec (not demo mode) |
