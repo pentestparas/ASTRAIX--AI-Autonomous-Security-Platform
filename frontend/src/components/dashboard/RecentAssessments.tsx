@@ -72,6 +72,7 @@ export function RecentAssessments() {
   const [menuOpenId, setMenuOpenId] = useState<string | null>(null);
   const [actingId, setActingId] = useState<string | null>(null);
   const runningScans = useActiveScansStore((s) => s.runningCount());
+  const addScan = useActiveScansStore((s) => s.addScan);
 
   async function refresh() {
     try {
@@ -101,11 +102,21 @@ export function RecentAssessments() {
     return () => window.clearInterval(id);
   }, [runningScans]);
 
-  async function handleRerun(id: string) {
+  async function handleRerun(assessment: Assessment) {
     setMenuOpenId(null);
-    setActingId(id);
+    setActingId(assessment.id);
     try {
-      await assessmentsApi.start(id);
+      await assessmentsApi.start(assessment.id);
+      addScan({
+        id: assessment.id,
+        target:
+          assessment.asset_name ??
+          assessment.asset?.identifier ??
+          String(assessment.config?.target ?? "unknown"),
+        scanType: assessment.type,
+        startedAt: Date.now(),
+        status: "running",
+      });
       await refresh();
     } catch (e) {
       console.error("Failed to re-run scan:", e);
@@ -247,7 +258,7 @@ export function RecentAssessments() {
                               </DropdownMenuItem>
                             ) : (
                               <DropdownMenuItem
-                                onClick={() => handleRerun(assessment.id)}
+                                onClick={() => handleRerun(assessment)}
                               >
                                 <RotateCcw className="w-4 h-4 mr-2" />
                                 Re-run Scan

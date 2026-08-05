@@ -130,6 +130,8 @@ export interface Finding {
   cve?: string[];
   references?: string[];
   remediation?: string;
+  reference?: string;
+  details?: Record<string, unknown>;
   fingerprint: string;
   tags: string[];
   metadata: Record<string, unknown>;

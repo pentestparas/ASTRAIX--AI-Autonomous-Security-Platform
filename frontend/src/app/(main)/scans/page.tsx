@@ -683,6 +683,27 @@ export default function ScansPage() {
           asset: a.asset || undefined,
         }));
         setScanResults(mapped);
+
+        const storeHasLive = Object.values(
+          useActiveScansStore.getState().scans
+        ).some((s) => s.status === "running");
+        const runningFromHistory = mapped.find((s) => s.status === "running");
+        if (runningFromHistory && !storeHasLive) {
+          addScan({
+            id: runningFromHistory.id,
+            target: runningFromHistory.target,
+            scanType: runningFromHistory.type,
+            startedAt:
+              Date.parse(runningFromHistory.started_at ?? "") || Date.now(),
+            status: "running",
+          });
+          setLiveScanId(runningFromHistory.id);
+          setLiveRunning(true);
+          setTarget(runningFromHistory.target);
+          setScanType(runningFromHistory.type);
+          liveActiveRef.current = true;
+          void pollProgress(runningFromHistory.id);
+        }
       }
     }).catch((e) => {
       console.error("Failed to load data:", e);

@@ -2,6 +2,7 @@
 
 import { StatsCards } from "@/components/dashboard/StatsCards";
 import { RecentAssessments } from "@/components/dashboard/RecentAssessments";
+import { RecentFindings } from "@/components/dashboard/RecentFindings";
 import { QuickActions } from "@/components/dashboard/QuickActions";
 import { SystemStatus } from "@/components/dashboard/SystemStatus";
 
@@ -25,8 +26,9 @@ export default function DashboardPage() {
       <StatsCards />
 
       <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-7">
-        <div className="col-span-4 lg:col-span-4">
+        <div className="col-span-4 lg:col-span-4 space-y-6">
           <RecentAssessments />
+          <RecentFindings />
         </div>
         <div className="col-span-3 lg:col-span-3 space-y-6">
           <QuickActions />
