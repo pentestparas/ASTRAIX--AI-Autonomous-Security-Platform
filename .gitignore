@@ -33,6 +33,9 @@ logs/
 *.sqlite
 *.sqlite3
 
+# Knowledge base ingest checkpoints (derived state, like embeddings)
+knowledge-base/ingested/
+
 # Testing
 .coverage
 htmlcov/

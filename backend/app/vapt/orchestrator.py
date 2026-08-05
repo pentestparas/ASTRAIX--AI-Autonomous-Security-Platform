@@ -14,6 +14,7 @@ from uuid import UUID, uuid4
 
 from app.vapt.models import VAPTFinding, VAPTSeverity, VAPTScanRequest, VAPTScanResult, VAPTScanType, VAPTTarget
 from app.vapt.executor import get_vapt_executor
+from app.vapt.adapters.registry import get_enabled_adapters
 from app.vapt.agents import ResearcherAgent, VerifierAgent
 from app.vapt.agents.planner import get_planner
 from app.vapt.progress import publish_scan_event, get_progress_bus
@@ -116,6 +117,19 @@ class AIOrchestrator:
 
             result = await self.recon.execute_scan(request, scan_id=scan_id)
 
+            adapter_results = await self._run_adapters(target, scan_type_enum, scan_id, target_info)
+            for ar in adapter_results:
+                for finding in ar.findings:
+                    result.add_finding(finding)
+                if ar.adapter_id not in result.tool_results:
+                    result.tool_results[ar.adapter_id] = {}
+                result.tool_results[ar.adapter_id].update({
+                    "findings": len(ar.findings),
+                    "duration": ar.duration,
+                    "errors": ar.errors,
+                    "status": "ok" if not ar.errors else "error",
+                })
+
             await publish_scan_event(scan_id, "ai_research", {
                 "message": "Researcher agent enriching findings from knowledge base",
             })
@@ -163,6 +177,71 @@ class AIOrchestrator:
             return result
         finally:
             watchdog.cancel()
+
+    async def _run_adapters(
+        self,
+        target: str,
+        scan_type: VAPTScanType,
+        scan_id: str,
+        target_info: Dict[str, Any],
+    ) -> List[Any]:
+        """Run all enabled external adapters in parallel against the target.
+
+        Adapters run AFTER the built-in Kali toolchain and BEFORE agent
+        enrichment, so their findings flow through the same researcher /
+        verifier / risk-scoring pipeline. Each adapter is isolated - one
+        failing adapter never aborts the scan.
+        """
+        adapters = [a for a in get_enabled_adapters() if a.allow_for(scan_type, target_info)]
+        if not adapters:
+            return []
+
+        await publish_scan_event(scan_id, "adapters_started", {
+            "adapters": [a.id for a in adapters],
+            "message": f"Running {len(adapters)} external platform adapters",
+        })
+
+        results = await asyncio.gather(*[
+            self._run_one_adapter(a, target, scan_id, scan_type, target_info)
+            for a in adapters
+        ])
+
+        await publish_scan_event(scan_id, "adapters_completed", {
+            "adapters": [
+                {"id": r.adapter_id, "findings": len(r.findings), "errors": len(r.errors)}
+                for r in results
+            ],
+            "message": f"External adapters finished: {sum(len(r.findings) for r in results)} findings",
+        })
+        return results
+
+    async def _run_one_adapter(
+        self,
+        adapter: Any,
+        target: str,
+        scan_id: str,
+        scan_type: VAPTScanType,
+        target_info: Dict[str, Any],
+    ):
+        await publish_scan_event(scan_id, "adapter_started", {
+            "adapter": adapter.id,
+            "name": adapter.name,
+            "message": f"{adapter.name} starting against {target}",
+        })
+        result = await adapter.run_scan(target, scan_id, scan_type, target_info)
+        await publish_scan_event(scan_id, "adapter_completed", {
+            "adapter": adapter.id,
+            "name": adapter.name,
+            "findings": len(result.findings),
+            "errors": result.errors,
+            "duration": result.duration,
+            "message": (
+                f"{adapter.name} found {len(result.findings)} findings in {result.duration:.0f}s"
+                if not result.errors
+                else f"{adapter.name} completed with errors: {'; '.join(result.errors)[:200]}"
+            ),
+        })
+        return result
 
     async def _stall_watchdog(self, scan_id: str) -> None:
         """Detect when a running scan stops producing activity (stuck).

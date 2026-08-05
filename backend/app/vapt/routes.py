@@ -5,6 +5,8 @@ Fast API endpoints for VAPT operations with database persistence.
 """
 
 from datetime import datetime
+import hashlib
+import json
 from sqlalchemy import select
 from typing import Optional
 from uuid import UUID, uuid4
@@ -28,6 +30,63 @@ from app.repositories import asset_repo, assessment_repo, finding_repo
 
 logger = get_logger(__name__)
 router = APIRouter(tags=["VAPT"])
+
+
+def _finding_fingerprint(finding, target: str) -> str:
+    """Tool-scoped, detail-aware fingerprint so findings from different tools
+    (or distinct evidence for the same title) are kept, while true duplicates
+    are still collapsed."""
+    detail_sig = ""
+    if getattr(finding, "details", None):
+        detail_sig = hashlib.md5(
+            json.dumps(finding.details, sort_keys=True, default=str).encode()
+        ).hexdigest()[:10]
+    key = (
+        f"{finding.tool_name}:{finding.title}:{target}:"
+        f"{finding.severity.value}:{detail_sig}"
+    )
+    return key[:64]
+
+
+def _to_domain_finding(finding, fingerprint: str, org_id: str, proj_id: str, asset_id: str, assessment_id: str) -> Finding:
+    """Map a VAPTFinding to the domain Finding model, packing the rich
+    forensic fields (payload, host, port, path, evidence, cve/cwe) into
+    the details JSON so the UI can show how the finding was captured."""
+    details = dict(finding.details or {})
+    details.update({
+        "tool": finding.tool_name,
+        "target": finding.target,
+        "host": finding.host,
+        "port": finding.port,
+        "path": finding.path,
+        "protocol": finding.protocol,
+        "service": finding.service,
+        "vulnerability_type": finding.vulnerability_type,
+        "payload": finding.payload,
+        "cve": finding.cve,
+        "cwe": finding.cwe,
+        "confidence": finding.confidence,
+    })
+    details = {k: v for k, v in details.items() if v is not None}
+    return Finding(
+        id=str(uuid4()),
+        organization_id=org_id,
+        project_id=proj_id,
+        asset_id=asset_id,
+        assessment_id=assessment_id,
+        plugin_id=f"vapt/{finding.tool_name}",
+        severity=finding.severity.value,
+        title=finding.title,
+        description=finding.description,
+        details=details,
+        cvss_score=finding.cvss_score,
+        remediation=finding.remediation or "",
+        reference=finding.reference or "",
+        fingerprint=fingerprint,
+        status="open",
+        created_at=datetime.utcnow(),
+        updated_at=datetime.utcnow(),
+    )
 
 
 class ScanRequest(BaseModel):
@@ -190,7 +249,7 @@ async def run_scan(
 
             seen_fingerprints: set[str] = set()
             for finding in result.findings:
-                fingerprint = f"{finding.title}:{request.target}:{finding.severity.value}"[:64]
+                fingerprint = _finding_fingerprint(finding, request.target)
                 if fingerprint in seen_fingerprints:
                     continue
 
@@ -203,26 +262,7 @@ async def run_scan(
                     continue
 
                 seen_fingerprints.add(fingerprint)
-                domain_finding = Finding(
-                    id=str(uuid4()),
-                    organization_id=str(org_id),
-                    project_id=str(proj_id),
-                    asset_id=str(asset_uuid),
-                    assessment_id=str(assessment_uuid),
-                    plugin_id=f"vapt/{finding.tool_name}",
-                    severity=finding.severity.value,
-                    title=finding.title,
-                    description=finding.description,
-                    details=finding.details or {},
-                    cvss_score=finding.cvss_score,
-                    remediation=finding.remediation or "",
-                    reference=finding.reference or "",
-                    fingerprint=fingerprint,
-                    status="open",
-                    created_at=datetime.utcnow(),
-                    updated_at=datetime.utcnow(),
-                )
-                session.add(domain_finding)
+                session.add(_to_domain_finding(finding, fingerprint, str(org_id), str(proj_id), str(asset_uuid), str(assessment_uuid)))
 
             try:
                 await session.commit()
@@ -239,31 +279,13 @@ async def run_scan(
                     assessment.findings_count = len(result.findings)
                     assessment.config = dict(assessment.config or {})
                 for finding in result.findings:
-                    fingerprint = f"{finding.title}:{request.target}:{finding.severity.value}"[:64]
+                    fingerprint = _finding_fingerprint(finding, request.target)
                     existing_finding = await session.execute(
                         select(Finding).where(Finding.fingerprint == fingerprint).limit(1)
                     )
                     if existing_finding.scalar_one_or_none():
                         continue
-                    session.add(Finding(
-                        id=str(uuid4()),
-                        organization_id=str(org_id),
-                        project_id=str(proj_id),
-                        asset_id=str(asset_uuid),
-                        assessment_id=str(assessment_uuid),
-                        plugin_id=f"vapt/{finding.tool_name}",
-                        severity=finding.severity.value,
-                        title=finding.title,
-                        description=finding.description,
-                        details=finding.details or {},
-                        cvss_score=finding.cvss_score,
-                        remediation=finding.remediation or "",
-                        reference=finding.reference or "",
-                        fingerprint=fingerprint,
-                        status="open",
-                        created_at=datetime.utcnow(),
-                        updated_at=datetime.utcnow(),
-                    ))
+                    session.add(_to_domain_finding(finding, fingerprint, str(org_id), str(proj_id), str(asset_uuid), str(assessment_uuid)))
                     await session.commit()
                     await session.rollback()
             logger.info(f"VAPT scan completed and persisted: {assessment_id}")
@@ -309,6 +331,20 @@ async def tools_health():
     }
 
 
+@router.get("/adapters")
+async def adapters_health():
+    """Get health of all external VAPT platform adapters."""
+    from app.vapt.adapters.registry import adapter_health
+
+    statuses = await adapter_health()
+    return {
+        "status": "healthy" if any(s.available for s in statuses) else "degraded",
+        "enabled": [s.id for s in statuses if s.enabled],
+        "available": [s.id for s in statuses if s.available],
+        "adapters": [s.to_dict() for s in statuses],
+    }
+
+
 @router.post("/scan/quick")
 async def quick_scan(
     request: ScanRequest,
@@ -332,16 +368,33 @@ async def get_scan_progress(
     scan_id: str,
     since: int = Query(0, ge=0, description="Event index to fetch from"),
     current_user: User = Depends(get_current_active_user),
+    session: AsyncSession = Depends(get_session),
 ) -> dict:
     """Get live scan progress events since an index."""
     bus = get_progress_bus()
     events, total = await bus.events(scan_id, since=since)
     status = await bus.status(scan_id)
+    if not status:
+        # No live progress in Redis (dead/expired scan) - fall back to the
+        # assessment's persisted state so the frontend stops polling.
+        from app.repositories import assessment_repo
+
+        assessment = None
+        try:
+            assessment = await assessment_repo.get(session, str(scan_id))
+        except Exception:
+            assessment = None
+        if assessment:
+            status = {"status": assessment.status}
+            if assessment.error:
+                status["message"] = assessment.error
+        else:
+            status = {"status": "failed", "message": "Scan state not found"}
     return {
         "scan_id": scan_id,
         "events": events,
         "total": total,
-        "status": status or {"status": "running"},
+        "status": status,
     }
 
 
