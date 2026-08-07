@@ -2,7 +2,7 @@
 # Download all 22 Kaggle datasets in the curated batch using kagglehub.
 #
 # Prerequisites:
-#   1. pip install kagglehub
+#   1. pip install kagglehub   (or: backend/venv/bin/pip install kagglehub)
 #   2. Place your Kaggle API token at ~/.kaggle/kaggle.json
 #      (get it from https://www.kaggle.com/settings -> API -> Create New Token)
 #   3. chmod 600 ~/.kaggle/kaggle.json
@@ -15,6 +15,24 @@
 #   ./download.sh cve phish      # only download datasets whose theme matches (case-insensitive substring)
 #
 set -euo pipefail
+
+# --- locate a python with kagglehub ------------------------------------------
+if command -v kagglehub >/dev/null 2>&1 && kagglehub --help >/dev/null 2>&1; then
+  # kagglehub CLI (legacy 0.x)
+  download_one() { kagglehub dataset_download "$1" --force; }
+else
+  PY=""
+  for cand in backend/venv/bin/python .venv/bin/python python3; do
+    if $cand -c "import kagglehub" >/dev/null 2>&1; then PY="$cand"; break; fi
+  done
+  if [ -z "$PY" ]; then
+    echo "ERROR: kagglehub not installed. Run: pip install kagglehub" >&2
+    echo "       (or: backend/venv/bin/pip install kagglehub)" >&2
+    exit 1
+  fi
+  echo "Using python: $PY"
+  download_one() { "$PY" -c "import kagglehub, sys; print(kagglehub.dataset_download('$1'))"; }
+fi
 
 # --- existing 3 datasets (already in cache) -----------------------------------
 EXISTING=(
@@ -63,14 +81,6 @@ declare -a BATCH=(
 
 FILTER="${1:-}"  # optional substring filter on theme
 
-echo "==> Verifying prerequisites"
-if ! command -v kagglehub >/dev/null 2>&1; then
-  if ! python3 -c "import kagglehub" 2>/dev/null; then
-    echo "ERROR: kagglehub not installed. Run: pip install kagglehub" >&2
-    exit 1
-  fi
-fi
-
 if [ ! -f "$HOME/.kaggle/kaggle.json" ]; then
   echo "ERROR: ~/.kaggle/kaggle.json not found." >&2
   echo "  1. Go to https://www.kaggle.com/settings -> API -> Create New Token" >&2
@@ -85,7 +95,7 @@ run_one() {
   local slug="$1"
   local theme="$2"
   echo "==> [$theme] $slug"
-  if kagglehub dataset_download "$slug" --force 2>&1 | tail -3; then
+  if download_one "$slug" 2>&1 | tail -3; then
     echo "    OK"
   else
     echo "    FAILED (slug may have been renamed or deleted — verify on kaggle.com)"
