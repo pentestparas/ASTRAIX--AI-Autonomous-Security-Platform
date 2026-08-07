@@ -7,6 +7,8 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
     nuclei \
     gobuster \
     sslscan \
+    dirb \
+    wordlists \
     ca-certificates \
     curl \
     wget \
@@ -21,4 +23,10 @@ RUN pip3 install --no-cache-dir --break-system-packages \
     fake-useragent==0.1.14 \
     raccoon-scanner \
     > /dev/null 2>&1 || true
+# Curated wordlists (amitlttwo/All-Wordlists, jeanphorn/wordlist, trickest/wordlists,
+# gmelodie/awesome-wordlists) + nuclei templates (projectdiscovery/nuclei-templates).
+# Baked at build time into /opt/wordlists; symlinked onto stock /usr/share/wordlists
+# paths that tools look for by default (dirb package provides the base tree).
+COPY docker/scripts/fetch-wordlists.sh /opt/astraix/fetch-wordlists.sh
+RUN chmod +x /opt/astraix/fetch-wordlists.sh && /opt/astraix/fetch-wordlists.sh
 CMD ["bash"]

@@ -858,12 +858,28 @@ class ToolRegistry:
             cmd_parts.extend(["-u", target])
 
         elif tool_id == "gobuster":
-            cmd_parts.extend(["-o", "-", "-f", "-j"])
+            from app.vapt.wordlists import get_wordlist
+            cmd_parts.extend(["-o", "-", "-f"])
             if deep:
-                cmd_parts.extend(["-w", "/usr/share/wordlists/dirb/big.txt"])
+                cmd_parts.extend(["-w", get_wordlist("dirs_medium")])
             else:
-                cmd_parts.extend(["-w", "/usr/share/wordlists/dirb/common.txt"])
+                cmd_parts.extend(["-w", get_wordlist("dirs")])
             cmd_parts.extend(["-u", target])
+
+        elif tool_id == "ffuf":
+            from app.vapt.wordlists import get_wordlist
+            cmd_parts.extend(["-w", get_wordlist("dirs_medium"), "-mc", "200,204,301,302,307,401,403"])
+            cmd_parts.append(target)
+
+        elif tool_id == "hydra":
+            from app.vapt.wordlists import get_wordlist
+            cmd_parts.extend(["-L", get_wordlist("usernames"), "-P", get_wordlist("rockyou_top10k")])
+            cmd_parts.append(target)
+
+        elif tool_id == "dnsrecon":
+            from app.vapt.wordlists import get_wordlist
+            cmd_parts.extend(["--json", "-D", get_wordlist("subdomains"), "-t", "brt"])
+            cmd_parts.extend(["-d", target])
 
         elif tool_id == "sslscan":
             cmd_parts.extend(["--xml=-"])
@@ -880,10 +896,6 @@ class ToolRegistry:
         elif tool_id == "semgrep":
             cmd_parts.extend(["--json", "--quiet"])
             cmd_parts.append(target)
-
-        elif tool_id == "dnsrecon":
-            cmd_parts.extend(["--json", "-z"])  # DNSSEC
-            cmd_parts.extend(["-d", target])
 
         else:
             # Default: just append target

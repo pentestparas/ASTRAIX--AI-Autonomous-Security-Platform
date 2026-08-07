@@ -14,6 +14,7 @@ Enterprise Features:
 
 import asyncio
 import json
+import re
 import subprocess
 from abc import ABC, abstractmethod
 from dataclasses import dataclass, field
@@ -33,6 +34,7 @@ from app.scanner.models import (
     ToolCapability,
     ToolResult,
 )
+from app.vapt.wordlists import get_wordlist
 
 
 class PlatformType(str, Enum):
@@ -327,11 +329,10 @@ class VAPTOutputParser:
 
     @staticmethod
     def parse_gobuster(json_output: str) -> List[Finding]:
-        """Parse Gobuster JSON output to findings."""
+        """Parse Gobuster text output to findings."""
         findings = []
         try:
             data = json.loads(json_output)
-
             for result in data.get("result", {}).get("findings", []):
                 if result.get("status") >= 200 and result.get("status") < 400:
                     severity = Severity.INFO
@@ -358,7 +359,29 @@ class VAPTOutputParser:
                 )
                 findings.append(finding)
         except json.JSONDecodeError:
-            pass
+            for line in json_output.splitlines():
+                match = re.search(r"(\S+)\s+\(Status:\s*(\d+)\)\s*\[Size:\s*(\d+)\]", line)
+                if not match:
+                    continue
+                path, status, size = match.group(1), int(match.group(2)), int(match.group(3))
+                if 200 <= status < 400:
+                    severity = Severity.INFO
+                elif 400 <= status < 500:
+                    severity = Severity.LOW
+                else:
+                    severity = Severity.MEDIUM
+                findings.append(Finding(
+                    id=uuid4(),
+                    title=f"Directory Found: {path}",
+                    description=f"Status: {status}, Length: {size}",
+                    severity=severity,
+                    tool_name="gobuster",
+                    plugin_id="tools/gobuster",
+                    target=path,
+                    path=path,
+                    details={"status_code": status, "content_length": size},
+                    remediation="If this is an unintended exposure, restrict access to sensitive paths",
+                ))
         return findings
 
     @staticmethod
@@ -681,6 +704,10 @@ class VAPTExecutor:
             cmd.extend(["image", "--severity", "CRITICAL,HIGH,MEDIUM", target])
         elif tool.name == "semgrep":
             cmd.extend(["--json", "--quiet", target])
+        elif tool.name == "dnsrecon":
+            cmd.extend(["-d", target])
+        elif tool.name == "hydra":
+            cmd.append(target)
 
         return cmd
 
@@ -797,7 +824,7 @@ class VAPTExecutor:
     def _parse_output(self, output: str, tool: ExternalTool) -> List[Finding]:
         """Parse tool output using appropriate parser."""
         parser = self._parsers.get(tool.name, VAPTOutputParser.parse_default)
-        return parser(output, tool.name)
+        return parser(output)
 
 
 # Predefined tool configurations for common VAPT tools
@@ -863,7 +890,7 @@ KALI_TOOLS = {
     "gobuster": ExternalTool(
         name="gobuster",
         command="gobuster",
-        args=["dir", "-o", "-", "-f", "-j", "-q"],
+        args=["dir", "-o", "-", "-f", "-q", "-w", get_wordlist("dirs")],
         output_format="json",
         parse_method="gobuster",
         timeout=600,
@@ -871,7 +898,7 @@ KALI_TOOLS = {
     "ffuf": ExternalTool(
         name="ffuf",
         command="ffuf",
-        args=["-json", "-u"],
+        args=["-json", "-w", get_wordlist("dirs_medium"), "-mc", "200,204,301,302,307,401,403"],
         output_format="json",
         parse_method="ffuf",
         timeout=600,
@@ -935,7 +962,7 @@ KALI_TOOLS = {
     "dnsrecon": ExternalTool(
         name="dnsrecon",
         command="dnsrecon",
-        args=["--json", "-z"],
+        args=["--json", "-D", get_wordlist("subdomains"), "-t", "brt"],
         output_format="json",
         parse_method="dnsrecon",
         timeout=300,
@@ -959,7 +986,7 @@ KALI_TOOLS = {
     "hydra": ExternalTool(
         name="hydra",
         command="hydra",
-        args=["-V", "-f"],
+        args=["-V", "-f", "-L", get_wordlist("usernames"), "-P", get_wordlist("rockyou_top10k")],
         output_format="text",
         parse_method="default",
         timeout=3600,

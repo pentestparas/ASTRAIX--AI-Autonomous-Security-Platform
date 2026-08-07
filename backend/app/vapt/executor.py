@@ -195,15 +195,29 @@ class VAPTExecutor:
             pass
 
     def _build_docker_command(self, tool: VAPTTool, target: str) -> Optional[str]:
+        from app.vapt.wordlists import get_wordlist
+
+        wl_dirs = get_wordlist("dirs")
+        wl_dirs_medium = get_wordlist("dirs_medium")
+        wl_sub = get_wordlist("subdomains")
+        wl_rockyou = get_wordlist("rockyou_top10k")
+        wl_users = get_wordlist("usernames")
+        wl_fuzz = get_wordlist("fuzz")
+
         tool_cmd = {
             "nmap": f"nmap -sV -Pn -T4 --top-ports 100 -oX - {target}",
             "sqlmap": f"sqlmap -u {target} --batch --random-agent --output-dir=/tmp",
             "nuclei": f"nuclei -u {target} -json-export - -silent",
             "nikto": f"nikto -h {target} -Format xml -output -",
-            "gobuster": f"gobuster dir -u {target} -o - -f -j -q",
-            "ffuf": f"ffuf -u {target}/FUZZ -w /usr/share/wordlists/dirb/common.txt -json",
+            "gobuster": f"gobuster dir -u {target} -w {wl_dirs} -o - -f -q",
+            "ffuf": f"ffuf -u {target}/FUZZ -w {wl_dirs_medium} -json",
             "sslscan": f"sslscan {target}",
             "trivy": f"trivy image --quiet --format json alpine:latest",
+            "hydra": f"hydra -L {wl_users} -P {wl_rockyou} {target} ssh",
+            "dnsrecon": f"dnsrecon -d {target} -D {wl_sub} -t brt",
+            "gobuster-dns": f"gobuster dns -d {target} -w {wl_sub} -q",
+            "gobuster-vhost": f"gobuster vhost -u {target} -w {wl_dirs} -q",
+            "ffuf-params": f"ffuf -u {target}?FUZZ=1 -w {wl_fuzz} -json",
         }.get(tool.id)
 
         return tool_cmd

@@ -345,6 +345,21 @@ async def adapters_health():
     }
 
 
+@router.get("/wordlists")
+async def wordlists_health():
+    """Get status of curated wordlists baked into the Kali image."""
+    from app.vapt.wordlists import list_wordlists
+
+    lists = list_wordlists()
+    present = sum(1 for v in lists.values() if v["lines"] > 0)
+    return {
+        "status": "healthy" if present >= len(lists) // 2 else "degraded",
+        "present": present,
+        "total": len(lists),
+        "wordlists": lists,
+    }
+
+
 @router.post("/scan/quick")
 async def quick_scan(
     request: ScanRequest,
