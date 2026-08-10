@@ -105,7 +105,7 @@ function DialogContent({ children, className = "" }: DialogContentProps) {
       />
       <div className="fixed inset-0 flex items-center justify-center p-4">
         <div
-          className={`relative bg-background rounded-lg shadow-lg w-full max-w-md animate-in zoom-in-95 fade-in-0 ${className}`}
+          className={`relative glass-card rounded-xl shadow-xl w-full max-w-md animate-in zoom-in-95 fade-in-0 ${className}`}
           onClick={(e) => e.stopPropagation()}
         >
           <button
