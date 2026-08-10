@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import localFont from "next/font/local";
 import "../styles/globals.css";
+import "reactflow/dist/style.css";
 
 const inter = localFont({
   src: "./fonts/inter-var.ttf",

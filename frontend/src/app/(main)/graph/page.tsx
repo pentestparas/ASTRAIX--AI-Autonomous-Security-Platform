@@ -1,14 +1,21 @@
 "use client";
 
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
+import ReactFlow, {
+  Background,
+  Controls,
+  type Node,
+  type Edge,
+  type NodeProps,
+} from "reactflow";
 import { apiClient } from "@/services/api";
 
-const GROUP_STYLES: Record<string, { shape: string; color: { background: string; border: string }; size: number }> = {
-  target: { shape: "diamond", color: { background: "#1a3a5c", border: "#0f2440" }, size: 30 },
-  port: { shape: "box", color: { background: "#475569", border: "#334155" }, size: 20 },
-  service: { shape: "ellipse", color: { background: "#16a34a", border: "#15803d" }, size: 25 },
-  finding: { shape: "dot", color: { background: "#dc2626", border: "#b91c1c" }, size: 18 },
-  tool: { shape: "star", color: { background: "#f59e0b", border: "#d97706" }, size: 20 },
+const GROUP_STYLES: Record<string, { shape: string; color: { background: string; border: string }; width: number }> = {
+  target: { shape: "diamond", color: { background: "#1a3a5c", border: "#0f2440" }, width: 130 },
+  port: { shape: "box", color: { background: "#475569", border: "#334155" }, width: 120 },
+  service: { shape: "ellipse", color: { background: "#16a34a", border: "#15803d" }, width: 120 },
+  finding: { shape: "dot", color: { background: "#dc2626", border: "#b91c1c" }, width: 64 },
+  tool: { shape: "star", color: { background: "#f59e0b", border: "#d97706" }, width: 72 },
 };
 
 const SEVERITY_COLORS: Record<string, string> = {
@@ -19,35 +26,157 @@ const SEVERITY_COLORS: Record<string, string> = {
   info: "#6b7280",
 };
 
-function getNodeStyle(n: any) {
-  const gs = GROUP_STYLES[n.group] || GROUP_STYLES.finding;
-  const sevColor = n.severity ? SEVERITY_COLORS[n.severity.toLowerCase()] : null;
-  return {
-    ...gs,
-    color: sevColor ? { background: sevColor, border: "#1e293b" } : gs.color,
-  };
+const SHAPE_CLIP: Record<string, string> = {
+  diamond: "polygon(50% 0%, 100% 50%, 50% 100%, 0% 50%)",
+  box: "polygon(0% 0%, 100% 0%, 100% 100%, 0% 100%)",
+  ellipse: "polygon(0% 15%, 15% 0%, 85% 0%, 100% 15%, 100% 85%, 85% 100%, 15% 100%, 0% 85%)",
+  dot: "polygon(50% 0%, 100% 50%, 50% 100%, 0% 50%)",
+  star: "polygon(50% 0%, 61% 35%, 98% 35%, 68% 57%, 79% 91%, 50% 70%, 21% 91%, 32% 57%, 2% 35%, 39% 35%)",
+};
+
+type GraphNodeData = {
+  label: string;
+  group: string;
+  severity?: string;
+  info: string;
+};
+
+function GraphNode({ data }: NodeProps) {
+  const gs = GROUP_STYLES[data.group] || GROUP_STYLES.finding;
+  const sevColor = data.severity ? SEVERITY_COLORS[data.severity.toLowerCase()] : null;
+  const bg = sevColor || gs.color.background;
+  const clip = SHAPE_CLIP[gs.shape] || SHAPE_CLIP.box;
+  const isDot = gs.shape === "dot";
+  return (
+    <div style={{ display: "flex", flexDirection: isDot ? "column" : "row", alignItems: "center", gap: 6, width: gs.width }}>
+      <div
+        style={{
+          clipPath: clip,
+          background: bg,
+          border: data.group === "finding" ? "none" : undefined,
+          boxShadow: "0 0 4px rgba(15, 36, 64, 0.6)",
+          flexShrink: 0,
+          ...(isDot
+            ? { width: 14, height: 14, margin: "0 auto" }
+            : { width: 16 + Math.min(gs.width, 130) * 0.28, height: 22 }),
+        }}
+      />
+      {!isDot && (
+        <span
+          style={{
+            color: "#e2e8f0",
+            fontSize: data.group === "target" ? 12 : 10,
+            fontWeight: data.group === "target" ? 700 : 400,
+            lineHeight: 1.2,
+            overflow: "hidden",
+            textOverflow: "ellipsis",
+            whiteSpace: "nowrap",
+            maxWidth: gs.width - 34,
+            textShadow: "0 1px 2px rgba(0,0,0,0.8)",
+          }}
+          title={data.label}
+        >
+          {data.label}
+        </span>
+      )}
+      {isDot && (
+        <span style={{ color: "#e2e8f0", fontSize: 9, textAlign: "center" }}>{data.label}</span>
+      )}
+    </div>
+  );
+}
+
+const nodeTypes = { graphNode: GraphNode };
+
+type RawNode = { id: string; label: string; group: string; severity: string; title: string };
+type RawEdge = { from: string; to: string; label: string };
+
+const GROUP_X: Record<string, number> = { target: 0, port: 260, service: 520, finding: 780, tool: 1040 };
+
+function computeLayout(rawNodes: RawNode[], rawEdges: RawEdge[]) {
+  const positions = new Map<string, { x: number; y: number }>();
+  rawNodes.forEach((n, i) => {
+    const gx = GROUP_X[n.group] ?? 300;
+    positions.set(n.id, { x: gx + (Math.random() - 0.5) * 40, y: (i % 12) * 70 + (Math.random() - 0.5) * 20 });
+  });
+
+  const connected = new Set<string>();
+  rawEdges.forEach((e) => {
+    connected.add(e.from);
+    connected.add(e.to);
+  });
+
+  for (let iter = 0; iter < 160; iter++) {
+    const delta = new Map<string, { x: number; y: number }>();
+    positions.forEach((p, id) => delta.set(id, { x: 0, y: 0 }));
+
+    for (let i = 0; i < rawNodes.length; i++) {
+      for (let j = i + 1; j < rawNodes.length; j++) {
+        const a = positions.get(rawNodes[i].id)!;
+        const b = positions.get(rawNodes[j].id)!;
+        const dx = a.x - b.x;
+        const dy = a.y - b.y;
+        const distSq = Math.max(dx * dx + dy * dy, 1);
+        if (distSq > 40000) continue;
+        const fx = (dx / Math.sqrt(distSq)) * (2200 / distSq);
+        const fy = (dy / Math.sqrt(distSq)) * (2200 / distSq);
+        const da = delta.get(rawNodes[i].id)!;
+        const db = delta.get(rawNodes[j].id)!;
+        da.x += fx;
+        da.y += fy;
+        db.x -= fx;
+        db.y -= fy;
+      }
+    }
+
+    rawEdges.forEach((e) => {
+      const pa = positions.get(e.from);
+      const pb = positions.get(e.to);
+      const da = delta.get(e.from);
+      const db = delta.get(e.to);
+      if (!pa || !pb || !da || !db) return;
+      const dx = pb.x - pa.x;
+      const dy = pb.y - pa.y;
+      const dist = Math.max(Math.sqrt(dx * dx + dy * dy), 1);
+      const fx = (dx / dist) * (dist - 170) * 0.035;
+      const fy = (dy / dist) * (dist - 170) * 0.035;
+      da.x += fx;
+      da.y += fy;
+      db.x -= fx;
+      db.y -= fy;
+    });
+
+    positions.forEach((p, id) => {
+      const d = delta.get(id)!;
+      const g = connected.has(id) ? 0.002 : 0.006;
+      const nxp = p.x + (d.x + -p.x * g) * 0.18;
+      const nyp = p.y + (d.y + -p.y * g) * 0.18;
+      p.x = Math.min(Math.max(nxp, -40), 1300);
+      p.y = Math.min(Math.max(nyp, -40), 900);
+    });
+  }
+
+  return positions;
 }
 
 export default function GraphPage() {
   const containerRef = useRef<HTMLDivElement>(null);
-  const networkRef = useRef<any>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
   const [stats, setStats] = useState({ targets: 0, ports: 0, findings: 0, services: 0 });
   const [selectedNode, setSelectedNode] = useState<{ id: string; label: string; info: string } | null>(null);
+  const [nodes, setNodes] = useState<Node[]>([]);
+  const [edges, setEdges] = useState<Edge[]>([]);
 
   useEffect(() => {
-    if (!containerRef.current) return;
-
-    let network: any = null;
     let mounted = true;
 
     async function initGraph() {
       try {
         const res = await apiClient.get<{ nodes: any[]; edges: any[] }>("/graph");
         if (!mounted) return;
-        const rawNodes: any[] = res.data?.nodes || [];
-        const rawEdges: any[] = res.data?.edges || [];
+        const rawNodes: RawNode[] = res.data?.nodes || [];
+        const rawEdges: RawEdge[] = res.data?.edges || [];
 
         if (!rawNodes.length) {
           setLoading(false);
@@ -55,68 +184,33 @@ export default function GraphPage() {
           return;
         }
 
-        const { Network } = await import("vis-network");
+        const layout = computeLayout(rawNodes, rawEdges);
 
-        const nodeData = rawNodes.map((n: any) => {
-          const style = getNodeStyle(n);
-          return {
+        setNodes(
+          rawNodes.map((n) => ({
             id: n.id,
-            label: n.label,
-            group: n.group,
-            shape: style.shape,
-            color: style.color,
-            size: style.size,
-            font: { size: n.group === "target" ? 14 : 11, color: "#e2e8f0" },
-            borderWidth: 2,
-            title: n.title || n.label,
-          };
-        });
-
-        const edgeData = rawEdges.map((e: any) => ({
-          from: e.from,
-          to: e.to,
-          label: e.label,
-          arrows: "to",
-          color: { color: "#475569", hover: "#94a3b8" },
-          font: { size: 9, color: "#94a3b8" },
-          smooth: { type: "continuous" },
-        }));
-
-        const options = {
-          nodes: { borderWidth: 2, font: { color: "#e2e8f0" } },
-          edges: { color: "#475569" },
-          physics: {
-            solver: "forceAtlas2Based",
-            forceAtlas2Based: { gravitationalConstant: -40, centralGravity: 0.005, springLength: 150, springConstant: 0.04 },
-            stabilization: { iterations: 200 },
-          },
-          interaction: { hover: true, tooltipDelay: 200, navigationButtons: true, keyboard: true },
-          groups: Object.fromEntries(
-            Object.entries(GROUP_STYLES).map(([k, v]) => [k, { shape: v.shape, color: v.color.background }])
-          ),
-          layout: { improvedLayout: true },
-        };
-
-        network = new Network(containerRef.current!, { nodes: nodeData as any, edges: edgeData as any }, options as any);
-        networkRef.current = network;
-
-        network.on("click", (params: any) => {
-          if (params.nodes.length) {
-            const nodeId = params.nodes[0];
-            const nodeData = rawNodes.find((n: any) => n.id === nodeId);
-            if (nodeData) {
-              setSelectedNode({ id: nodeData.id, label: nodeData.label, info: nodeData.title || "" });
-            }
-          } else {
-            setSelectedNode(null);
-          }
-        });
+            type: "graphNode",
+            position: layout.get(n.id) || { x: Math.random() * 800, y: Math.random() * 600 },
+            data: { label: n.label, group: n.group, severity: n.severity, info: n.title || "" } as GraphNodeData,
+          }))
+        );
+        setEdges(
+          rawEdges.map((e) => ({
+            id: `${e.from}->${e.to}`,
+            source: e.from,
+            target: e.to,
+            label: e.label || undefined,
+            style: { stroke: "#475569", strokeWidth: 1 },
+            labelStyle: { fill: "#94a3b8", fontSize: 9 },
+            labelBgStyle: { fill: "#0f172a", fillOpacity: 0.7 },
+          }))
+        );
 
         setStats({
-          targets: rawNodes.filter((n: any) => n.group === "target").length,
-          ports: rawNodes.filter((n: any) => n.group === "port").length,
-          findings: rawNodes.filter((n: any) => n.group === "finding").length,
-          services: rawNodes.filter((n: any) => n.group === "service").length,
+          targets: rawNodes.filter((n) => n.group === "target").length,
+          ports: rawNodes.filter((n) => n.group === "port").length,
+          findings: rawNodes.filter((n) => n.group === "finding").length,
+          services: rawNodes.filter((n) => n.group === "service").length,
         });
         setLoading(false);
       } catch (e: any) {
@@ -131,9 +225,10 @@ export default function GraphPage() {
 
     return () => {
       mounted = false;
-      if (network) network.destroy();
     };
   }, []);
+
+  const selectedInfo = useMemo(() => selectedNode, [selectedNode]);
 
   return (
     <div className="h-[calc(100vh-3rem)] flex flex-col">
@@ -167,24 +262,45 @@ export default function GraphPage() {
               </div>
             </div>
           )}
+          {!loading && !error && (
+            <ReactFlow
+              nodes={nodes}
+              edges={edges}
+              nodeTypes={nodeTypes}
+              fitView
+              fitViewOptions={{ padding: 0.15, maxZoom: 1.2 }}
+              minZoom={0.05}
+              nodesDraggable
+              nodesConnectable={false}
+              onNodeClick={(_event, node) => {
+                const data = node.data as GraphNodeData;
+                setSelectedNode({ id: node.id, label: data.label, info: data.info });
+              }}
+              onPaneClick={() => setSelectedNode(null)}
+              style={{ backgroundColor: "#0f172a" }}
+            >
+              <Background color="#1e293b" gap={24} />
+              <Controls />
+            </ReactFlow>
+          )}
         </div>
 
-        {selectedNode && (
+        {selectedInfo && (
           <div className="w-72 bg-card border rounded-xl p-4 overflow-y-auto">
             <h3 className="font-semibold text-sm mb-3">Node Detail</h3>
             <div className="space-y-2 text-sm">
               <div>
                 <span className="text-xs text-muted-foreground block">Label</span>
-                <p className="font-medium">{selectedNode.label}</p>
+                <p className="font-medium">{selectedInfo.label}</p>
               </div>
               <div>
                 <span className="text-xs text-muted-foreground block">ID</span>
-                <p className="font-mono text-xs truncate">{selectedNode.id}</p>
+                <p className="font-mono text-xs truncate">{selectedInfo.id}</p>
               </div>
-              {selectedNode.info && (
+              {selectedInfo.info && (
                 <div>
                   <span className="text-xs text-muted-foreground block">Details</span>
-                  <div className="text-xs mt-1 leading-relaxed" dangerouslySetInnerHTML={{ __html: selectedNode.info }} />
+                  <div className="text-xs mt-1 leading-relaxed" dangerouslySetInnerHTML={{ __html: selectedInfo.info }} />
                 </div>
               )}
             </div>
@@ -212,7 +328,10 @@ function Legend() {
       <h3 className="font-semibold text-sm">Legend</h3>
       {Object.entries(GROUP_STYLES).map(([group, style]) => (
         <div key={group} className="flex items-center gap-2 text-sm">
-          <div className="w-4 h-4 rounded-sm flex-shrink-0" style={{ background: style.color.background }} />
+          <div
+            className="w-4 h-4 rounded-sm flex-shrink-0"
+            style={{ background: style.color.background, clipPath: "polygon(50% 0%, 100% 50%, 50% 100%, 0% 50%)" }}
+          />
           <span className="capitalize">{group}</span>
         </div>
       ))}
