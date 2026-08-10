@@ -6,6 +6,7 @@ import "reactflow/dist/style.css";
 const inter = localFont({
   src: "./fonts/inter-var.ttf",
   variable: "--font-inter",
+  weight: "100 900",
   display: "swap",
 });
 
