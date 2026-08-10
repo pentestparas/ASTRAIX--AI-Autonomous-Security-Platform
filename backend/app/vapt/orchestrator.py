@@ -174,6 +174,8 @@ class AIOrchestrator:
             bus = get_progress_bus()
             await bus.set_status(scan_id, result.status, findings_count=len(result.findings))
 
+            await self._ingest_attack_graph(scan_id, target, result)
+
             return result
         finally:
             watchdog.cancel()
@@ -389,6 +391,63 @@ class AIOrchestrator:
             return f"Medium security posture on {target}. {count} findings identified - address in planned timeline."
         else:
             return f"Acceptable security posture on {target}. {count} informational findings - continue monitoring."
+
+    async def _ingest_attack_graph(
+        self,
+        scan_id: str,
+        target: str,
+        result: VAPTScanResult,
+    ) -> None:
+        """Populate the Neo4j attack-surface graph with targets, ports,
+        services, tools and findings from this scan (best-effort)."""
+        try:
+            from app.recon_orchestrator.graph_db import get_knowledge_graph
+
+            kg = get_knowledge_graph()
+            if not getattr(kg, "_enabled", False):
+                logger.info("Attack graph disabled (Neo4j) - skipping ingestion")
+                return
+
+            await publish_scan_event(scan_id, "graph_ingesting", {
+                "message": "Building attack surface graph (Neo4j)",
+            })
+
+            target_id = f"target:{target}"
+            await kg.upsert_target(target_id, target, scan_id)
+
+            port_ids: Dict[int, str] = {}
+            service_ids: Dict[tuple, str] = {}
+            for finding in result.findings:
+                port = finding.port
+                if port and port not in port_ids:
+                    port_ids[port] = await kg.upsert_port(
+                        target_id, port, finding.protocol or "tcp", "open"
+                    )
+                service_key = (finding.port, finding.service)
+                if finding.service and service_key not in service_ids:
+                    service_ids[service_key] = await kg.upsert_service(
+                        port_ids.get(finding.port, ""), finding.service, ""
+                    )
+
+            for finding in result.findings:
+                await kg.add_finding(
+                    target_id=target_id,
+                    title=finding.title,
+                    severity=finding.severity.value,
+                    description=finding.description,
+                    remediation=finding.remediation or "",
+                    tool_name=finding.tool_name,
+                    port_id=port_ids.get(finding.port, ""),
+                    service_id=service_ids.get((finding.port, finding.service), ""),
+                )
+
+            await publish_scan_event(scan_id, "graph_ready", {
+                "targets": 1,
+                "findings": len(result.findings),
+                "message": f"Attack surface graph built: {len(result.findings)} findings",
+            })
+        except Exception as exc:
+            logger.error("Attack graph ingestion failed: %s", exc)
 
 
 _orchestrator: Optional[AIOrchestrator] = None

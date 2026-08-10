@@ -1,6 +1,7 @@
 "use client";
 
-import { useEffect, useState, useRef } from "react";
+import { useEffect, useState, useRef, Fragment } from "react";
+import { useRouter } from "next/navigation";
 import { projectsApi, apiClient, assessmentsApi, vaptScanApi } from "@/services/api";
 import { Button } from "@/components/ui/button";
 import {
@@ -108,8 +109,21 @@ interface Finding {
   severity: string;
   tool_name: string;
   target: string;
-  remediation?: string;
+  host?: string;
   port?: number;
+  protocol?: string;
+  service?: string;
+  path?: string;
+  vulnerability_type?: string;
+  remediation?: string;
+  reference?: string;
+  cve?: string;
+  cwe?: string;
+  payload?: string;
+  confidence?: string;
+  kb_context?: string;
+  kb_sources?: string[];
+  discovered_at?: string;
 }
 
 interface VaptScanResult {
@@ -588,6 +602,8 @@ export default function ScansPage() {
   const [liveEvents, setLiveEvents] = useState<ScanProgressEvent[]>([]);
   const [liveScanId, setLiveScanId] = useState<string | null>(null);
   const [liveRunning, setLiveRunning] = useState(false);
+  const [expandedFinding, setExpandedFinding] = useState<string | null>(null);
+  const router = useRouter();
   const liveActiveRef = useRef(false);
   const addScan = useActiveScansStore((s) => s.addScan);
   const updateScan = useActiveScansStore((s) => s.updateScan);
@@ -606,6 +622,8 @@ export default function ScansPage() {
             updateScan(scanId, { status: "completed" });
             removeScan(scanId);
             liveActiveRef.current = false;
+            setLiveRunning(false);
+            void refreshHistory();
             return;
           }
         }
@@ -614,6 +632,8 @@ export default function ScansPage() {
           if (status === "failed") updateScan(scanId, { status: "failed" });
           removeScan(scanId);
           liveActiveRef.current = false;
+          setLiveRunning(false);
+          void refreshHistory();
           return;
         }
       } catch {
@@ -855,6 +875,19 @@ export default function ScansPage() {
         target: String(f.target || target),
         remediation: f.remediation ? String(f.remediation) : undefined,
         port: f.port ? Number(f.port) : undefined,
+        host: f.host ? String(f.host) : undefined,
+        protocol: f.protocol ? String(f.protocol) : undefined,
+        service: f.service ? String(f.service) : undefined,
+        path: f.path ? String(f.path) : undefined,
+        vulnerability_type: f.vulnerability_type ? String(f.vulnerability_type) : undefined,
+        reference: f.reference ? String(f.reference) : undefined,
+        cve: f.cve ? String(f.cve) : undefined,
+        cwe: f.cwe ? String(f.cwe) : undefined,
+        payload: f.payload ? String(f.payload) : undefined,
+        confidence: f.confidence ? String(f.confidence) : undefined,
+        kb_context: f.kb_context ? String(f.kb_context) : undefined,
+        kb_sources: Array.isArray(f.kb_sources) ? (f.kb_sources as string[]) : undefined,
+        discovered_at: f.discovered_at ? String(f.discovered_at) : undefined,
       }));
 
       setFindings(mappedFindings);
@@ -1072,6 +1105,16 @@ export default function ScansPage() {
                       Assessment ID: {result.assessment_id.slice(0, 8)}...
                     </p>
                   )}
+                  <div className="flex flex-wrap gap-2 mt-3">
+                    <Button size="sm" variant="outline" onClick={() => router.push("/reports")}>
+                      <FileText className="w-4 h-4 mr-2" />
+                      Download Report
+                    </Button>
+                    <Button size="sm" variant="outline" onClick={() => router.push("/graph")}>
+                      <Network className="w-4 h-4 mr-2" />
+                      View Attack Graph
+                    </Button>
+                  </div>
                 </div>
 
                 <div className="grid grid-cols-5 gap-2 text-center">
@@ -1124,33 +1167,148 @@ export default function ScansPage() {
                 <TableRow>
                   <TableHead>Severity</TableHead>
                   <TableHead>Finding</TableHead>
-                  <TableHead>Tool</TableHead>
-                  <TableHead>Remediation</TableHead>
+                  <TableHead>Where</TableHead>
+                  <TableHead>How</TableHead>
+                  <TableHead>Insights</TableHead>
+                  <TableHead>Discovered</TableHead>
+                  <TableHead className="w-10"></TableHead>
                 </TableRow>
               </TableHeader>
               <TableBody>
                 {findings.map((finding) => (
-                  <TableRow key={finding.id}>
-                    <TableCell>
-                      <Badge className={severityColors[finding.severity] || severityColors.info}>
-                        {finding.severity.toUpperCase()}
-                      </Badge>
-                    </TableCell>
-                    <TableCell>
-                      <div>
-                        <div className="font-medium">{finding.title}</div>
-                        <div className="text-sm text-muted-foreground">
-                          {finding.description}
+                  <Fragment key={finding.id}>
+                    <TableRow>
+                      <TableCell>
+                        <Badge className={severityColors[finding.severity] || severityColors.info}>
+                          {finding.severity.toUpperCase()}
+                        </Badge>
+                      </TableCell>
+                      <TableCell>
+                        <div className="max-w-xs">
+                          <div className="font-medium">{finding.title}</div>
+                          <div className="text-sm text-muted-foreground line-clamp-2">
+                            {finding.description}
+                          </div>
                         </div>
-                      </div>
-                    </TableCell>
-                    <TableCell>
-                      <Badge variant="outline">{finding.tool_name}</Badge>
-                    </TableCell>
-                    <TableCell className="text-sm text-muted-foreground max-w-xs">
-                      {finding.remediation || "No remediation available"}
-                    </TableCell>
-                  </TableRow>
+                      </TableCell>
+                      <TableCell>
+                        <div className="text-sm font-mono">
+                          {finding.host || finding.target}
+                          {finding.port ? `:${finding.port}` : ""}
+                          {finding.path ? finding.path : ""}
+                        </div>
+                        {finding.service && (
+                          <div className="text-xs text-muted-foreground">{finding.service}</div>
+                        )}
+                      </TableCell>
+                      <TableCell>
+                        <Badge variant="outline">{finding.tool_name}</Badge>
+                        {finding.vulnerability_type && (
+                          <div className="text-xs text-muted-foreground mt-1">
+                            {finding.vulnerability_type}
+                          </div>
+                        )}
+                      </TableCell>
+                      <TableCell>
+                        {finding.cve || finding.cwe ? (
+                          <div className="space-y-1">
+                            {finding.cve && (
+                              <div className="text-xs">
+                                <Badge variant="outline" className="mr-1">CVE</Badge>
+                                <span className="font-mono">{finding.cve}</span>
+                              </div>
+                            )}
+                            {finding.cwe && (
+                              <div className="text-xs">
+                                <Badge variant="outline" className="mr-1">CWE</Badge>
+                                <span className="font-mono">{finding.cwe}</span>
+                              </div>
+                            )}
+                          </div>
+                        ) : (
+                          <span className="text-xs text-muted-foreground">-</span>
+                        )}
+                        {finding.confidence && (
+                          <div className="text-xs mt-1">
+                            Confidence: <span className="font-medium">{finding.confidence}</span>
+                          </div>
+                        )}
+                      </TableCell>
+                      <TableCell className="text-xs text-muted-foreground whitespace-nowrap">
+                        {finding.discovered_at
+                          ? new Date(finding.discovered_at).toLocaleString()
+                          : "-"}
+                      </TableCell>
+                      <TableCell>
+                        <Button
+                          variant="ghost"
+                          size="sm"
+                          onClick={() =>
+                            setExpandedFinding(expandedFinding === finding.id ? null : finding.id)
+                          }
+                        >
+                          <Eye className="w-4 h-4" />
+                        </Button>
+                      </TableCell>
+                    </TableRow>
+                    {expandedFinding === finding.id && (
+                      <TableRow key={`${finding.id}-detail`}>
+                        <TableCell colSpan={7}>
+                          <div className="grid grid-cols-1 md:grid-cols-2 gap-4 text-sm p-2">
+                            <div>
+                              <div className="font-semibold mb-1">Description</div>
+                              <p className="text-muted-foreground">{finding.description}</p>
+                              {finding.payload && (
+                                <>
+                                  <div className="font-semibold mb-1 mt-3">Payload / Evidence</div>
+                                  <pre className="text-xs bg-muted p-2 rounded-md overflow-x-auto font-mono">
+                                    {finding.payload}
+                                  </pre>
+                                </>
+                              )}
+                            </div>
+                            <div>
+                              {finding.kb_context && (
+                                <>
+                                  <div className="font-semibold mb-1">Knowledge Base Context</div>
+                                  <p className="text-muted-foreground">{finding.kb_context}</p>
+                                </>
+                              )}
+                              {finding.kb_sources && finding.kb_sources.length > 0 && (
+                                <>
+                                  <div className="font-semibold mb-1 mt-3">Sources</div>
+                                  <ul className="list-disc list-inside text-xs text-muted-foreground space-y-1">
+                                    {finding.kb_sources.map((s) => (
+                                      <li key={s} className="break-all">{s}</li>
+                                    ))}
+                                  </ul>
+                                </>
+                              )}
+                              {finding.remediation && (
+                                <>
+                                  <div className="font-semibold mb-1 mt-3">Remediation</div>
+                                  <p className="text-muted-foreground">{finding.remediation}</p>
+                                </>
+                              )}
+                              {finding.reference && (
+                                <>
+                                  <div className="font-semibold mb-1 mt-3">Reference</div>
+                                  <a
+                                    href={finding.reference}
+                                    target="_blank"
+                                    rel="noreferrer"
+                                    className="text-primary text-xs break-all underline"
+                                  >
+                                    {finding.reference}
+                                  </a>
+                                </>
+                              )}
+                            </div>
+                          </div>
+                        </TableCell>
+                      </TableRow>
+                    )}
+                  </Fragment>
                 ))}
               </TableBody>
             </Table>
