@@ -5,8 +5,8 @@ import { useRouter } from "next/navigation";
 import { authApi, organizationsApi } from "@/services/api";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Activity, Loader2 } from "lucide-react";
+import { Card, CardContent } from "@/components/ui/card";
+import { Radar, Loader2 } from "lucide-react";
 
 export default function LoginPage() {
   const router = useRouter();
@@ -93,23 +93,75 @@ export default function LoginPage() {
   }
 
   return (
-    <div className="min-h-screen flex items-center justify-center bg-background p-4">
-      <div className="w-full max-w-md space-y-6">
-        <div className="text-center">
-          <div className="flex items-center justify-center gap-2 mb-4">
-            <Activity className="w-8 h-8 text-primary" />
-            <span className="text-2xl font-bold">AstraIX</span>
+    <div className="min-h-screen flex bg-background">
+      <div className="relative hidden lg:flex w-1/2 items-center justify-center overflow-hidden border-r border-border/70 bg-grid">
+        <div
+          className="absolute inset-0"
+          style={{
+            background:
+              "radial-gradient(ellipse 60% 50% at 30% 20%, hsl(188 94% 47% / 0.14), transparent 60%), radial-gradient(ellipse 50% 40% at 75% 80%, hsl(262 83% 63% / 0.12), transparent 60%)",
+          }}
+        />
+        <div className="relative z-10 max-w-md text-center px-8">
+          <div className="flex items-center justify-center gap-3 mb-6">
+            <div className="relative flex items-center justify-center w-14 h-14 rounded-2xl btn-gradient glow-primary shadow-lg">
+              <Radar className="w-8 h-8 text-primary-foreground" />
+            </div>
+            <div className="text-left leading-tight">
+              <span className="block text-3xl font-bold tracking-tight">
+                Astra<span className="text-gradient">IX</span>
+              </span>
+              <span className="block text-xs uppercase tracking-[0.2em] text-muted-foreground">
+                Security Analyst
+              </span>
+            </div>
           </div>
-          <p className="text-muted-foreground">
-            AI-Powered Security Assessment Platform
+          <h1 className="text-3xl font-bold tracking-tight mb-3">
+            Autonomous AI Security{" "}
+            <span className="text-gradient">Operations</span>
+          </h1>
+          <p className="text-muted-foreground leading-relaxed">
+            Real Kali container scanning · multi-agent vulnerability
+            analysis · AI executive reports · attack surface graphs
           </p>
+          <div className="mt-8 grid grid-cols-3 gap-3">
+            {[
+              { label: "18+ tools", value: "Kali fleet" },
+              { label: "3 agents", value: "recon · research · verify" },
+              { label: "3 formats", value: "HTML · PDF · JSON" },
+            ].map((f) => (
+              <div key={f.label} className="rounded-xl border border-border/70 bg-card/50 p-3">
+                <p className="text-[10px] uppercase tracking-wider text-muted-foreground">{f.label}</p>
+                <p className="text-sm font-semibold mt-1">{f.value}</p>
+              </div>
+            ))}
+          </div>
         </div>
+      </div>
 
-        <Card>
-          <CardHeader>
-            <CardTitle>{isLogin ? "Sign In" : "Create Account"}</CardTitle>
-          </CardHeader>
-          <CardContent>
+      <div className="flex-1 flex items-center justify-center p-4">
+        <div className="w-full max-w-md space-y-6 animate-slide-up">
+          <div className="text-center lg:hidden">
+            <div className="flex items-center justify-center gap-2 mb-4">
+              <div className="relative flex items-center justify-center w-10 h-10 rounded-xl btn-gradient glow-primary">
+                <Radar className="w-5 h-5 text-primary-foreground" />
+              </div>
+              <div className="leading-tight text-left">
+                <span className="block text-xl font-bold tracking-tight">Astra<span className="text-gradient">IX</span></span>
+                <span className="block text-[10px] uppercase tracking-[0.16em] text-muted-foreground">Security Analyst</span>
+              </div>
+            </div>
+          </div>
+          <div className="hidden lg:block">
+            <p className="eyebrow mb-2">Workspace</p>
+            <h2 className="text-2xl font-bold tracking-tight">{isLogin ? "Sign in" : "Create your workspace"}</h2>
+          </div>
+
+        <Card className="glass-card-hover">
+          <CardContent className="p-6">
+            <div className="lg:hidden mb-4">
+              <p className="text-lg font-bold">{isLogin ? "Sign in" : "Create your workspace"}</p>
+            </div>
             <form onSubmit={isLogin ? handleLogin : handleRegister} className="space-y-4">
               {!isLogin && (
                 <>
@@ -171,13 +223,13 @@ export default function LoginPage() {
               </Button>
             </form>
 
-            <div className="mt-4 text-center text-sm">
+            <div className="mt-4 text-center text-sm text-muted-foreground">
               {isLogin ? (
                 <>
                   Don&apos;t have an account?{" "}
                   <button
                     onClick={() => { setIsLogin(false); setError(""); }}
-                    className="text-primary hover:underline"
+                    className="text-primary hover:underline hover:text-primary/80"
                   >
                     Sign up
                   </button>
@@ -187,7 +239,7 @@ export default function LoginPage() {
                   Already have an account?{" "}
                   <button
                     onClick={() => { setIsLogin(true); setError(""); }}
-                    className="text-primary hover:underline"
+                    className="text-primary hover:underline hover:text-primary/80"
                   >
                     Sign in
                   </button>
@@ -196,6 +248,7 @@ export default function LoginPage() {
             </div>
           </CardContent>
         </Card>
+        </div>
       </div>
     </div>
   );

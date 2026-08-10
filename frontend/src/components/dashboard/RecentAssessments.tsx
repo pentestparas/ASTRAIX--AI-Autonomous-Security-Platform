@@ -41,27 +41,27 @@ import Link from "next/link";
 const statusConfig = {
   running: {
     label: "Running",
-    className: "bg-blue-100 text-blue-800",
+    className: "bg-blue-500/15 text-blue-400",
     icon: Play,
   },
   completed: {
     label: "Completed",
-    className: "bg-green-100 text-green-800",
+    className: "bg-green-500/15 text-green-400",
     icon: CheckCircle,
   },
   failed: {
     label: "Failed",
-    className: "bg-red-100 text-red-800",
+    className: "bg-red-500/15 text-red-400",
     icon: XCircle,
   },
   cancelled: {
     label: "Cancelled",
-    className: "bg-gray-100 text-gray-800",
+    className: "bg-secondary text-secondary-foreground border-border/60",
     icon: XCircle,
   },
   pending: {
     label: "Pending",
-    className: "bg-yellow-100 text-yellow-800",
+    className: "bg-yellow-500/15 text-yellow-400",
     icon: Clock,
   },
 };
@@ -250,7 +250,7 @@ export function RecentAssessments() {
                             {assessment.status === "running" ||
                             assessment.status === "pending" ? (
                               <DropdownMenuItem
-                                className="text-red-600 focus:text-red-600"
+                                className="text-red-400 focus:text-red-400"
                                 onClick={() => handleCancel(assessment.id)}
                               >
                                 <Ban className="w-4 h-4 mr-2" />

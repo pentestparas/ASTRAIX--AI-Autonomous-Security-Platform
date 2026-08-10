@@ -26,11 +26,11 @@ import { formatDistanceToNow } from "date-fns";
 import type { Finding } from "@/types";
 
 const severityConfig = {
-  critical: { label: "Critical", className: "bg-red-500 text-white", icon: AlertTriangle },
-  high: { label: "High", className: "bg-orange-500 text-white", icon: AlertCircle },
-  medium: { label: "Medium", className: "bg-yellow-500 text-white", icon: AlertCircle },
-  low: { label: "Low", className: "bg-blue-500 text-white", icon: Info },
-  info: { label: "Info", className: "bg-gray-500 text-white", icon: Info },
+  critical: { label: "Critical", className: "bg-red-500/15 text-red-400 border-red-500/30", icon: AlertTriangle },
+  high: { label: "High", className: "bg-orange-500/15 text-orange-400 border-orange-500/30", icon: AlertCircle },
+  medium: { label: "Medium", className: "bg-yellow-500/15 text-yellow-400 border-yellow-500/30", icon: AlertCircle },
+  low: { label: "Low", className: "bg-blue-500/15 text-blue-400 border-blue-500/30", icon: Info },
+  info: { label: "Info", className: "bg-secondary text-secondary-foreground border-border/60", icon: Info },
 };
 
 const statusOptions = ["open", "triaged", "resolved", "false_positive", "accepted"];
@@ -181,12 +181,12 @@ export default function FindingsPage() {
                           <span
                             className={
                               finding.cvss_score >= 9
-                                ? "text-red-600 font-bold"
+                                ? "text-red-400 font-bold"
                                 : finding.cvss_score >= 7
-                                  ? "text-orange-600 font-bold"
+                                  ? "text-orange-400 font-bold"
                                   : finding.cvss_score >= 4
-                                    ? "text-yellow-600"
-                                    : "text-green-600"
+                                    ? "text-yellow-400"
+                                    : "text-green-400"
                             }
                           >
                             {finding.cvss_score.toFixed(1)}

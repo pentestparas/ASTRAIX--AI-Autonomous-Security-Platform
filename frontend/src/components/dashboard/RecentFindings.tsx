@@ -14,11 +14,11 @@ import { findingsApi } from "@/services/api";
 import type { Finding } from "@/types";
 
 const severityStyles: Record<string, string> = {
-  critical: "bg-red-500 text-white",
-  high: "bg-orange-500 text-white",
-  medium: "bg-yellow-500 text-white",
-  low: "bg-blue-500 text-white",
-  info: "bg-gray-500 text-white",
+  critical: "bg-red-500/15 text-red-400 border-red-500/30",
+  high: "bg-orange-500/15 text-orange-400 border-orange-500/30",
+  medium: "bg-yellow-500/15 text-yellow-400 border-yellow-500/30",
+  low: "bg-blue-500/15 text-blue-400 border-blue-500/30",
+  info: "bg-secondary text-secondary-foreground border-border/60",
 };
 
 function DetailRow({ label, value }: { label: string; value?: unknown }) {
@@ -246,8 +246,8 @@ function FindingDetail({ finding }: { finding: Finding }) {
       )}
 
       {finding.remediation && (
-        <div className="rounded-lg border border-green-200 bg-green-50 dark:bg-green-950/30 p-4">
-          <h4 className="text-sm font-semibold text-green-700 dark:text-green-400 mb-1">
+        <div className="rounded-lg border border-green-500/30 bg-green-500/10 p-4">
+          <h4 className="text-sm font-semibold text-green-400 mb-1">
             Resolution
           </h4>
           <p className="text-sm text-muted-foreground whitespace-pre-wrap">

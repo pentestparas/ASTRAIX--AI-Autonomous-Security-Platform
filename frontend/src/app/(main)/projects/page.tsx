@@ -215,7 +215,7 @@ export default function ProjectsPage() {
                     </DropdownMenuItem>
                     <DropdownMenuSeparator />
                     <DropdownMenuItem
-                      className="text-red-600 focus:text-red-600"
+                      className="text-red-400 focus:text-red-400"
                       onClick={() => handleDeleteProject(project.id)}
                       disabled={deletingId === project.id}
                     >

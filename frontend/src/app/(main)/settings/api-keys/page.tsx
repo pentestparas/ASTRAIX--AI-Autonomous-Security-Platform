@@ -114,19 +114,19 @@ export default function ApiKeysSettingsPage() {
       </div>
 
       {showNewKey && (
-        <Card className="border-green-500 bg-green-50">
+        <Card className="border-green-500/40 bg-green-500/5">
           <CardContent className="pt-6">
             <div className="flex items-start justify-between">
               <div className="space-y-2">
-                <div className="flex items-center gap-2 text-green-800">
+                <div className="flex items-center gap-2 text-green-400">
                   <CheckCircle className="w-5 h-5" />
                   <span className="font-medium">API Key Created</span>
                 </div>
-                <p className="text-sm text-green-700">
+                <p className="text-sm text-green-400">
                   Copy this key now. You will not be able to see it again.
                 </p>
                 <div className="flex items-center gap-2">
-                  <code className="px-3 py-2 bg-white border rounded text-sm font-mono">
+                  <code className="px-3 py-2 bg-secondary border border-border rounded text-sm font-mono">
                     {showNewKey}
                   </code>
                   <Button
@@ -225,8 +225,8 @@ export default function ApiKeysSettingsPage() {
                         variant={key.is_active ? "default" : "secondary"}
                         className={
                           key.is_active
-                            ? "bg-green-100 text-green-800"
-                            : "bg-gray-100 text-gray-800"
+                            ? "bg-green-500/15 text-green-400"
+                            : "bg-secondary text-secondary-foreground border-border/60"
                         }
                       >
                         {key.is_active ? "Active" : "Revoked"}

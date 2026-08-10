@@ -25,10 +25,10 @@ import {
 import type { Membership } from "@/types";
 
 const roleConfig = {
-  owner: { label: "Owner", className: "bg-purple-100 text-purple-800" },
-  admin: { label: "Admin", className: "bg-red-100 text-red-800" },
-  analyst: { label: "Analyst", className: "bg-blue-100 text-blue-800" },
-  viewer: { label: "Viewer", className: "bg-gray-100 text-gray-800" },
+  owner: { label: "Owner", className: "bg-purple-500/20 text-purple-300" },
+  admin: { label: "Admin", className: "bg-red-500/15 text-red-400" },
+  analyst: { label: "Analyst", className: "bg-blue-500/15 text-blue-400" },
+  viewer: { label: "Viewer", className: "bg-secondary text-secondary-foreground border-border/60" },
 };
 
 export default function MembersSettingsPage() {

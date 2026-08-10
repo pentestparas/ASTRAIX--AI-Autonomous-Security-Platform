@@ -190,26 +190,26 @@ const vaptScanTypes = [
 ];
 
 const severityColors: Record<string, string> = {
-  critical: "bg-red-100 text-red-800 border-red-300",
-  high: "bg-orange-100 text-orange-800 border-orange-300",
-  medium: "bg-yellow-100 text-yellow-800 border-yellow-300",
-  low: "bg-blue-100 text-blue-800 border-blue-300",
-  info: "bg-gray-100 text-gray-800 border-gray-300",
+  critical: "bg-red-500/15 text-red-400 border-red-500/30",
+  high: "bg-orange-500/15 text-orange-400 border-orange-500/30",
+  medium: "bg-yellow-500/15 text-yellow-400 border-yellow-500/30",
+  low: "bg-blue-500/15 text-blue-400 border-blue-500/30",
+  info: "bg-secondary text-secondary-foreground border-border/60",
 };
 
 const riskColors: Record<string, string> = {
-  CRITICAL: "text-red-600 bg-red-50 border-red-200",
-  HIGH: "text-orange-600 bg-orange-50 border-orange-200",
-  MEDIUM: "text-yellow-600 bg-yellow-50 border-yellow-200",
-  LOW: "text-green-600 bg-green-50 border-green-200",
+  CRITICAL: "text-red-400 bg-red-500/10 border-red-500/30",
+  HIGH: "text-orange-400 bg-orange-500/10 border-orange-500/30",
+  MEDIUM: "text-yellow-400 bg-yellow-500/10 border-yellow-500/30",
+  LOW: "text-green-400 bg-green-500/10 border-green-500/30",
 };
 
 const statusConfig: Record<string, { label: string; icon: typeof Clock; className: string }> = {
-  pending:    { label: "Pending",    icon: Clock,        className: "bg-yellow-100 text-yellow-800" },
-  running:    { label: "Running",    icon: Pause,        className: "bg-blue-100 text-blue-800" },
-  completed:  { label: "Completed",  icon: CheckCircle,  className: "bg-green-100 text-green-800" },
-  failed:     { label: "Failed",     icon: XCircle,      className: "bg-red-100 text-red-800" },
-  cancelled:  { label: "Cancelled",  icon: XCircle,      className: "bg-gray-100 text-gray-800" },
+  pending:    { label: "Pending",    icon: Clock,        className: "bg-yellow-500/15 text-yellow-400" },
+  running:    { label: "Running",    icon: Pause,        className: "bg-blue-500/15 text-blue-400" },
+  completed:  { label: "Completed",  icon: CheckCircle,  className: "bg-green-500/15 text-green-400" },
+  failed:     { label: "Failed",     icon: XCircle,      className: "bg-red-500/15 text-red-400" },
+  cancelled:  { label: "Cancelled",  icon: XCircle,      className: "bg-secondary text-secondary-foreground border-border/60" },
 };
 
 const typeLabels: Record<string, string> = {
@@ -233,10 +233,13 @@ function getTypeIcon(type: string) {
 
 function getSeverityBadge(severity: string) {
   const colorMap: Record<string, string> = {
-    critical: "bg-red-500", high: "bg-orange-500", medium: "bg-yellow-500",
-    low: "bg-blue-500", info: "bg-gray-500",
+    critical: "bg-red-500/15 text-red-400 border-red-500/30",
+    high: "bg-orange-500/15 text-orange-400 border-orange-500/30",
+    medium: "bg-yellow-500/15 text-yellow-400 border-yellow-500/30",
+    low: "bg-blue-500/15 text-blue-400 border-blue-500/30",
+    info: "bg-secondary text-secondary-foreground border-border/60",
   };
-  return colorMap[severity] || "bg-gray-500";
+  return colorMap[severity] || colorMap.info;
 }
 
 const phaseIcons: Record<string, typeof Shield> = {
@@ -515,9 +518,9 @@ function LiveScanConsole({
                         state === "running"
                           ? "bg-primary/10 border-primary/40 text-primary"
                           : state === "done"
-                            ? "bg-green-500/10 border-green-500/40 text-green-600"
-                            : state === "failed"
-                              ? "bg-red-500/10 border-red-500/40 text-red-600"
+? "bg-green-500/10 border-green-500/40 text-green-400"
+                          : state === "failed"
+                            ? "bg-red-500/10 border-red-500/40 text-red-400"
                               : "bg-muted/50 border-border text-muted-foreground"
                       }`}
                     >
@@ -936,7 +939,7 @@ export default function ScansPage() {
       </div>
 
       {successMessage && (
-        <div className="bg-green-50 border border-green-200 text-green-800 px-4 py-3 rounded-lg flex items-center gap-2">
+        <div className="bg-green-500/10 border border-green-500/30 text-green-400 px-4 py-3 rounded-lg flex items-center gap-2">
           <CheckCircle className="w-5 h-5" />
           {successMessage}
         </div>
@@ -952,13 +955,13 @@ export default function ScansPage() {
           </Card>
           <Card>
             <CardContent className="pt-6">
-              <div className="text-2xl font-bold text-green-600">{completedScans}</div>
+              <div className="text-2xl font-bold text-green-400">{completedScans}</div>
               <p className="text-sm text-muted-foreground">Completed</p>
             </CardContent>
           </Card>
           <Card>
             <CardContent className="pt-6">
-              <div className="text-2xl font-bold text-red-600">{failedScans}</div>
+              <div className="text-2xl font-bold text-red-400">{failedScans}</div>
               <p className="text-sm text-muted-foreground">Failed</p>
             </CardContent>
           </Card>
@@ -1118,24 +1121,24 @@ export default function ScansPage() {
                 </div>
 
                 <div className="grid grid-cols-5 gap-2 text-center">
-                  <div className="p-2 bg-red-50 rounded-lg">
-                    <div className="text-2xl font-bold text-red-600">{result.severity_breakdown.critical}</div>
+                  <div className="p-2 bg-red-500/10 border border-red-500/25 rounded-lg">
+                    <div className="text-2xl font-bold text-red-400">{result.severity_breakdown.critical}</div>
                     <div className="text-xs text-muted-foreground">Critical</div>
                   </div>
-                  <div className="p-2 bg-orange-50 rounded-lg">
-                    <div className="text-2xl font-bold text-orange-600">{result.severity_breakdown.high}</div>
+                  <div className="p-2 bg-orange-500/10 border border-orange-500/25 rounded-lg">
+                    <div className="text-2xl font-bold text-orange-400">{result.severity_breakdown.high}</div>
                     <div className="text-xs text-muted-foreground">High</div>
                   </div>
-                  <div className="p-2 bg-yellow-50 rounded-lg">
-                    <div className="text-2xl font-bold text-yellow-600">{result.severity_breakdown.medium}</div>
+                  <div className="p-2 bg-yellow-500/10 border border-yellow-500/25 rounded-lg">
+                    <div className="text-2xl font-bold text-yellow-400">{result.severity_breakdown.medium}</div>
                     <div className="text-xs text-muted-foreground">Medium</div>
                   </div>
-                  <div className="p-2 bg-blue-50 rounded-lg">
-                    <div className="text-2xl font-bold text-blue-600">{result.severity_breakdown.low}</div>
+                  <div className="p-2 bg-blue-500/10 border border-blue-500/25 rounded-lg">
+                    <div className="text-2xl font-bold text-blue-400">{result.severity_breakdown.low}</div>
                     <div className="text-xs text-muted-foreground">Low</div>
                   </div>
-                  <div className="p-2 bg-gray-50 rounded-lg">
-                    <div className="text-2xl font-bold text-gray-600">{result.severity_breakdown.info}</div>
+                  <div className="p-2 bg-secondary/40 border border-border/60 rounded-lg">
+                    <div className="text-2xl font-bold text-foreground">{result.severity_breakdown.info}</div>
                     <div className="text-xs text-muted-foreground">Info</div>
                   </div>
                 </div>
@@ -1320,7 +1323,7 @@ export default function ScansPage() {
         <Card>
           <CardHeader>
             <CardTitle className="flex items-center gap-2">
-              <AlertTriangle className="w-5 h-5 text-yellow-600" />
+              <AlertTriangle className="w-5 h-5 text-yellow-400" />
               AI Recommendations
             </CardTitle>
           </CardHeader>
@@ -1328,7 +1331,7 @@ export default function ScansPage() {
             <ul className="space-y-2">
               {result.insights.recommendations.map((rec, i) => (
                 <li key={i} className="flex items-start gap-2">
-                  <CheckCircle className="w-4 h-4 text-green-600 mt-0.5 flex-shrink-0" />
+                  <CheckCircle className="w-4 h-4 text-green-400 mt-0.5 flex-shrink-0" />
                   <span>{rec}</span>
                 </li>
               ))}
@@ -1465,10 +1468,10 @@ export default function ScansPage() {
                           <Badge
                             variant="secondary"
                             className={`text-xs ${
-                              type.color === "blue" ? "bg-blue-100 text-blue-800" :
-                              type.color === "green" ? "bg-green-100 text-green-800" :
-                              type.color === "purple" ? "bg-purple-100 text-purple-800" :
-                              "bg-orange-100 text-orange-800"
+                              type.color === "blue" ? "bg-blue-500/15 text-blue-400" :
+                              type.color === "green" ? "bg-green-500/15 text-green-400" :
+                              type.color === "purple" ? "bg-purple-500/20 text-purple-300" :
+                              "bg-orange-500/15 text-orange-400"
                             }`}
                           >
                             {type.tools.length} tools

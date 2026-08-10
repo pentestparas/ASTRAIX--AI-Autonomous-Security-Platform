@@ -34,24 +34,24 @@ function StatCard({
   loading,
 }: StatCardProps) {
   return (
-    <Card>
+    <Card className="hover:border-primary/30 transition-colors">
       <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-        <CardTitle className="text-sm font-medium">{title}</CardTitle>
-        <div className={`text-2xl ${iconColor}`}>{icon}</div>
+        <CardTitle className="text-sm font-medium text-muted-foreground">{title}</CardTitle>
+        <div className={`w-11 h-11 p-2.5 rounded-lg bg-secondary/60 border border-border/60 flex items-center justify-center ${iconColor}`}>{icon}</div>
       </CardHeader>
       <CardContent>
         {loading ? (
           <div className="h-8 w-20 animate-pulse bg-muted rounded" />
         ) : (
-          <div className="text-2xl font-bold">{value}</div>
+          <div className="text-3xl font-bold tracking-tight">{value}</div>
         )}
         {change && (
           <p
             className={`text-xs mt-1 ${
               changeType === "increase"
-                ? "text-green-600"
+                ? "text-green-400"
                 : changeType === "decrease"
-                  ? "text-red-600"
+                  ? "text-red-400"
                   : "text-muted-foreground"
             }`}
           >

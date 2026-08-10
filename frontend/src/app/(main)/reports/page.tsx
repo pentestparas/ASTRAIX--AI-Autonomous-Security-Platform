@@ -220,13 +220,13 @@ export default function ReportsPage() {
             </div>
 
             {successMessage && (
-              <div className="flex items-center gap-2 text-sm text-green-600 bg-green-50 dark:bg-green-950 dark:text-green-400 px-3 py-2 rounded-lg">
+              <div className="flex items-center gap-2 text-sm text-green-400 bg-green-500/10 border border-green-500/30 px-3 py-2 rounded-lg">
                 <CheckCircle2 className="w-4 h-4" />
                 {successMessage}
               </div>
             )}
             {error && (
-              <div className="flex items-center gap-2 text-sm text-red-600 bg-red-50 dark:bg-red-950 dark:text-red-400 px-3 py-2 rounded-lg">
+              <div className="flex items-center gap-2 text-sm text-red-400 bg-red-500/10 border border-red-500/30 px-3 py-2 rounded-lg">
                 <AlertCircle className="w-4 h-4" />
                 {error}
               </div>

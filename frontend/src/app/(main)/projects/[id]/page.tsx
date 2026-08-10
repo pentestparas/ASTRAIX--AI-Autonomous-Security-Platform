@@ -175,11 +175,11 @@ export default function ProjectDetailPage() {
   }
 
   const severityColors: Record<string, string> = {
-    critical: "bg-red-500 text-white",
-    high: "bg-orange-500 text-white",
-    medium: "bg-yellow-500 text-white",
-    low: "bg-blue-500 text-white",
-    info: "bg-gray-500 text-white",
+    critical: "bg-red-500/15 text-red-400 border-red-500/30",
+    high: "bg-orange-500/15 text-orange-400 border-orange-500/30",
+    medium: "bg-yellow-500/15 text-yellow-400 border-yellow-500/30",
+    low: "bg-blue-500/15 text-blue-400 border-blue-500/30",
+    info: "bg-secondary text-secondary-foreground border-border/60",
   };
 
   return (

@@ -8,6 +8,7 @@ import ReactFlow, {
   type Edge,
   type NodeProps,
 } from "reactflow";
+import dagre from "dagre";
 import { apiClient } from "@/services/api";
 
 const GROUP_STYLES: Record<string, { shape: string; color: { background: string; border: string }; width: number }> = {
@@ -91,71 +92,39 @@ const nodeTypes = { graphNode: GraphNode };
 type RawNode = { id: string; label: string; group: string; severity: string; title: string };
 type RawEdge = { from: string; to: string; label: string };
 
-const GROUP_X: Record<string, number> = { target: 0, port: 260, service: 520, finding: 780, tool: 1040 };
+const GROUP_HEIGHT: Record<string, number> = { target: 44, port: 40, service: 40, finding: 34, tool: 40 };
 
 function computeLayout(rawNodes: RawNode[], rawEdges: RawEdge[]) {
-  const positions = new Map<string, { x: number; y: number }>();
-  rawNodes.forEach((n, i) => {
-    const gx = GROUP_X[n.group] ?? 300;
-    positions.set(n.id, { x: gx + (Math.random() - 0.5) * 40, y: (i % 12) * 70 + (Math.random() - 0.5) * 20 });
+  const g = new dagre.graphlib.Graph();
+  g.setDefaultEdgeLabel(() => ({}));
+  g.setGraph({
+    rankdir: "LR",
+    nodesep: 14,
+    ranksep: 100,
+    marginx: 30,
+    marginy: 30,
   });
 
-  const connected = new Set<string>();
+  rawNodes.forEach((n) => {
+    const gw = GROUP_STYLES[n.group]?.width ?? 90;
+    const gh = GROUP_HEIGHT[n.group] ?? 40;
+    g.setNode(n.id, { width: gw, height: gh });
+  });
   rawEdges.forEach((e) => {
-    connected.add(e.from);
-    connected.add(e.to);
+    if (!g.hasNode(e.from) || !g.hasNode(e.to)) return;
+    g.setEdge(e.from, e.to);
   });
 
-  for (let iter = 0; iter < 160; iter++) {
-    const delta = new Map<string, { x: number; y: number }>();
-    positions.forEach((p, id) => delta.set(id, { x: 0, y: 0 }));
+  dagre.layout(g);
 
-    for (let i = 0; i < rawNodes.length; i++) {
-      for (let j = i + 1; j < rawNodes.length; j++) {
-        const a = positions.get(rawNodes[i].id)!;
-        const b = positions.get(rawNodes[j].id)!;
-        const dx = a.x - b.x;
-        const dy = a.y - b.y;
-        const distSq = Math.max(dx * dx + dy * dy, 1);
-        if (distSq > 40000) continue;
-        const fx = (dx / Math.sqrt(distSq)) * (2200 / distSq);
-        const fy = (dy / Math.sqrt(distSq)) * (2200 / distSq);
-        const da = delta.get(rawNodes[i].id)!;
-        const db = delta.get(rawNodes[j].id)!;
-        da.x += fx;
-        da.y += fy;
-        db.x -= fx;
-        db.y -= fy;
-      }
-    }
-
-    rawEdges.forEach((e) => {
-      const pa = positions.get(e.from);
-      const pb = positions.get(e.to);
-      const da = delta.get(e.from);
-      const db = delta.get(e.to);
-      if (!pa || !pb || !da || !db) return;
-      const dx = pb.x - pa.x;
-      const dy = pb.y - pa.y;
-      const dist = Math.max(Math.sqrt(dx * dx + dy * dy), 1);
-      const fx = (dx / dist) * (dist - 170) * 0.035;
-      const fy = (dy / dist) * (dist - 170) * 0.035;
-      da.x += fx;
-      da.y += fy;
-      db.x -= fx;
-      db.y -= fy;
-    });
-
-    positions.forEach((p, id) => {
-      const d = delta.get(id)!;
-      const g = connected.has(id) ? 0.002 : 0.006;
-      const nxp = p.x + (d.x + -p.x * g) * 0.18;
-      const nyp = p.y + (d.y + -p.y * g) * 0.18;
-      p.x = Math.min(Math.max(nxp, -40), 1300);
-      p.y = Math.min(Math.max(nyp, -40), 900);
-    });
-  }
-
+  const positions = new Map<string, { x: number; y: number }>();
+  rawNodes.forEach((n) => {
+    const layout = g.node(n.id);
+    if (!layout) return;
+    const gw = GROUP_STYLES[n.group]?.width ?? 90;
+    const gh = GROUP_HEIGHT[n.group] ?? 40;
+    positions.set(n.id, { x: layout.x - gw / 2, y: layout.y - gh / 2 });
+  });
   return positions;
 }
 
@@ -187,22 +156,28 @@ export default function GraphPage() {
         const layout = computeLayout(rawNodes, rawEdges);
 
         setNodes(
-          rawNodes.map((n) => ({
-            id: n.id,
-            type: "graphNode",
-            position: layout.get(n.id) || { x: Math.random() * 800, y: Math.random() * 600 },
-            data: { label: n.label, group: n.group, severity: n.severity, info: n.title || "" } as GraphNodeData,
-          }))
+          rawNodes.map((n) => {
+            const gw = GROUP_STYLES[n.group]?.width ?? 90;
+            const gh = GROUP_HEIGHT[n.group] ?? 40;
+            return {
+              id: n.id,
+              type: "graphNode",
+              position: layout.get(n.id) || { x: Math.random() * 800, y: Math.random() * 600 },
+              style: { width: gw, height: gh },
+              data: { label: n.label, group: n.group, severity: n.severity, info: n.title || "" } as GraphNodeData,
+            };
+          })
         );
         setEdges(
           rawEdges.map((e) => ({
             id: `${e.from}->${e.to}`,
             source: e.from,
             target: e.to,
+            type: "smoothstep",
             label: e.label || undefined,
             style: { stroke: "#475569", strokeWidth: 1 },
             labelStyle: { fill: "#94a3b8", fontSize: 9 },
-            labelBgStyle: { fill: "#0f172a", fillOpacity: 0.7 },
+            labelBgStyle: { fill: "#0f172a", fillOpacity: 0.75, stroke: "#1e293b", strokeWidth: 1 },
           }))
         );
 
@@ -268,10 +243,12 @@ export default function GraphPage() {
               edges={edges}
               nodeTypes={nodeTypes}
               fitView
-              fitViewOptions={{ padding: 0.15, maxZoom: 1.2 }}
-              minZoom={0.05}
+              fitViewOptions={{ padding: 0.12, maxZoom: 1.2 }}
+              minZoom={0.03}
               nodesDraggable
               nodesConnectable={false}
+              proOptions={{ hideAttribution: true }}
+              defaultEdgeOptions={{ type: "smoothstep" }}
               onNodeClick={(_event, node) => {
                 const data = node.data as GraphNodeData;
                 setSelectedNode({ id: node.id, label: data.label, info: data.info });

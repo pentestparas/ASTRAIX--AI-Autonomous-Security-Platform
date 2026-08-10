@@ -107,7 +107,7 @@ export default function OrganizationSettingsPage() {
           </div>
 
           {message && (
-            <p className="text-sm text-green-600 bg-green-50 px-3 py-2 rounded-lg">
+            <p className="text-sm text-green-400 bg-green-500/10 border border-green-500/30 px-3 py-2 rounded-lg">
               {message}
             </p>
           )}

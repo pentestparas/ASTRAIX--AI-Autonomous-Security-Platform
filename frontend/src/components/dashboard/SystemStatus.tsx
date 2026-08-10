@@ -143,7 +143,7 @@ export function SystemStatus() {
             </div>
           ) : error ? (
             <div className="py-6 text-center">
-              <p className="text-sm text-red-600 mb-3">{error}</p>
+              <p className="text-sm text-red-400 mb-3">{error}</p>
               <button
                 onClick={() => void load()}
                 className="inline-flex items-center gap-1.5 text-xs text-primary hover:underline"

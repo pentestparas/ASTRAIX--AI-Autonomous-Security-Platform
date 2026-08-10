@@ -17,7 +17,7 @@ export default function DashboardPage() {
           </p>
         </div>
         <div className="flex items-center gap-4">
-          <span className="px-3 py-1 text-sm bg-green-100 text-green-800 rounded-full">
+          <span className="px-3 py-1 text-sm bg-green-500/10 text-green-400 border border-green-500/30 rounded-full">
             System Operational
           </span>
         </div>
