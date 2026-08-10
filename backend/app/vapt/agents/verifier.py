@@ -48,8 +48,11 @@ class VerifierAgent:
 
     async def _kb_exploit_context(self, finding: VAPTFinding) -> Optional[str]:
         """Best-effort lookup of exploitation/technique guidance in the
-        knowledge base for a confirmed finding. Non-blocking - never fails
-        the verification step."""
+        knowledge base for a confirmed finding. Runs KB search off the event
+        loop; never fails the verification step."""
+        return await asyncio.to_thread(self._kb_exploit_sync, finding)
+
+    def _kb_exploit_sync(self, finding: VAPTFinding) -> Optional[str]:
         try:
             import sys
             from app.vapt.agents.planner import KB_PATH

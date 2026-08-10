@@ -241,11 +241,13 @@ class SecurityFinding(BaseModel):
     @field_validator("references")
     @classmethod
     def _validate_urls(cls, value: list[str]) -> list[str]:
+        # References may be either URLs or knowledge-base source paths
+        # (e.g. "Cyber_and_Information_Security_Knowledge_Base/.../Readme.md").
         url_re = re.compile(r"^https?://[^\s]+$")
         for u in value:
-            if not url_re.match(u):
+            if u.startswith(("http://", "https://")) and not url_re.match(u):
                 raise ValueError(f"invalid reference url: {u!r}")
-        return value
+        return [u.strip() for u in value if u.strip()]
 
 
 # --- Public re-exports --------------------------------------------------

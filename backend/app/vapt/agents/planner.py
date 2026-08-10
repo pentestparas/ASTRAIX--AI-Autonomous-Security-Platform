@@ -87,7 +87,7 @@ class PlannerAgent:
     """Knowledge-base-grounded plan generator for VAPT scans."""
 
     def __init__(self):
-        self._kb = self._load_kb()
+        self._kb = None
 
     def _load_kb(self) -> Any:
         try:
@@ -102,8 +102,13 @@ class PlannerAgent:
             logger.warning("PlannerAgent KB unavailable: %s", e)
             return None
 
+    def _get_kb(self) -> Any:
+        if self._kb is None:
+            self._kb = self._load_kb()
+        return self._kb
+
     def _kb_search(self, query: str, top_k: int = 3) -> List[str]:
-        if not self._kb:
+        if not self._get_kb():
             return []
         try:
             results = self._kb.search(query, top_k=top_k)
@@ -246,7 +251,7 @@ class PlannerAgent:
             if scan_type == VAPTScanType.WEB and phase_def["id"] == "crypto":
                 continue
 
-            kb_snippets = self._kb_search(phase_def["kb_query"])
+            kb_snippets = await asyncio.to_thread(self._kb_search, phase_def["kb_query"])
             tools = []
             for tool_id in phase_def["tools"]:
                 if tool_id not in TOOLS_REGISTRY:
@@ -254,7 +259,7 @@ class PlannerAgent:
                 if tool_id not in available:
                     continue
                 tool = TOOLS_REGISTRY[tool_id]
-                reason = self._kb_search(TOOL_KB_QUERIES[tool_id], top_k=1)
+                reason = await asyncio.to_thread(self._kb_search, TOOL_KB_QUERIES[tool_id], top_k=1)
                 tools.append({
                     "id": tool_id,
                     "name": tool.name,

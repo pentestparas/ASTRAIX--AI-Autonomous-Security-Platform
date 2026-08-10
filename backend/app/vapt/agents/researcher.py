@@ -1,3 +1,4 @@
+import asyncio
 import os
 import sys
 from typing import List, Optional
@@ -23,16 +24,32 @@ def _load_kb():
         logger.warning("ResearcherAgent: knowledge base unavailable: %s", e)
 
 
-class ResearcherAgent:
-    def __init__(self):
+def _get_kb():
+    global _kb
+    if _kb is None:
         _load_kb()
+    return _kb
 
-    async def enrich_finding(self, finding: VAPTFinding) -> VAPTFinding:
-        if _kb is None:
+
+class ResearcherAgent:
+    async def enrich_findings(self, findings: List[VAPTFinding]) -> List[VAPTFinding]:
+        # KB search is CPU-bound (TF-IDF over 30k+ chunks) and would block the
+        # event loop (and defeat asyncio.wait_for timeouts) if awaited inline.
+        return await asyncio.to_thread(self._enrich_sync, findings)
+
+    def _enrich_sync(self, findings: List[VAPTFinding]) -> List[VAPTFinding]:
+        enriched = []
+        for f in findings:
+            enriched.append(self._enrich_one(f))
+        return enriched
+
+    def _enrich_one(self, finding: VAPTFinding) -> VAPTFinding:
+        kb = _get_kb()
+        if kb is None:
             return finding
 
         query = f"{finding.title} {finding.description[:200]} {finding.vulnerability_type or ''}"
-        results = _kb.search(query, top_k=3)
+        results = kb.search(query, top_k=3)
         if not results:
             return finding
 
@@ -53,12 +70,6 @@ class ResearcherAgent:
             finding.cve = list(cves)[0]
 
         return finding
-
-    async def enrich_findings(self, findings: List[VAPTFinding]) -> List[VAPTFinding]:
-        enriched = []
-        for f in findings:
-            enriched.append(await self.enrich_finding(f))
-        return enriched
 
     def _extract_cves(self, text: str) -> List[str]:
         import re
