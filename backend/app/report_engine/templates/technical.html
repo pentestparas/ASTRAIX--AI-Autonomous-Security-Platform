@@ -5,6 +5,10 @@
 <p>During the {{ assessment_type }} assessment of <strong>{{ asset_name }}</strong> for <strong>{{ client_name }}</strong>,
 {{ total_findings }} finding(s) were identified. The severity distribution is shown below.</p>
 
+{% if risk_level %}
+<p><strong>Overall risk level:</strong> <span class="badge risk-{{ risk_level | lower }}">{{ risk_level }}</span></p>
+{% endif %}
+
 <div class="summary-cards">
   {% set counts = severity_counts %}
   <div class="card card-critical"><div class="card-num">{{ counts.get("critical", 0) }}</div><div class="card-label">Critical</div></div>
@@ -14,14 +18,9 @@
   <div class="card card-info"><div class="card-num">{{ counts.get("info", 0) }}</div><div class="card-label">Info</div></div>
 </div>
 
-{% if top_risks %}
-<h3>Top Risks</h3>
-<table>
-  <tr><th>Asset</th><th>Risk Score</th></tr>
-  {% for r in top_risks %}
-  <tr><td>{{ r.asset }}</td><td>{{ "%.1f"|format(r.score) }}</td></tr>
-  {% endfor %}
-</table>
+{% if ai_comment %}
+<h3>AI Analyst Overview</h3>
+<p>{{ ai_comment }}</p>
 {% endif %}
 
 <h2>2. Detailed Findings</h2>
@@ -31,20 +30,48 @@
   <span class="badge severity-{{ f.severity }}">{{ f.severity | upper }}</span>
   {% if f.cvss %}&nbsp;CVSS: {{ "%.1f"|format(f.cvss) }}{% endif %}
   {% if f.risk_score %}&nbsp;Risk: {{ "%.1f"|format(f.risk_score) }}{% endif %}
+  {% if f.confidence is not none %}&nbsp;Confidence: {{ "%.0f"|format(f.confidence * 100) }}%{% endif %}
   <p>{{ f.description }}</p>
   {% if f.asset %}<p><strong>Affected Asset:</strong> {{ f.asset }}</p>{% endif %}
+  {% set m = f.metadata %}
+  {% if m.get("host") %}<p><strong>Host:</strong> {{ m.host }}{% if m.get("port") %}:{{ m.port }}{% endif %}</p>{% endif %}
+  {% if m.get("path") %}<p><strong>Path:</strong> {{ m.path }}</p>{% endif %}
+  {% if m.get("service") %}<p><strong>Service:</strong> {{ m.service }}</p>{% endif %}
+  {% if m.get("vulnerability_type") %}<p><strong>Type:</strong> {{ m.vulnerability_type }}</p>{% endif %}
   {% if f.plugin %}<p><strong>Detected by:</strong> {{ f.plugin }}</p>{% endif %}
   {% if f.cwe %}<p><strong>CWE:</strong> {{ f.cwe | join(", ") }}</p>{% endif %}
   {% if f.cve %}<p><strong>CVE:</strong> {{ f.cve | join(", ") }}</p>{% endif %}
+  {% if f.evidence %}
+  <div class="evidence"><strong>Evidence:</strong>
+    {% if f.evidence is string %}{{ f.evidence }}{% else %}{{ f.evidence }}{% endif %}
+  </div>
+  {% endif %}
+  {% if f.references %}
+  <p><strong>References:</strong>
+    {% for r in f.references %}<a href="{{ r }}">{{ r }}</a>{% if not loop.last %}; {% endif %}{% endfor %}
+  </p>
+  {% endif %}
   {% if f.remediation %}
   <div class="remediation"><strong>Remediation:</strong> {{ f.remediation }}</div>
   {% endif %}
 </div>
 {% endfor %}
 
-<h2>3. Methodology</h2>
-<p>Assessment was executed with the AstraIX autonomous VAPT pipeline: recon (nmap), web analysis (nikto, gobuster, nuclei),
-and deep checks (sslscan) inside isolated Kali containers. Findings were normalized, scored by CVSS/risk engine,
-enriched via the cybersecurity knowledge base, and verified by re-exploitation.</p>
+<h2>3. Recommendations</h2>
+{% if recommendations %}
+<ul>
+  {% for rec in recommendations %}
+  <li>{{ rec }}</li>
+  {% endfor %}
+</ul>
+{% else %}
+<p>No prioritized recommendations available.</p>
+{% endif %}
+
+<h2>4. Methodology</h2>
+<p>Assessment was executed with the AstraIX autonomous VAPT pipeline inside isolated Kali containers.
+{% if tools_used %}Tools used: {{ tools_used | join(", ") }}.{% endif %}
+Findings were normalized, scored by the CVSS/risk engine, enriched via the cybersecurity knowledge base,
+and verified by re-exploitation.</p>
 
 {% endblock %}

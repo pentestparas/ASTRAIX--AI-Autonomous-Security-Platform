@@ -22,6 +22,7 @@ class ReportFormat(str, Enum):
     JSON = "json"
     MARKDOWN = "markdown"
     HTML = "html"
+    PDF = "pdf"
 
 
 @dataclass(frozen=True)

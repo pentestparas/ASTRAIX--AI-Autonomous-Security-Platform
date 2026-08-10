@@ -62,7 +62,7 @@ class Jinja2ReportEngine:
 
         out: list[ReportArtifact] = []
         for fmt in formats:
-            if fmt in (ReportFormat.HTML, ReportFormat.MARKDOWN):
+            if fmt in (ReportFormat.HTML, ReportFormat.PDF, ReportFormat.MARKDOWN):
                 artifact = self._render_html(request, sections, fmt)
             else:
                 artifact = ReportArtifact(
@@ -106,7 +106,11 @@ class Jinja2ReportEngine:
             "total_findings": len(request.findings),
             "severity_counts": severity_counts,
             "top_risks": risky[:5],
-            "ai_comment": ai_comment,
+            "ai_comment": extras.get("ai_comment") or ai_comment,
+            "risk_level": extras.get("risk_level", ""),
+            "recommendations": extras.get("recommendations", []),
+            "tools_used": extras.get("tools_used", []),
+            "scan_duration": extras.get("scan_duration", ""),
             "client_name": extras.get("client_name", "AstraIX Client"),
             "asset_name": extras.get("asset_name", "Unknown Asset"),
             "assessment_type": extras.get("assessment_type", "VAPT"),
@@ -133,6 +137,9 @@ class Jinja2ReportEngine:
                     "cwe": f.cwe or [],
                     "cve": f.cve or [],
                     "confidence": f.confidence,
+                    "evidence": f.evidence,
+                    "references": f.references or [],
+                    "metadata": f.metadata or {},
                 }
                 for f in request.findings
             ],
@@ -145,13 +152,14 @@ class Jinja2ReportEngine:
 
         body = tmpl.render(**ctx)
 
-        if fmt is ReportFormat.HTML:
+        if fmt is ReportFormat.PDF:
+            # True PDF document: render HTML then convert with WeasyPrint.
             try:
                 from weasyprint import HTML as WeasyHTML
                 pdf_bytes = WeasyHTML(string=body).write_pdf()
                 serialized = pdf_bytes.decode("latin-1")
-            except Exception:
-                serialized = body
+            except Exception as exc:  # noqa: BLE001
+                raise RuntimeError(f"PDF rendering failed: {exc}") from exc
         else:
             serialized = body
 
@@ -219,9 +227,12 @@ def _findings_section(request: ReportRequest) -> ReportSection:
 
 
 def _ai_comment_placeholder(request: ReportRequest) -> ReportSection:
+    comment = (request.extras or {}).get("ai_comment") or (
+        "(placeholder — AI Gateway integration arrives post M1)"
+    )
     return ReportSection(
         title="AI Analyst Comment",
         kind="ai_comment",
-        body="(placeholder — AI Gateway integration arrives post M1)",
-        data={"requires_ai_gateway": True},
+        body=comment,
+        data={"requires_ai_gateway": not (request.extras or {}).get("ai_comment")},
     )

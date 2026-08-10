@@ -2,7 +2,13 @@
 {% block content %}
 
 <h2>Executive Summary</h2>
-<p>{{ total_findings }} finding(s) identified during the assessment.</p>
+<p>During the {{ assessment_type }} assessment of <strong>{{ asset_name }}</strong> for <strong>{{ client_name }}</strong>,
+{{ total_findings }} finding(s) were identified across the target environment
+{% if environment %}({{ environment }}){% endif %}.</p>
+
+{% if risk_level %}
+<p><strong>Overall risk level:</strong> <span class="badge risk-{{ risk_level | lower }}">{{ risk_level }}</span></p>
+{% endif %}
 
 <h3>Severity Breakdown</h3>
 <div class="summary-cards">
@@ -29,6 +35,11 @@
   </div>
 </div>
 
+{% if ai_comment %}
+<h3>AI Analyst Overview</h3>
+<p>{{ ai_comment }}</p>
+{% endif %}
+
 {% if top_risks %}
 <h3>Top Risks</h3>
 <table>
@@ -39,9 +50,32 @@
 </table>
 {% endif %}
 
-{% if ai_comment %}
-<h3>AI Analyst Comment</h3>
-<p>{{ ai_comment }}</p>
+{% if recommendations %}
+<h3>Recommendations</h3>
+<ul>
+  {% for rec in recommendations %}
+  <li>{{ rec }}</li>
+  {% endfor %}
+</ul>
+{% endif %}
+
+{% if findings %}
+<h3>Key Findings</h3>
+<table>
+  <tr><th>Severity</th><th>Title</th><th>Target</th></tr>
+  {% for f in findings %}
+  <tr>
+    <td><span class="badge severity-{{ f.severity }}">{{ f.severity | upper }}</span></td>
+    <td>{{ f.title }}</td>
+    <td>{% if f.metadata.get("host") %}{{ f.metadata.host }}{% if f.metadata.get("path") %}{{ f.metadata.path }}{% endif %}{% elif f.metadata.get("path") %}{{ f.metadata.path }}{% else %}{{ asset_name }}{% endif %}</td>
+  </tr>
+  {% endfor %}
+</table>
+{% endif %}
+
+{% if tools_used %}
+<p class="muted">Scan executed with {{ tools_used | join(", ") }}
+{% if scan_duration %} in {{ scan_duration }}{% endif %}. Assessment {{ assessment_status }}.</p>
 {% endif %}
 
 {% endblock %}

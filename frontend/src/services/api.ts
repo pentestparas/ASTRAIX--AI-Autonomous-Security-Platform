@@ -268,13 +268,33 @@ export const graphApi = {
 };
 
 // --- Reports ---
+export interface ReportTemplateInfo {
+  id: string;
+  name: string;
+  description: string;
+  version: string;
+  frameworks: string[];
+}
+
+export interface ReportGenerateResponse {
+  download_url: string | null;
+  report: string;
+  filename: string;
+  format: string;
+  mime?: string;
+  title: string;
+  findings_count: number;
+}
+
 export const reportsApi = {
   generate: (assessmentId: string, template: string, format: string) =>
-    apiClient.post<{ download_url: string | null; report: string; filename: string; format: string; title: string; findings_count: number }>("/reports/generate", {
+    apiClient.post<ReportGenerateResponse>("/reports/generate", {
       assessment_id: assessmentId,
       template,
       format,
     }),
+  getTemplates: () =>
+    apiClient.get<ReportTemplateInfo[]>("/reports/templates"),
   list: (params?: { page?: number; limit?: number }) =>
     apiClient.getPaginated<{ id: string; created_at: string; template: string }>("/reports", params),
 };

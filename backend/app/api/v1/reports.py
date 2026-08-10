@@ -49,7 +49,19 @@ TEMPLATES = {
 FORMAT_MAP = {
     "json": ReportFormat.JSON,
     "html": ReportFormat.HTML,
-    "pdf": ReportFormat.HTML,
+    "pdf": ReportFormat.PDF,
+}
+
+FORMAT_MIME = {
+    "json": "application/json",
+    "html": "text/html",
+    "pdf": "application/pdf",
+}
+
+TEMPLATE_FRAMEWORKS = {
+    "executive": ["OWASP", "CIS"],
+    "technical": ["OWASP ASVS", "NIST CSF"],
+    "compliance": ["SOC2", "PCI DSS", "ISO 27001"],
 }
 
 # SOC 2 Trust Services Criteria relevant to VAPT findings
@@ -109,6 +121,28 @@ def _finding_to_security_finding(f: FindingModel) -> SecurityFinding:
 
     risk_score = details.get("risk_score") or details.get("cvss")
 
+    evidence = details.get("evidence") or details.get("payload")
+    kb_sources = [r for r in (details.get("kb_sources") or []) if isinstance(r, str)]
+    references = [r for r in kb_sources if r.startswith(("http://", "https://"))]
+    kb_non_urls = [r for r in kb_sources if not r.startswith(("http://", "https://"))]
+    metadata = {
+        "host": details.get("host"),
+        "port": details.get("port"),
+        "path": details.get("path"),
+        "protocol": details.get("protocol"),
+        "service": details.get("service"),
+        "vulnerability_type": details.get("vulnerability_type"),
+        "tool": details.get("tool"),
+        "confidence": details.get("confidence"),
+        "kb_sources": kb_non_urls or None,
+    }
+    metadata = {k: v for k, v in metadata.items() if v is not None}
+
+    try:
+        confidence = float(details.get("confidence") or 1.0)
+    except (TypeError, ValueError):
+        confidence = 1.0
+
     return SecurityFinding(
         id=uuid_lib.UUID(f.id) if isinstance(f.id, str) else f.id,
         assessment_id=str(f.assessment_id),
@@ -118,12 +152,15 @@ def _finding_to_security_finding(f: FindingModel) -> SecurityFinding:
         title=f.title,
         description=f.description or "",
         severity=Severity(f.severity.lower()) if f.severity else Severity.INFO,
-        confidence=1.0,
+        confidence=confidence,
         remediation=f.remediation or "",
         cvss=f.cvss_score,
         risk_score=risk_score,
-        cwe=cwes or None,
-        cve=cves or None,
+        cwe=cwes,
+        cve=cves,
+        evidence=evidence if isinstance(evidence, str) else None,
+        references=references,
+        metadata=metadata,
         fingerprint=str(f.id),
     )
 
@@ -132,6 +169,60 @@ class GenerateReportRequest(BaseModel):
     assessment_id: str
     template: str = "executive"
     format: str = "json"
+
+
+def _dict_to_security_finding(item: dict, assessment_id: str) -> SecurityFinding:
+    """Build a SecurityFinding from a scan snapshot row (assessment.config)."""
+    cves = item.get("cve") or []
+    cwes = item.get("cwe") or []
+    if isinstance(cves, str):
+        cves = [cves]
+    if isinstance(cwes, str):
+        cwes = [cwes]
+    kb_sources = [r for r in (item.get("kb_sources") or []) if isinstance(r, str)]
+    references = [r for r in kb_sources if r.startswith(("http://", "https://"))]
+    kb_non_urls = [r for r in kb_sources if not r.startswith(("http://", "https://"))]
+    metadata = {
+        "host": item.get("host"),
+        "port": item.get("port"),
+        "path": item.get("path"),
+        "protocol": item.get("protocol"),
+        "service": item.get("service"),
+        "vulnerability_type": item.get("vulnerability_type"),
+        "tool": item.get("tool"),
+        "confidence": item.get("confidence"),
+        "kb_sources": kb_non_urls or None,
+    }
+    metadata = {k: v for k, v in metadata.items() if v is not None}
+    try:
+        confidence = float(item.get("confidence") or 1.0)
+    except (TypeError, ValueError):
+        confidence = 1.0
+    evidence = item.get("evidence")
+    try:
+        severity = Severity(str(item.get("severity", "info")).lower())
+    except ValueError:
+        severity = Severity.INFO
+    return SecurityFinding(
+        id=uuid_lib.uuid4(),
+        assessment_id=assessment_id,
+        asset="target",
+        capability="vapt",
+        plugin="vapt",
+        title=str(item.get("title"))[:512] or "Finding",
+        description=item.get("description") or "",
+        severity=severity,
+        confidence=confidence,
+        remediation=item.get("remediation") or "",
+        cvss=None,
+        risk_score=None,
+        cwe=cwes,
+        cve=cves,
+        evidence=evidence if isinstance(evidence, str) else None,
+        references=references,
+        metadata=metadata,
+        fingerprint=str(uuid_lib.uuid4()),
+    )
 
 
 @router.post("/generate")
@@ -151,7 +242,16 @@ async def generate_report(
 
     fmt = FORMAT_MAP.get(body.format, ReportFormat.JSON)
 
-    sec_findings = [_finding_to_security_finding(f) for f in findings]
+    # Prefer the scan's own finding snapshot (assessment.config) so the report
+    # shows the full scan result even when cross-scan fingerprint dedup kept
+    # most findings attached to earlier assessments. Falls back to DB rows.
+    snapshot = (dict(assessment.config or {}).get("finding_snapshot")) or []
+    if snapshot:
+        sec_findings = [_dict_to_security_finding(item, str(assessment.id)) for item in snapshot]
+        findings_count = len(sec_findings)
+    else:
+        sec_findings = [_finding_to_security_finding(f) for f in findings]
+        findings_count = len(findings)
 
     project = assessment.project if hasattr(assessment, "project") else None
     org_name = None
@@ -169,6 +269,17 @@ async def generate_report(
     completed = assessment.completed_at
     now = datetime.now(timezone.utc)
 
+    # Real AI insights (Gemini executive summary / recommendations) captured
+    # by the VAPT orchestrator at scan time are stored in assessment.config.
+    cfg = dict(assessment.config or {})
+    insights = cfg.get("insights") or {}
+    if isinstance(insights, str):
+        try:
+            import json as _json
+            insights = _json.loads(insights)
+        except Exception:
+            insights = {}
+
     extras = {
         "client_name": client_name,
         "asset_name": asset_name,
@@ -182,6 +293,11 @@ async def generate_report(
         "environment": details_env(assessment),
         "soc2_controls": SOC2_CONTROLS,
         "iso27001_controls": ISO27001_CONTROLS,
+        "ai_comment": insights.get("executive_summary") or "",
+        "risk_level": insights.get("risk_level") or "",
+        "recommendations": insights.get("recommendations") or [],
+        "tools_used": insights.get("tools_used") or [],
+        "scan_duration": insights.get("scan_duration") or "",
     }
 
     request = ReportRequest(
@@ -192,9 +308,7 @@ async def generate_report(
     )
 
     engine = Jinja2ReportEngine()
-    artifacts = await engine.render(request, formats=(
-        ReportFormat.HTML if body.format == "pdf" else fmt,
-    ))
+    artifacts = await engine.render(request, formats=(fmt,))
 
     if not artifacts:
         raise HTTPException(status_code=500, detail="Report generation failed")
@@ -211,8 +325,9 @@ async def generate_report(
             "filename": filename,
             "title": artifact.title,
             "format": artifact.format.value,
+            "mime": FORMAT_MIME.get(body.format, "application/octet-stream"),
             "assessment_id": body.assessment_id,
-            "findings_count": len(findings),
+            "findings_count": findings_count,
         }
     )
 
@@ -237,6 +352,7 @@ async def list_templates():
                 "name": t.description.split(" - ")[0],
                 "description": t.description,
                 "version": t.version,
+                "frameworks": TEMPLATE_FRAMEWORKS.get(tid, []),
             }
             for tid, t in TEMPLATES.items()
         ]

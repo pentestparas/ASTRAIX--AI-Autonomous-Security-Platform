@@ -111,6 +111,16 @@ identified <strong>{{ total_findings }}</strong> finding(s) relevant to SOC 2, P
 </table>
 
 <h2>5. Remediation Plan</h2>
+{% if risk_level %}
+<p><strong>Overall risk level:</strong> <span class="badge risk-{{ risk_level | lower }}">{{ risk_level }}</span></p>
+{% endif %}
+{% if recommendations %}
+<ul>
+  {% for rec in recommendations %}
+  <li>{{ rec }}</li>
+  {% endfor %}
+</ul>
+{% endif %}
 {% for f in findings %}
 {% if f.remediation %}
 <div class="finding" style="border-left-color: {{ '#dc2626' if f.severity == 'critical' else '#ea580c' if f.severity == 'high' else '#ca8a04' if f.severity == 'medium' else '#65a30d' if f.severity == 'low' else '#6b7280' }};">

@@ -115,9 +115,21 @@ class AIOrchestrator:
                 "message": "Starting tool execution",
             })
 
-            result = await self.recon.execute_scan(request, scan_id=scan_id)
+            # Built-in Kali toolchain and enabled external platform adapters
+            # run SIMULTANEOUSLY (Dark-Moon / Xalgorix / PentAGI / RedAmon all
+            # fan out recon in parallel). Adapters are best-effort: a failing
+            # adapter never aborts the scan.
+            result, adapter_results = await asyncio.gather(
+                self.recon.execute_scan(request, scan_id=scan_id),
+                self._run_adapters(target, scan_type_enum, scan_id, target_info),
+                return_exceptions=True,
+            )
+            if isinstance(result, BaseException):
+                raise result
+            if isinstance(adapter_results, BaseException):
+                logger.warning("Adapters failed for %s: %s", target, adapter_results)
+                adapter_results = []
 
-            adapter_results = await self._run_adapters(target, scan_type_enum, scan_id, target_info)
             for ar in adapter_results:
                 for finding in ar.findings:
                     result.add_finding(finding)

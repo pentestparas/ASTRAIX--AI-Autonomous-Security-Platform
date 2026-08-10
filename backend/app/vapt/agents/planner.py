@@ -28,29 +28,36 @@ PHASE_DEFS: List[Dict[str, Any]] = [
         "id": "recon",
         "name": "Reconnaissance",
         "description": "Discover live hosts, open ports and running services to map the attack surface.",
-        "tools": ["nmap"],
-        "kb_query": "network reconnaissance port scanning service discovery nmap",
+        "tools": ["nmap", "masscan", "dnsrecon", "subfinder"],
+        "kb_query": "network reconnaissance port scanning service discovery nmap masscan dnsrecon subfinder",
     },
     {
         "id": "enumeration",
         "name": "Web Enumeration",
-        "description": "Enumerate web paths, directories and server headers to find exposed surface.",
-        "tools": ["gobuster", "nikto"],
-        "kb_query": "web directory enumeration gobuster nikto server misconfiguration",
+        "description": "Enumerate web paths, directories, server headers and technologies to find exposed surface.",
+        "tools": ["gobuster", "ffuf", "whatweb", "httpx", "wafw00f", "arjun"],
+        "kb_query": "web directory enumeration gobuster ffuf whatweb httpx wafw00f server misconfiguration",
     },
     {
         "id": "vuln_scan",
         "name": "Vulnerability Detection",
-        "description": "Actively probe for known vulnerabilities with signature engines.",
-        "tools": ["nuclei", "sqlmap"],
-        "kb_query": "vulnerability scanning nuclei sqlmap OWASP top 10 injection",
+        "description": "Actively probe for known vulnerabilities with signature engines and injection detectors.",
+        "tools": ["nuclei", "sqlmap", "commix", "dalfox"],
+        "kb_query": "vulnerability scanning nuclei sqlmap commix dalfox OWASP top 10 injection",
+    },
+    {
+        "id": "brute_force",
+        "name": "Credential Testing",
+        "description": "Test for weak credentials on exposed authentication services.",
+        "tools": ["hydra"],
+        "kb_query": "brute force weak credentials hydra password policy authentication",
     },
     {
         "id": "crypto",
         "name": "SSL/TLS Deep Dive",
         "description": "Audit SSL/TLS configuration, weak ciphers and protocol issues.",
-        "tools": ["sslscan"],
-        "kb_query": "SSL TLS certificate weak ciphers protocol audit",
+        "tools": ["sslscan", "testssl"],
+        "kb_query": "SSL TLS certificate weak ciphers protocol audit testssl",
     },
 ]
 
@@ -62,6 +69,17 @@ TOOL_KB_QUERIES: Dict[str, str] = {
     "gobuster": "gobuster directory brute force web enumeration",
     "ffuf": "ffuf fuzzing web content discovery",
     "sslscan": "sslscan SSL TLS protocol cipher audit",
+    "masscan": "masscan high speed port scanning",
+    "dnsrecon": "dnsrecon DNS enumeration records brute force",
+    "subfinder": "subfinder passive subdomain discovery",
+    "httpx": "httpx http probing technology fingerprinting",
+    "whatweb": "whatweb web technology fingerprinting",
+    "wafw00f": "wafw00f web application firewall detection",
+    "arjun": "arjun hidden parameter discovery",
+    "commix": "commix command injection detection exploitation",
+    "dalfox": "dalfox XSS scanning parameter based",
+    "hydra": "hydra brute force weak credentials ssh http",
+    "testssl": "testssl TLS SSL configuration audit cipher suite",
 }
 
 
@@ -265,8 +283,10 @@ class PlannerAgent:
         llm_plan, provider = await self._llm_refine(
             "You are a senior penetration testing planner. Given the target "
             f"{target!r} (type {target_info.get('type')}), select the best Kali tools "
-            "per VAPT phase from: nmap, nikto, nuclei, sqlmap, gobuster, ffuf, sslscan. "
-            "Return JSON {\"phases\":[{\"id\":\"recon|enumeration|vuln_scan|crypto\","
+            "per VAPT phase from: nmap, masscan, dnsrecon, subfinder, nikto, nuclei, "
+            "sqlmap, gobuster, ffuf, httpx, whatweb, wafw00f, arjun, commix, dalfox, "
+            "hydra, sslscan, testssl. "
+            "Return JSON {\"phases\":[{\"id\":\"recon|enumeration|vuln_scan|brute_force|crypto\","
             "\"tools\":[\"nmap\",...]}]}. Only include tools above and phases relevant to the target type."
         )
         if llm_plan and isinstance(llm_plan, dict) and llm_plan.get("phases"):

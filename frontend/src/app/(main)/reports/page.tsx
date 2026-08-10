@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { assessmentsApi, reportsApi } from "@/services/api";
+import { assessmentsApi, reportsApi, type ReportTemplateInfo } from "@/services/api";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
@@ -13,32 +13,15 @@ import {
   ShieldCheck,
   Loader2,
   CheckCircle2,
+  AlertCircle,
 } from "lucide-react";
 import type { Assessment } from "@/types";
 
-const templates = [
-  {
-    id: "executive",
-    name: "Executive Summary",
-    description: "High-level overview for leadership",
-    icon: ShieldCheck,
-    frameworks: ["OWASP", "CIS"],
-  },
-  {
-    id: "technical",
-    name: "Technical Report",
-    description: "Detailed technical findings and remediation steps",
-    icon: FileBarChart,
-    frameworks: ["OWASP ASVS", "NIST CSF"],
-  },
-  {
-    id: "compliance",
-    name: "Compliance Report",
-    description: "Audit-ready compliance documentation",
-    icon: FileText,
-    frameworks: ["SOC2", "PCI DSS", "ISO 27001"],
-  },
-];
+const templateIcons: Record<string, typeof ShieldCheck> = {
+  executive: ShieldCheck,
+  technical: FileBarChart,
+  compliance: FileText,
+};
 
 const formats = [
   { id: "pdf", label: "PDF", icon: FileText },
@@ -46,29 +29,48 @@ const formats = [
   { id: "json", label: "JSON", icon: FileBarChart },
 ];
 
+const MIME_TYPES: Record<string, string> = {
+  pdf: "application/pdf",
+  html: "text/html",
+  json: "application/json",
+};
+
 export default function ReportsPage() {
   const [assessments, setAssessments] = useState<Assessment[]>([]);
+  const [templates, setTemplates] = useState<ReportTemplateInfo[]>([]);
   const [selectedAssessment, setSelectedAssessment] = useState("");
   const [selectedTemplate, setSelectedTemplate] = useState("executive");
   const [selectedFormat, setSelectedFormat] = useState("pdf");
   const [generating, setGenerating] = useState(false);
   const [loading, setLoading] = useState(true);
+  const [error, setError] = useState("");
   const [successMessage, setSuccessMessage] = useState("");
 
   useEffect(() => {
     async function load() {
       try {
         const orgId = localStorage.getItem("organization_id");
-        const res = await assessmentsApi.list({
-          page: 1,
-          limit: 50,
-          organization_id: orgId ?? undefined,
-        });
-        if (res.success && res.data) {
-          setAssessments((res.data.items ?? []).filter((a) => a.status === "completed"));
+        const [assessmentsRes, templatesRes] = await Promise.all([
+          assessmentsApi.list({
+            page: 1,
+            limit: 50,
+            organization_id: orgId ?? undefined,
+          }),
+          reportsApi.getTemplates(),
+        ]);
+        if (assessmentsRes.success && assessmentsRes.data) {
+          setAssessments((assessmentsRes.data.items ?? []).filter((a) => a.status === "completed"));
+        }
+        if (templatesRes.success && templatesRes.data) {
+          const items = Array.isArray(templatesRes.data) ? templatesRes.data : [];
+          setTemplates(items);
+          if (items.length > 0 && !items.some((t) => t.id === selectedTemplate)) {
+            setSelectedTemplate(items[0].id);
+          }
         }
       } catch (e) {
-        console.error("Failed to load assessments:", e);
+        console.error("Failed to load report data:", e);
+        setError("Failed to load assessments or report templates.");
       } finally {
         setLoading(false);
       }
@@ -76,8 +78,12 @@ export default function ReportsPage() {
     load();
   }, []);
 
-  function downloadReport(reportContent: string, filename: string) {
-    const blob = new Blob([reportContent], { type: "application/octet-stream" });
+  function downloadReport(reportContent: string, filename: string, format: string) {
+    const mime = MIME_TYPES[format] ?? "application/octet-stream";
+    const blob =
+      format === "pdf"
+        ? new Blob([new Uint8Array(Array.from(reportContent, (c) => c.charCodeAt(0) & 0xff))], { type: mime })
+        : new Blob([reportContent], { type: mime });
     const url = URL.createObjectURL(blob);
     const a = document.createElement("a");
     a.href = url;
@@ -92,6 +98,7 @@ export default function ReportsPage() {
     if (!selectedAssessment) return;
     setGenerating(true);
     setSuccessMessage("");
+    setError("");
     try {
       const res = await reportsApi.generate(
         selectedAssessment,
@@ -99,14 +106,18 @@ export default function ReportsPage() {
         selectedFormat
       );
       if (res.success && res.data?.report) {
-        const ext = ({ json: "json", html: "html", pdf: "pdf" } as Record<string, string>)[res.data.format] || "json";
+        const format = res.data.format || selectedFormat;
+        const ext = ({ json: "json", html: "html", pdf: "pdf" } as Record<string, string>)[format] || "json";
         const filename = res.data.filename || `report_${selectedAssessment.slice(0, 8)}_${selectedTemplate}.${ext}`;
-        downloadReport(res.data.report, filename);
+        downloadReport(res.data.report, filename, format);
         setSuccessMessage(`Report downloaded as ${filename}`);
         setTimeout(() => setSuccessMessage(""), 3000);
+      } else {
+        setError("Report generation returned no content.");
       }
     } catch (e) {
       console.error("Failed to generate report:", e);
+      setError("Report generation failed. Please try again.");
     } finally {
       setGenerating(false);
     }
@@ -149,34 +160,43 @@ export default function ReportsPage() {
               <label className="text-sm font-medium mb-2 block">
                 Report Template
               </label>
-              <div className="grid gap-3">
-                {templates.map((t) => (
-                  <button
-                    key={t.id}
-                    onClick={() => setSelectedTemplate(t.id)}
-                    className={`flex items-start gap-3 p-3 border rounded-lg text-left transition-colors ${
-                      selectedTemplate === t.id
-                        ? "border-primary bg-primary/5"
-                        : "hover:border-primary/50"
-                    }`}
-                  >
-                    <t.icon className="w-5 h-5 text-primary mt-0.5" />
-                    <div>
-                      <div className="font-medium text-sm">{t.name}</div>
-                      <div className="text-xs text-muted-foreground">
-                        {t.description}
-                      </div>
-                      <div className="flex gap-1 mt-1">
-                        {t.frameworks.map((f) => (
-                          <Badge key={f} variant="secondary" className="text-xs">
-                            {f}
-                          </Badge>
-                        ))}
-                      </div>
-                    </div>
-                  </button>
-                ))}
-              </div>
+              {templates.length === 0 ? (
+                <p className="text-xs text-muted-foreground">No templates available.</p>
+              ) : (
+                <div className="grid gap-3">
+                  {templates.map((t) => {
+                    const Icon = templateIcons[t.id] ?? FileBarChart;
+                    return (
+                      <button
+                        key={t.id}
+                        onClick={() => setSelectedTemplate(t.id)}
+                        className={`flex items-start gap-3 p-3 border rounded-lg text-left transition-colors ${
+                          selectedTemplate === t.id
+                            ? "border-primary bg-primary/5"
+                            : "hover:border-primary/50"
+                        }`}
+                      >
+                        <Icon className="w-5 h-5 text-primary mt-0.5" />
+                        <div>
+                          <div className="font-medium text-sm">{t.name}</div>
+                          <div className="text-xs text-muted-foreground">
+                            {t.description}
+                          </div>
+                          {(t.frameworks ?? []).length > 0 && (
+                            <div className="flex gap-1 mt-1">
+                              {t.frameworks.map((f) => (
+                                <Badge key={f} variant="secondary" className="text-xs">
+                                  {f}
+                                </Badge>
+                              ))}
+                            </div>
+                          )}
+                        </div>
+                      </button>
+                    );
+                  })}
+                </div>
+              )}
             </div>
 
             <div>
@@ -203,6 +223,12 @@ export default function ReportsPage() {
               <div className="flex items-center gap-2 text-sm text-green-600 bg-green-50 dark:bg-green-950 dark:text-green-400 px-3 py-2 rounded-lg">
                 <CheckCircle2 className="w-4 h-4" />
                 {successMessage}
+              </div>
+            )}
+            {error && (
+              <div className="flex items-center gap-2 text-sm text-red-600 bg-red-50 dark:bg-red-950 dark:text-red-400 px-3 py-2 rounded-lg">
+                <AlertCircle className="w-4 h-4" />
+                {error}
               </div>
             )}
             <Button

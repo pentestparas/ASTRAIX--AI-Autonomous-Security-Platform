@@ -221,7 +221,7 @@ class RaccoonAdapter(_KaliToolAdapter):
     def _build_command(self, target: str, target_info: Dict[str, Any]) -> str:
         return (
             f"mkdir -p /tmp/raccoon-out && raccoon -d A,MX,NS,SOA,TXT,CNAME "
-            f"--skip-health-check {target} -o /tmp/raccoon-out > /tmp/raccoon.log 2>&1; "
+            f"--skip-health-check --skip-nmap-scan {target} -o /tmp/raccoon-out > /tmp/raccoon.log 2>&1; "
             f"cat /tmp/raccoon-out/*/*.txt 2>/dev/null; echo '---STDOUT---'; tail -n 120 /tmp/raccoon.log"
         )
 

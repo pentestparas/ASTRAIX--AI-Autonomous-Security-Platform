@@ -234,6 +234,34 @@ async def run_scan(
 
     insights = orchestrator.generate_insights(result)
 
+    # Compact snapshot of the scan's OWN findings. The findings table dedupes
+    # globally on fingerprint, so re-scans of the same target only link NEW
+    # findings to a fresh assessment - without this snapshot reports would
+    # under-report. Stored in assessment.config and consumed by the report
+    # engine (app/api/v1/reports.py).
+    finding_snapshot = []
+    for f in result.findings:
+        details = dict(f.details or {})
+        kb = details.get("kb_sources") or []
+        finding_snapshot.append({
+            "title": f.title,
+            "severity": f.severity.value,
+            "description": f.description,
+            "remediation": f.remediation,
+            "tool": f.tool_name,
+            "host": f.host,
+            "port": f.port,
+            "path": f.path,
+            "protocol": f.protocol,
+            "service": f.service,
+            "vulnerability_type": f.vulnerability_type,
+            "cve": details.get("cve") or details.get("cves") or [],
+            "cwe": details.get("cwe") or details.get("cwes") or [],
+            "confidence": f.confidence,
+            "evidence": details.get("evidence") or f.payload,
+            "kb_sources": kb if isinstance(kb, list) else [],
+        })
+
     if persisted and assessment_id:
         try:
             assessment = await session.get(Assessment, assessment_id)
@@ -245,6 +273,7 @@ async def run_scan(
                 cfg = dict(assessment.config or {})
                 cfg["insights"] = insights
                 cfg["tool_results"] = result.tool_results
+                cfg["finding_snapshot"] = finding_snapshot
                 assessment.config = cfg
 
             seen_fingerprints: set[str] = set()

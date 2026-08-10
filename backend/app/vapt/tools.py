@@ -97,6 +97,145 @@ TOOLS_REGISTRY: Dict[str, VAPTTool] = {
         requires_hostname=True,
         output_format="xml",
     ),
+    "masscan": VAPTTool(
+        id="masscan",
+        name="Masscan",
+        command="masscan",
+        description="High-speed asynchronous port scanner",
+        category=VAPTScanType.NETWORK,
+        args=["-oX", "-", "--rate", "1000"],
+        timeout=600,
+        requires_ip=True,
+        output_format="xml",
+    ),
+    "dnsrecon": VAPTTool(
+        id="dnsrecon",
+        name="DNSRecon",
+        command="dnsrecon",
+        description="DNS enumeration - records, zone transfer, brute force",
+        category=VAPTScanType.NETWORK,
+        args=["-j", "-", "-t", "std"],
+        timeout=600,
+        requires_hostname=True,
+        output_format="json",
+    ),
+    "subfinder": VAPTTool(
+        id="subfinder",
+        name="Subfinder",
+        command="subfinder",
+        description="Passive subdomain discovery",
+        category=VAPTScanType.NETWORK,
+        args=["-jsonl", "-", "-silent"],
+        timeout=600,
+        requires_hostname=True,
+        output_format="json",
+    ),
+    "httpx": VAPTTool(
+        id="httpx",
+        name="HTTPx",
+        command="httpx",
+        description="HTTP probing - status, title, tech fingerprint",
+        category=VAPTScanType.WEB,
+        args=["-json", "-silent"],
+        timeout=600,
+        requires_hostname=True,
+        output_format="json",
+    ),
+    "whatweb": VAPTTool(
+        id="whatweb",
+        name="WhatWeb",
+        command="whatweb",
+        description="Web technology fingerprinting",
+        category=VAPTScanType.WEB,
+        args=["--log-json=-"],
+        timeout=300,
+        requires_url=True,
+        output_format="json",
+    ),
+    "wafw00f": VAPTTool(
+        id="wafw00f",
+        name="WAFW00F",
+        command="wafw00f",
+        description="WAF detection and fingerprinting",
+        category=VAPTScanType.WEB,
+        args=["-o", "-", "-f", "json"],
+        timeout=300,
+        requires_url=True,
+        output_format="json",
+    ),
+    "arjun": VAPTTool(
+        id="arjun",
+        name="Arjun",
+        command="arjun",
+        description="HTTP parameter discovery",
+        category=VAPTScanType.WEB,
+        args=["-oJ", "-", "-q"],
+        timeout=600,
+        requires_url=True,
+        output_format="json",
+    ),
+    "wfuzz": VAPTTool(
+        id="wfuzz",
+        name="WFuzz",
+        command="wfuzz",
+        description="Web fuzzer for content and parameter fuzzing",
+        category=VAPTScanType.WEB,
+        args=["--oF", "-", "--json"],
+        timeout=600,
+        requires_url=True,
+        output_format="json",
+    ),
+    "commix": VAPTTool(
+        id="commix",
+        name="Commix",
+        command="commix",
+        description="OS command injection detector and exploiter",
+        category=VAPTScanType.WEB,
+        args=["--batch", "--output-dir=/tmp"],
+        timeout=900,
+        requires_url=True,
+        output_format="text",
+    ),
+    "hydra": VAPTTool(
+        id="hydra",
+        name="Hydra",
+        command="hydra",
+        description="Network login brute-forcer (ssh, http, rdp, ftp)",
+        category=VAPTScanType.NETWORK,
+        args=["-L", "-P", "-t", "4", "-w", "10"],
+        timeout=1200,
+        requires_hostname=True,
+        output_format="text",
+    ),
+    "testssl": VAPTTool(
+        id="testssl",
+        name="TestSSL",
+        command="testssl",
+        description="Deep TLS/SSL configuration audit",
+        category=VAPTScanType.SSL,
+        args=["--jsonfile", "-"],
+        timeout=600,
+        requires_hostname=True,
+        output_format="json",
+    ),
+}
+
+TOOLS_BY_CATEGORY: Dict[VAPTScanType, List[str]] = {
+    VAPTScanType.NETWORK: ["nmap", "masscan", "dnsrecon", "subfinder"],
+    VAPTScanType.WEB: ["nikto", "nuclei", "gobuster", "ffuf", "whatweb", "httpx"],
+    VAPTScanType.API: ["nuclei", "ffuf", "arjun"],
+    VAPTScanType.SSL: ["sslscan", "testssl"],
+    VAPTScanType.CONTAINER: ["trivy"],
+    VAPTScanType.FULL: ["nmap", "nikto", "nuclei", "gobuster", "sslscan", "masscan", "ffuf", "hydra"],
+}
+
+DEFAULT_TOOLS: Dict[VAPTScanType, List[str]] = {
+    VAPTScanType.NETWORK: ["nmap", "dnsrecon"],
+    VAPTScanType.WEB: ["nikto", "nuclei", "gobuster"],
+    VAPTScanType.API: ["nuclei", "ffuf"],
+    VAPTScanType.SSL: ["sslscan"],
+    VAPTScanType.CONTAINER: ["trivy"],
+    VAPTScanType.FULL: ["nmap", "nikto", "nuclei", "gobuster"],
 }
 
 TOOLS_BY_CATEGORY: Dict[VAPTScanType, List[str]] = {
@@ -130,8 +269,8 @@ def get_tools_for_scan_type(scan_type: VAPTScanType) -> List[VAPTTool]:
 def check_tool_availability() -> Dict[str, bool]:
     """Tools run inside the astraix-kali container, not the backend process.
 
-    Availability is therefore determined by whether the Kali image exists.
-    Falls back to host `which` checks only when the image is missing.
+    Probes the actual binaries in the image with a single container run;
+    falls back to host `which` checks only when the image is missing.
     """
     from app.vapt.executor import VAPTExecutor
 
@@ -142,7 +281,24 @@ def check_tool_availability() -> Dict[str, bool]:
             timeout=10,
         )
         if result.returncode == 0:
-            return {tool_id: True for tool_id in TOOLS_REGISTRY}
+            script = "; ".join(
+                f"command -v {tool.command} >/dev/null 2>&1 && echo 'OK {tool_id}' || echo 'MISS {tool_id}'"
+                for tool_id, tool in TOOLS_REGISTRY.items()
+            )
+            probe = subprocess.run(
+                [
+                    "docker", "run", "--rm", VAPTExecutor.KALI_IMAGE,
+                    "bash", "-c", script,
+                ],
+                capture_output=True,
+                timeout=120,
+            )
+            availability: Dict[str, bool] = {tid: False for tid in TOOLS_REGISTRY}
+            for line in (probe.stdout or b"").decode("utf-8", errors="ignore").splitlines():
+                parts = line.split()
+                if len(parts) == 2 and parts[0] in ("OK", "MISS"):
+                    availability[parts[1]] = parts[0] == "OK"
+            return availability
     except Exception:
         pass
 

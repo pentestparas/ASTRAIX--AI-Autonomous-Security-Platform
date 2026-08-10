@@ -20,7 +20,7 @@
 | `backend/app/vapt/executor.py` | Spawns Kali containers, runs security tools via Docker |
 | `backend/app/vapt/normalizer.py` | Converts tool output → canonical SecurityFinding |
 | `backend/app/vapt/routes.py` | API endpoints: `/scan/quick`, `/scans`, etc. |
-| `backend/app/api/v1/auth.py` | Login at `/login` (OAuth2 form) and `/login/json` (JSON) |
+| `backend/app/api/v1/auth.py` | Login at `/api/v1/auth/login` (OAuth2 form) and `/api/v1/auth/login/json` (JSON) |
 | `frontend/src/app/(main)/vapt/page.tsx` | Redirect stub → `/scans` |
 | `frontend/src/app/(main)/scans/page.tsx` | Unified scans page (quick scan + history + findings) |
 | `frontend/src/app/api/v1/vapt/scan/route.ts` | Route handler proxy for VAPT scan (180s timeout, bypasses Next.js rewrite proxy) |

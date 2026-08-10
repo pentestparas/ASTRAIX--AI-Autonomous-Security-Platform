@@ -108,6 +108,11 @@ class VAPTExecutor:
             result.errors.append(f"Could not build command for {tool_id}")
             return
 
+        # Execution guard (Dark-Moon pattern): bound every tool with an
+        # in-container timeout so the process dies even if docker-py's wait
+        # hangs, and kill the process group shortly after on the way out.
+        cmd = f"timeout --kill-after=5 {tool.timeout}s bash -c '{cmd}'"
+
         container_name = f"astraix-vapt-{uuid4().hex[:8]}"
 
         try:
@@ -207,17 +212,27 @@ class VAPTExecutor:
         tool_cmd = {
             "nmap": f"nmap -sV -Pn -T4 --top-ports 100 -oX - {target}",
             "sqlmap": f"sqlmap -u {target} --batch --random-agent --output-dir=/tmp",
-            "nuclei": f"nuclei -u {target} -json-export - -silent",
+            "nuclei": f"nuclei -u {target} -json-export - -silent -rate-limit 150",
             "nikto": f"nikto -h {target} -Format xml -output -",
-            "gobuster": f"gobuster dir -u {target} -w {wl_dirs} -o - -f -q",
-            "ffuf": f"ffuf -u {target}/FUZZ -w {wl_dirs_medium} -json",
-            "sslscan": f"sslscan {target}",
+            "gobuster": f"gobuster dir -u {target} -w {wl_dirs} -o - -f -q -t 10",
+            "ffuf": f"ffuf -u {target}/FUZZ -w {wl_dirs_medium} -json -rate 100",
+            "sslscan": f"sslscan --xml=- --no-failed {target}",
             "trivy": f"trivy image --quiet --format json alpine:latest",
-            "hydra": f"hydra -L {wl_users} -P {wl_rockyou} {target} ssh",
-            "dnsrecon": f"dnsrecon -d {target} -D {wl_sub} -t brt",
+            "hydra": f"hydra -L {wl_users} -P {wl_rockyou} -t 4 -w 10 {target} ssh",
+            "dnsrecon": f"dnsrecon -d {target} -t std -j /tmp/dnsrecon.json > /dev/null 2>&1; cat /tmp/dnsrecon.json 2>/dev/null",
             "gobuster-dns": f"gobuster dns -d {target} -w {wl_sub} -q",
             "gobuster-vhost": f"gobuster vhost -u {target} -w {wl_dirs} -q",
             "ffuf-params": f"ffuf -u {target}?FUZZ=1 -w {wl_fuzz} -json",
+            "masscan": f"masscan -Pn --top-ports 100 -oX - --rate 1000 {target}",
+            "subfinder": f"subfinder -d {target} -jsonl -silent",
+            "httpx": f"httpx -u {target} -json -silent -threads 20",
+            "whatweb": f"whatweb -a 3 --log-json=/tmp/whatweb.json {target} > /dev/null 2>&1; cat /tmp/whatweb.json",
+            "wafw00f": f"wafw00f -f json -o /tmp/waf.json {target} > /dev/null 2>&1; cat /tmp/waf.json",
+            "arjun": f"arjun -u {target} -oJ -q",
+            "wfuzz": f"wfuzz -z file,{wl_dirs_medium} --hc 404 --json {target}/FUZZ",
+            "commix": f"commix -u {target} --batch --output-dir=/tmp",
+            "dalfox": f"dalfox url {target} --format json --silence",
+            "testssl": f"testssl --jsonfile=/tmp/testssl.json {target} > /dev/null 2>&1; cat /tmp/testssl.json 2>/dev/null",
         }.get(tool.id)
 
         return tool_cmd
@@ -243,10 +258,23 @@ class VAPTExecutor:
     ) -> List[VAPTFinding]:
         parser_map = {
             "nmap": self._parse_nmap,
+            "masscan": self._parse_nmap,
             "nikto": self._parse_nikto,
             "nuclei": self._parse_nuclei,
             "gobuster": self._parse_gobuster,
             "sslscan": self._parse_sslscan,
+            "ffuf": self._parse_ffuf,
+            "dnsrecon": self._parse_dnsrecon,
+            "subfinder": self._parse_jsonl_findings,
+            "httpx": self._parse_jsonl_findings,
+            "whatweb": self._parse_jsonl_findings,
+            "wafw00f": self._parse_wafw00f,
+            "arjun": self._parse_arjun,
+            "wfuzz": self._parse_ffuf,
+            "dalfox": self._parse_dalfox,
+            "commix": self._parse_commix,
+            "hydra": self._parse_hydra,
+            "testssl": self._parse_testssl,
         }
         parser = parser_map.get(tool.id, self._parse_generic)
         return parser(output, target, tool.name)
@@ -395,6 +423,202 @@ class VAPTExecutor:
                 ))
         return findings[:10]
 
+    def _parse_ffuf(self, output: str, target: str, tool_name: str) -> List[VAPTFinding]:
+        findings = []
+        for line in output.splitlines():
+            try:
+                data = json.loads(line)
+                if data.get("status") in (200, 301, 302, 401, 403):
+                    url = data.get("url") or data.get("input", {}).get("FUZZ", "")
+                    findings.append(VAPTFinding(
+                        title=f"Endpoint Found: {url[:200]}",
+                        description=f"Status {data.get('status')}, size {data.get('length', 0)}",
+                        severity=VAPTSeverity.INFO,
+                        tool_name=tool_name,
+                        target=target,
+                        path=url,
+                        remediation="Review if this endpoint should be publicly accessible",
+                    ))
+            except (json.JSONDecodeError, KeyError):
+                continue
+        return findings
+
+    def _parse_dnsrecon(self, output: str, target: str, tool_name: str) -> List[VAPTFinding]:
+        findings = []
+        try:
+            data = json.loads(output)
+            if isinstance(data, dict):
+                for record_type in ("records", "MX", "NS", "SOA", "SRV", "TXT", "A"):
+                    for rec in data.get(record_type, []):
+                        desc = str(rec.get("address", rec.get("mname", rec)))
+                        findings.append(VAPTFinding(
+                            title=f"DNS Record: {record_type}",
+                            description=desc[:300],
+                            severity=VAPTSeverity.INFO,
+                            tool_name=tool_name,
+                            target=target,
+                            service=record_type.lower(),
+                            remediation="Review DNS records for information disclosure",
+                        ))
+        except (json.JSONDecodeError, AttributeError):
+            for line in output.splitlines():
+                if line.strip().startswith("[") and "]" in line:
+                    findings.append(VAPTFinding(
+                        title="DNS Record Found",
+                        description=line[:300],
+                        severity=VAPTSeverity.INFO,
+                        tool_name=tool_name,
+                        target=target,
+                    ))
+        return findings[:20]
+
+    def _parse_jsonl_findings(self, output: str, target: str, tool_name: str) -> List[VAPTFinding]:
+        findings = []
+        for line in output.splitlines():
+            try:
+                data = json.loads(line)
+                url = data.get("url") or data.get("host") or data.get("target") or ""
+                title = data.get("title") or data.get("webapp") or f"{tool_name} Discovery"
+                status = data.get("status_code") or data.get("status")
+                desc = f"{tool_name}: {url}"
+                if status:
+                    desc += f" (HTTP {status})"
+                tech = data.get("tech") or data.get("plugins")
+                if tech:
+                    desc += f" - tech: {tech}"
+                if not url:
+                    continue
+                findings.append(VAPTFinding(
+                    title=str(title)[:200],
+                    description=desc[:500],
+                    severity=VAPTSeverity.INFO,
+                    tool_name=tool_name,
+                    target=target,
+                    path=url,
+                ))
+            except (json.JSONDecodeError, KeyError):
+                continue
+        return findings[:20]
+
+    def _parse_wafw00f(self, output: str, target: str, tool_name: str) -> List[VAPTFinding]:
+        findings = []
+        try:
+            data = json.loads(output)
+            for entry in data if isinstance(data, list) else [data]:
+                if entry.get("detected"):
+                    firewall = entry.get("firewall", "unknown")
+                    findings.append(VAPTFinding(
+                        title=f"WAF Detected: {firewall}",
+                        description=f"{entry.get('description', '')} at {entry.get('url', target)}",
+                        severity=VAPTSeverity.INFO,
+                        tool_name=tool_name,
+                        target=target,
+                        vulnerability_type="Web Application Firewall",
+                        remediation="Account for WAF rules when testing; WAF bypass may be possible",
+                    ))
+        except (json.JSONDecodeError, AttributeError):
+            pass
+        return findings
+
+    def _parse_arjun(self, output: str, target: str, tool_name: str) -> List[VAPTFinding]:
+        findings = []
+        try:
+            data = json.loads(output)
+            for url, params in data.items():
+                if params:
+                    findings.append(VAPTFinding(
+                        title=f"Hidden Parameters Found",
+                        description=f"{url} accepts params: {', '.join(params)[:400]}",
+                        severity=VAPTSeverity.INFO,
+                        tool_name=tool_name,
+                        target=target,
+                        path=url,
+                        vulnerability_type="Parameter Discovery",
+                        remediation="Test discovered parameters for injection vulnerabilities",
+                    ))
+        except (json.JSONDecodeError, AttributeError):
+            pass
+        return findings
+
+    def _parse_dalfox(self, output: str, target: str, tool_name: str) -> List[VAPTFinding]:
+        findings = []
+        for line in output.splitlines():
+            try:
+                data = json.loads(line)
+                if data.get("type") in ("found", "verified"):
+                    findings.append(VAPTFinding(
+                        title="Reflected XSS Detected",
+                        description=f"{data.get('data', '')[:400]} at {data.get('url', target)}",
+                        severity=VAPTSeverity.HIGH,
+                        tool_name=tool_name,
+                        target=target,
+                        vulnerability_type="Cross-Site Scripting (XSS)",
+                        remediation="Implement output encoding and CSP headers",
+                    ))
+            except (json.JSONDecodeError, KeyError):
+                continue
+        return findings
+
+    def _parse_commix(self, output: str, target: str, tool_name: str) -> List[VAPTFinding]:
+        findings = []
+        for line in output.splitlines():
+            if "+++" in line or "is vulnerable" in line.lower() or "Parameter:" in line:
+                findings.append(VAPTFinding(
+                    title="OS Command Injection",
+                    description=line[:400],
+                    severity=VAPTSeverity.CRITICAL,
+                    tool_name=tool_name,
+                    target=target,
+                    vulnerability_type="Command Injection",
+                    remediation="Validate and sanitize all input; use allowlisted parameters",
+                ))
+        return findings
+
+    def _parse_hydra(self, output: str, target: str, tool_name: str) -> List[VAPTFinding]:
+        findings = []
+        for line in output.splitlines():
+            if line.startswith("["):
+                findings.append(VAPTFinding(
+                    title="Valid Credentials Found",
+                    description=line[:300],
+                    severity=VAPTSeverity.CRITICAL,
+                    tool_name=tool_name,
+                    target=target,
+                    vulnerability_type="Weak Credentials",
+                    remediation="Enforce strong password policy and rate-limit login attempts",
+                ))
+        return findings
+
+    def _parse_testssl(self, output: str, target: str, tool_name: str) -> List[VAPTFinding]:
+        findings = []
+        for line in output.splitlines():
+            try:
+                data = json.loads(line)
+                severity = (data.get("severity") or "").lower()
+                if severity in ("high", "critical", "medium", "low"):
+                    findings.append(VAPTFinding(
+                        title=f"TLS: {data.get('finding', 'issue')[:180]}",
+                        description=(data.get("finding", "") + " " + str(data.get("cve", "")))[:500],
+                        severity=self._severity_from_str(severity),
+                        tool_name=tool_name,
+                        target=target,
+                        vulnerability_type="SSL/TLS Misconfiguration",
+                        remediation="Update TLS configuration and cipher suites",
+                    ))
+            except (json.JSONDecodeError, KeyError):
+                continue
+        return findings
+
+    def _severity_from_str(self, severity: str) -> VAPTSeverity:
+        mapping = {
+            "critical": VAPTSeverity.CRITICAL,
+            "high": VAPTSeverity.HIGH,
+            "medium": VAPTSeverity.MEDIUM,
+            "low": VAPTSeverity.LOW,
+            "info": VAPTSeverity.INFO,
+        }
+        return mapping.get(severity, VAPTSeverity.INFO)
+
     async def _execute_demo_scan(
         self,
         request: VAPTScanRequest,
@@ -472,6 +696,7 @@ class VAPTExecutor:
         cmd = self._build_docker_command(tool, target)
         if not cmd:
             return ""
+        cmd = f"timeout --kill-after=5 {timeout}s bash -c '{cmd}'"
         return self._run_container_sync(self.KALI_IMAGE, cmd, f"astraix-vrfy-{uuid4().hex[:8]}", timeout)
 
 
