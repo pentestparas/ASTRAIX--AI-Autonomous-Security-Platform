@@ -3,37 +3,34 @@
 import { useEffect, useMemo, useRef, useState } from "react";
 import ReactFlow, {
   Background,
+  BackgroundVariant,
   Controls,
+  MiniMap,
   type Node,
   type Edge,
   type NodeProps,
 } from "reactflow";
 import dagre from "dagre";
 import { apiClient } from "@/services/api";
+import { LayoutGrid, MoveHorizontal, Orbit, RotateCw } from "lucide-react";
 
-const GROUP_STYLES: Record<string, { shape: string; color: { background: string; border: string }; width: number }> = {
-  target: { shape: "diamond", color: { background: "#1a3a5c", border: "#0f2440" }, width: 130 },
-  port: { shape: "box", color: { background: "#475569", border: "#334155" }, width: 120 },
-  service: { shape: "ellipse", color: { background: "#16a34a", border: "#15803d" }, width: 120 },
-  finding: { shape: "dot", color: { background: "#dc2626", border: "#b91c1c" }, width: 64 },
-  tool: { shape: "star", color: { background: "#f59e0b", border: "#d97706" }, width: 72 },
+const GROUP_META: Record<string, { label: string; color: string; glyph: string }> = {
+  target: { label: "Target", color: "#38bdf8", glyph: "◆" },
+  port: { label: "Port", color: "#818cf8", glyph: "▣" },
+  service: { label: "Service", color: "#34d399", glyph: "⬡" },
+  finding: { label: "Finding", color: "#f87171", glyph: "●" },
+  tool: { label: "Tool", color: "#fbbf24", glyph: "★" },
 };
 
 const SEVERITY_COLORS: Record<string, string> = {
-  critical: "#dc2626",
-  high: "#ea580c",
-  medium: "#ca8a04",
-  low: "#65a30d",
-  info: "#6b7280",
+  critical: "#f87171",
+  high: "#fb923c",
+  medium: "#facc15",
+  low: "#4ade80",
+  info: "#94a3b8",
 };
 
-const SHAPE_CLIP: Record<string, string> = {
-  diamond: "polygon(50% 0%, 100% 50%, 50% 100%, 0% 50%)",
-  box: "polygon(0% 0%, 100% 0%, 100% 100%, 0% 100%)",
-  ellipse: "polygon(0% 15%, 15% 0%, 85% 0%, 100% 15%, 100% 85%, 85% 100%, 15% 100%, 0% 85%)",
-  dot: "polygon(50% 0%, 100% 50%, 50% 100%, 0% 50%)",
-  star: "polygon(50% 0%, 61% 35%, 98% 35%, 68% 57%, 79% 91%, 50% 70%, 21% 91%, 32% 57%, 2% 35%, 39% 35%)",
-};
+const GROUP_WIDTH: Record<string, number> = { target: 150, port: 120, service: 130, finding: 84, tool: 110 };
 
 type GraphNodeData = {
   label: string;
@@ -43,46 +40,34 @@ type GraphNodeData = {
 };
 
 function GraphNode({ data }: NodeProps) {
-  const gs = GROUP_STYLES[data.group] || GROUP_STYLES.finding;
+  const meta = GROUP_META[data.group] || GROUP_META.finding;
   const sevColor = data.severity ? SEVERITY_COLORS[data.severity.toLowerCase()] : null;
-  const bg = sevColor || gs.color.background;
-  const clip = SHAPE_CLIP[gs.shape] || SHAPE_CLIP.box;
-  const isDot = gs.shape === "dot";
+  const isFinding = data.group === "finding";
+  const color = isFinding ? sevColor || meta.color : meta.color;
+  const width = GROUP_WIDTH[data.group] || 84;
+
   return (
-    <div style={{ display: "flex", flexDirection: isDot ? "column" : "row", alignItems: "center", gap: 6, width: gs.width }}>
-      <div
-        style={{
-          clipPath: clip,
-          background: bg,
-          border: data.group === "finding" ? "none" : undefined,
-          boxShadow: "0 0 4px rgba(15, 36, 64, 0.6)",
-          flexShrink: 0,
-          ...(isDot
-            ? { width: 14, height: 14, margin: "0 auto" }
-            : { width: 16 + Math.min(gs.width, 130) * 0.28, height: 22 }),
-        }}
-      />
-      {!isDot && (
-        <span
-          style={{
-            color: "#e2e8f0",
-            fontSize: data.group === "target" ? 12 : 10,
-            fontWeight: data.group === "target" ? 700 : 400,
-            lineHeight: 1.2,
-            overflow: "hidden",
-            textOverflow: "ellipsis",
-            whiteSpace: "nowrap",
-            maxWidth: gs.width - 34,
-            textShadow: "0 1px 2px rgba(0,0,0,0.8)",
-          }}
-          title={data.label}
-        >
-          {data.label}
-        </span>
-      )}
-      {isDot && (
-        <span style={{ color: "#e2e8f0", fontSize: 9, textAlign: "center" }}>{data.label}</span>
-      )}
+    <div
+      className="flex items-center gap-2 rounded-lg border bg-card/95 px-2 py-1.5 backdrop-blur transition-colors hover:border-primary/50"
+      style={{
+        width,
+        borderColor: `${color}66`,
+        boxShadow: `0 0 14px -4px ${color}40, inset 0 1px 0 hsl(210 40% 98% / 0.04)`,
+      }}
+    >
+      <span
+        className="flex items-center justify-center w-5 h-5 rounded-md text-[10px] font-bold flex-shrink-0"
+        style={{ background: `${color}22`, color }}
+      >
+        {meta.glyph}
+      </span>
+      <span
+        className="text-[11px] font-medium truncate"
+        style={{ color: "#e2e8f0", textShadow: "0 1px 2px rgba(0,0,0,0.8)" }}
+        title={data.label}
+      >
+        {data.label}
+      </span>
     </div>
   );
 }
@@ -91,51 +76,114 @@ const nodeTypes = { graphNode: GraphNode };
 
 type RawNode = { id: string; label: string; group: string; severity: string; title: string };
 type RawEdge = { from: string; to: string; label: string };
+type LayoutMode = "lr" | "tb" | "radial";
 
-const GROUP_HEIGHT: Record<string, number> = { target: 44, port: 40, service: 40, finding: 34, tool: 40 };
+function edgeColor(e: RawEdge): string {
+  if (e.to === "finding" || e.label === "finding") return "#f87171";
+  if (e.from === "tool") return "#fbbf24";
+  return "#64748b";
+}
 
-function computeLayout(rawNodes: RawNode[], rawEdges: RawEdge[]) {
+function layoutDagre(rawNodes: RawNode[], rawEdges: RawEdge[], rankdir: "LR" | "TB") {
   const g = new dagre.graphlib.Graph();
   g.setDefaultEdgeLabel(() => ({}));
   g.setGraph({
-    rankdir: "LR",
-    nodesep: 14,
-    ranksep: 100,
-    marginx: 30,
-    marginy: 30,
+    rankdir,
+    nodesep: 18,
+    ranksep: 90,
+    marginx: 40,
+    marginy: 40,
   });
-
   rawNodes.forEach((n) => {
-    const gw = GROUP_STYLES[n.group]?.width ?? 90;
-    const gh = GROUP_HEIGHT[n.group] ?? 40;
-    g.setNode(n.id, { width: gw, height: gh });
+    g.setNode(n.id, { width: GROUP_WIDTH[n.group] || 84, height: 34 });
   });
   rawEdges.forEach((e) => {
     if (!g.hasNode(e.from) || !g.hasNode(e.to)) return;
     g.setEdge(e.from, e.to);
   });
-
   dagre.layout(g);
 
   const positions = new Map<string, { x: number; y: number }>();
   rawNodes.forEach((n) => {
     const layout = g.node(n.id);
     if (!layout) return;
-    const gw = GROUP_STYLES[n.group]?.width ?? 90;
-    const gh = GROUP_HEIGHT[n.group] ?? 40;
-    positions.set(n.id, { x: layout.x - gw / 2, y: layout.y - gh / 2 });
+    positions.set(n.id, { x: layout.x - (GROUP_WIDTH[n.group] || 84) / 2, y: layout.y - 17 });
   });
   return positions;
+}
+
+function layoutRadial(rawNodes: RawNode[], rawEdges: RawEdge[]) {
+  const order = ["target", "port", "service", "tool", "finding"];
+  const radii: Record<string, number> = { target: 0, port: 150, service: 270, tool: 360, finding: 450 };
+  const positions = new Map<string, { x: number; y: number }>();
+  const counts: Record<string, number> = {};
+  rawNodes.forEach((n) => {
+    counts[n.group] = (counts[n.group] || 0) + 1;
+  });
+  const cursor: Record<string, number> = {};
+  rawNodes.forEach((n) => {
+    const r = radii[n.group] ?? 300;
+    const total = counts[n.group] || 1;
+    const idx = cursor[n.group] || 0;
+    cursor[n.group] = idx + 1;
+    if (r === 0) {
+      positions.set(n.id, { x: -60, y: -17 });
+      return;
+    }
+    const angle = (idx / total) * Math.PI * 2 - Math.PI / 2;
+    positions.set(n.id, { x: Math.cos(angle) * r - (GROUP_WIDTH[n.group] || 84) / 2, y: Math.sin(angle) * r - 17 });
+  });
+  return positions;
+}
+
+function computeLayout(rawNodes: RawNode[], rawEdges: RawEdge[], mode: LayoutMode) {
+  if (mode === "radial") return layoutRadial(rawNodes, rawEdges);
+  return layoutDagre(rawNodes, rawEdges, mode === "lr" ? "LR" : "TB");
 }
 
 export default function GraphPage() {
   const containerRef = useRef<HTMLDivElement>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
-  const [stats, setStats] = useState({ targets: 0, ports: 0, findings: 0, services: 0 });
+  const [layoutMode, setLayoutMode] = useState<LayoutMode>("lr");
   const [selectedNode, setSelectedNode] = useState<{ id: string; label: string; info: string } | null>(null);
   const [nodes, setNodes] = useState<Node[]>([]);
   const [edges, setEdges] = useState<Edge[]>([]);
+  const [stats, setStats] = useState({ targets: 0, ports: 0, findings: 0, services: 0 });
+
+  const buildGraph = useMemo(
+    () => async (rawNodes: RawNode[], rawEdges: RawEdge[]) => {
+      const layout = computeLayout(rawNodes, rawEdges, layoutMode);
+      setNodes(
+        rawNodes.map((n) => {
+          const gw = GROUP_WIDTH[n.group] || 84;
+          return {
+            id: n.id,
+            type: "graphNode",
+            position: layout.get(n.id) || { x: Math.random() * 800, y: Math.random() * 500 },
+            style: { width: gw, height: 34 },
+            data: { label: n.label, group: n.group, severity: n.severity, info: n.title || "" } as GraphNodeData,
+          };
+        })
+      );
+      setEdges(
+        rawEdges.map((e) => ({
+          id: `${e.from}->${e.to}`,
+          source: e.from,
+          target: e.to,
+          type: "smoothstep",
+          animated: true,
+          label: e.label || undefined,
+          style: { stroke: edgeColor(e), strokeWidth: 1.4 },
+          labelStyle: { fill: "#94a3b8", fontSize: 9 },
+          labelBgStyle: { fill: "#0f172a", fillOpacity: 0.8, stroke: "#1e293b", strokeWidth: 1 },
+        }))
+      );
+    },
+    [layoutMode]
+  );
+
+  const dataRef = useRef<{ nodes: RawNode[]; edges: RawEdge[] } | null>(null);
 
   useEffect(() => {
     let mounted = true;
@@ -153,40 +201,14 @@ export default function GraphPage() {
           return;
         }
 
-        const layout = computeLayout(rawNodes, rawEdges);
-
-        setNodes(
-          rawNodes.map((n) => {
-            const gw = GROUP_STYLES[n.group]?.width ?? 90;
-            const gh = GROUP_HEIGHT[n.group] ?? 40;
-            return {
-              id: n.id,
-              type: "graphNode",
-              position: layout.get(n.id) || { x: Math.random() * 800, y: Math.random() * 600 },
-              style: { width: gw, height: gh },
-              data: { label: n.label, group: n.group, severity: n.severity, info: n.title || "" } as GraphNodeData,
-            };
-          })
-        );
-        setEdges(
-          rawEdges.map((e) => ({
-            id: `${e.from}->${e.to}`,
-            source: e.from,
-            target: e.to,
-            type: "smoothstep",
-            label: e.label || undefined,
-            style: { stroke: "#475569", strokeWidth: 1 },
-            labelStyle: { fill: "#94a3b8", fontSize: 9 },
-            labelBgStyle: { fill: "#0f172a", fillOpacity: 0.75, stroke: "#1e293b", strokeWidth: 1 },
-          }))
-        );
-
+        dataRef.current = { nodes: rawNodes, edges: rawEdges };
         setStats({
           targets: rawNodes.filter((n) => n.group === "target").length,
           ports: rawNodes.filter((n) => n.group === "port").length,
           findings: rawNodes.filter((n) => n.group === "finding").length,
           services: rawNodes.filter((n) => n.group === "service").length,
         });
+        await buildGraph(rawNodes, rawEdges);
         setLoading(false);
       } catch (e: any) {
         if (mounted) {
@@ -201,27 +223,62 @@ export default function GraphPage() {
     return () => {
       mounted = false;
     };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
+
+  async function changeLayout(mode: LayoutMode) {
+    setLayoutMode(mode);
+  }
+
+  useEffect(() => {
+    if (dataRef.current) {
+      void buildGraph(dataRef.current.nodes, dataRef.current.edges);
+    }
+  }, [buildGraph]);
 
   const selectedInfo = useMemo(() => selectedNode, [selectedNode]);
 
+  const layoutOptions: { id: LayoutMode; label: string; icon: typeof MoveHorizontal }[] = [
+    { id: "lr", label: "Left → Right", icon: MoveHorizontal },
+    { id: "tb", label: "Top → Bottom", icon: LayoutGrid },
+    { id: "radial", label: "Radial", icon: Orbit },
+  ];
+
   return (
     <div className="h-[calc(100vh-3rem)] flex flex-col">
-      <div className="flex items-center justify-between mb-4">
+      <div className="flex items-center justify-between mb-4 gap-4 flex-wrap">
         <div>
           <h1 className="text-2xl font-bold tracking-tight">Attack Surface Graph</h1>
           <p className="text-muted-foreground text-sm mt-1">Neo4j knowledge graph visualization of scan results</p>
         </div>
-        <div className="flex gap-3">
-          <StatBadge label="targets" count={stats.targets} />
-          <StatBadge label="ports" count={stats.ports} />
-          <StatBadge label="services" count={stats.services} />
-          <StatBadge label="findings" count={stats.findings} />
+        <div className="flex items-center gap-3">
+          <div className="flex p-1 gap-1 bg-secondary/60 border border-border rounded-lg">
+            {layoutOptions.map((opt) => (
+              <button
+                key={opt.id}
+                onClick={() => changeLayout(opt.id)}
+                className={`flex items-center gap-1.5 px-2.5 py-1.5 rounded-md text-xs font-medium transition-colors ${
+                  layoutMode === opt.id
+                    ? "bg-primary/15 text-primary border border-primary/30"
+                    : "text-muted-foreground hover:text-foreground border border-transparent"
+                }`}
+              >
+                <opt.icon className="w-3.5 h-3.5" />
+                {opt.label}
+              </button>
+            ))}
+          </div>
+          <div className="flex gap-2">
+            <StatBadge label="targets" count={stats.targets} />
+            <StatBadge label="ports" count={stats.ports} />
+            <StatBadge label="services" count={stats.services} />
+            <StatBadge label="findings" count={stats.findings} />
+          </div>
         </div>
       </div>
 
       <div className="flex-1 flex gap-4 min-h-0">
-        <div ref={containerRef} className="flex-1 bg-card border rounded-xl overflow-hidden relative" style={{ backgroundColor: "#0f172a" }}>
+        <div ref={containerRef} className="flex-1 glass-card overflow-hidden relative">
           {loading && (
             <div className="absolute inset-0 flex items-center justify-center bg-card/80 z-10">
               <div className="flex flex-col items-center gap-3">
@@ -239,11 +296,12 @@ export default function GraphPage() {
           )}
           {!loading && !error && (
             <ReactFlow
+              key={layoutMode}
               nodes={nodes}
               edges={edges}
               nodeTypes={nodeTypes}
               fitView
-              fitViewOptions={{ padding: 0.12, maxZoom: 1.2 }}
+              fitViewOptions={{ padding: 0.14, maxZoom: 1.3 }}
               minZoom={0.03}
               nodesDraggable
               nodesConnectable={false}
@@ -254,16 +312,27 @@ export default function GraphPage() {
                 setSelectedNode({ id: node.id, label: data.label, info: data.info });
               }}
               onPaneClick={() => setSelectedNode(null)}
-              style={{ backgroundColor: "#0f172a" }}
+              style={{ background: "transparent" }}
             >
-              <Background color="#1e293b" gap={24} />
-              <Controls />
+              <Background variant={BackgroundVariant.Dots} color="#334155" gap={22} size={1.2} />
+              <MiniMap
+                pannable
+                zoomable
+                nodeColor={(n) => {
+                  const d = n.data as GraphNodeData;
+                  if (!d) return "#334155";
+                  if (d.group === "finding") return SEVERITY_COLORS[d.severity?.toLowerCase() || "info"] || "#f87171";
+                  return GROUP_META[d.group]?.color || "#334155";
+                }}
+                className="!bg-card/90 !border-border"
+              />
+              <Controls className="!bg-card !border-border [&>button]:!bg-card [&>button]:!text-foreground [&>button]:hover:!bg-accent" />
             </ReactFlow>
           )}
         </div>
 
         {selectedInfo && (
-          <div className="w-72 bg-card border rounded-xl p-4 overflow-y-auto">
+          <div className="w-72 glass-card rounded-xl p-4 overflow-y-auto">
             <h3 className="font-semibold text-sm mb-3">Node Detail</h3>
             <div className="space-y-2 text-sm">
               <div>
@@ -292,7 +361,7 @@ export default function GraphPage() {
 
 function StatBadge({ label, count }: { label: string; count: number }) {
   return (
-    <div className="flex items-center gap-1.5 px-3 py-1.5 bg-muted rounded-lg">
+    <div className="flex items-center gap-1.5 px-3 py-1.5 bg-secondary/60 border border-border rounded-lg">
       <span className="text-sm font-semibold">{count}</span>
       <span className="text-xs text-muted-foreground">{label}</span>
     </div>
@@ -303,13 +372,15 @@ function Legend() {
   return (
     <div className="w-56 bg-card border rounded-xl p-4 space-y-3 overflow-y-auto">
       <h3 className="font-semibold text-sm">Legend</h3>
-      {Object.entries(GROUP_STYLES).map(([group, style]) => (
+      {Object.entries(GROUP_META).map(([group, meta]) => (
         <div key={group} className="flex items-center gap-2 text-sm">
-          <div
-            className="w-4 h-4 rounded-sm flex-shrink-0"
-            style={{ background: style.color.background, clipPath: "polygon(50% 0%, 100% 50%, 50% 100%, 0% 50%)" }}
-          />
-          <span className="capitalize">{group}</span>
+          <span
+            className="w-4 h-4 rounded flex items-center justify-center text-[10px] font-bold flex-shrink-0"
+            style={{ background: `${meta.color}22`, color: meta.color }}
+          >
+            {meta.glyph}
+          </span>
+          <span className="capitalize">{meta.label}</span>
         </div>
       ))}
       <div className="pt-3 border-t mt-3">
@@ -323,7 +394,7 @@ function Legend() {
       </div>
       <div className="pt-3 border-t text-xs text-muted-foreground">
         <p>Drag to pan · Scroll to zoom · Click a node for details</p>
-        <p className="mt-1">Findings color by severity: critical→high→medium→low→info</p>
+        <p className="mt-1">Animated edges trace attack paths · findings color by severity</p>
       </div>
     </div>
   );
