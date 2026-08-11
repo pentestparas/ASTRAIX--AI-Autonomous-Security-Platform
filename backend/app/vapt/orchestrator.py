@@ -17,6 +17,7 @@ from app.vapt.executor import get_vapt_executor
 from app.vapt.adapters.registry import get_enabled_adapters
 from app.vapt.agents import ResearcherAgent, VerifierAgent
 from app.vapt.agents.planner import get_planner
+from app.vapt.control import ScanStoppedError, get_scan_controller
 from app.vapt.progress import publish_scan_event, get_progress_bus
 from app.recon_orchestrator.orchestrator import ReconOrchestrator
 from app.core.logging import get_logger
@@ -48,6 +49,9 @@ class AIOrchestrator:
     ) -> VAPTScanResult:
         """Analyze target and run the AI-planned scan with live progress events."""
         scan_id = scan_id or str(uuid4())
+
+        controller = get_scan_controller()
+        controller.register(scan_id, meta={"target": target, "scan_type": scan_type})
 
         await publish_scan_event(scan_id, "scan_started", {"target": target, "scan_type": scan_type})
 
@@ -98,6 +102,8 @@ class AIOrchestrator:
                 "strategy": plan["strategy"],
             })
 
+            await controller.checkpoint(scan_id)
+
             request = VAPTScanRequest(
                 target=VAPTTarget(value=target, type=target_info["type"]),
                 scan_type=scan_type_enum,
@@ -142,6 +148,8 @@ class AIOrchestrator:
                     "status": "ok" if not ar.errors else "error",
                 })
 
+            await controller.checkpoint(scan_id)
+
             await publish_scan_event(scan_id, "ai_research", {
                 "message": "Researcher agent enriching findings from knowledge base",
             })
@@ -155,6 +163,8 @@ class AIOrchestrator:
                 "enriched_count": len(result.findings),
             })
 
+            await controller.checkpoint(scan_id)
+
             await publish_scan_event(scan_id, "ai_verification", {
                 "message": "Verifier agent re-confirming findings to eliminate false positives",
             })
@@ -167,6 +177,8 @@ class AIOrchestrator:
                 "duration": round(time.time() - t0, 1),
                 "confirmed_count": len(result.findings),
             })
+
+            await controller.checkpoint(scan_id)
 
             await publish_scan_event(scan_id, "report_generating", {
                 "message": "Generating executive summary and remediation plan",
@@ -189,8 +201,20 @@ class AIOrchestrator:
             await self._ingest_attack_graph(scan_id, target, result)
 
             return result
+        except asyncio.CancelledError as exc:
+            # Stop requested while the scan task was cancelled mid-await
+            # (e.g. inside a docker worker). Convert to the cooperative stop
+            # signal so callers mark the assessment as stopped.
+            raise ScanStoppedError(scan_id) from exc
+        except ScanStoppedError:
+            await publish_scan_event(scan_id, "scan_stopped", {
+                "message": "Scan stopped by user",
+            })
+            await get_progress_bus().set_status(scan_id, "stopped")
+            raise
         finally:
             watchdog.cancel()
+            controller.finish(scan_id)
 
     async def _run_adapters(
         self,

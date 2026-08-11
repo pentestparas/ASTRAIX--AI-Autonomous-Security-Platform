@@ -71,6 +71,8 @@ import {
   Search,
   X,
   Activity,
+  StopCircle,
+  RotateCcw,
 } from "lucide-react";
 import { formatDistanceToNow } from "date-fns";
 import type { Project, ScanProgressEvent } from "@/types";
@@ -207,8 +209,10 @@ const riskColors: Record<string, string> = {
 const statusConfig: Record<string, { label: string; icon: typeof Clock; className: string }> = {
   pending:    { label: "Pending",    icon: Clock,        className: "bg-yellow-500/15 text-yellow-400" },
   running:    { label: "Running",    icon: Pause,        className: "bg-blue-500/15 text-blue-400" },
+  paused:     { label: "Paused",     icon: Pause,        className: "bg-amber-500/15 text-amber-400" },
   completed:  { label: "Completed",  icon: CheckCircle,  className: "bg-green-500/15 text-green-400" },
   failed:     { label: "Failed",     icon: XCircle,      className: "bg-red-500/15 text-red-400" },
+  stopped:    { label: "Stopped",    icon: StopCircle,   className: "bg-red-500/15 text-red-400" },
   cancelled:  { label: "Cancelled",  icon: XCircle,      className: "bg-secondary text-secondary-foreground border-border/60" },
 };
 
@@ -258,11 +262,19 @@ function LiveScanConsole({
   target,
   scanType,
   running,
+  paused,
+  onPause,
+  onResume,
+  onStop,
 }: {
   events: ScanProgressEvent[];
   target: string;
   scanType: string;
   running: boolean;
+  paused?: boolean;
+  onPause?: () => void;
+  onResume?: () => void;
+  onStop?: () => void;
 }) {
   const planEvent = events.find((e) => e.type === "plan_ready");
   const phases: PlanPhase[] = (planEvent?.data as { phases?: PlanPhase[] })?.phases || [];
@@ -360,14 +372,16 @@ function LiveScanConsole({
     : now;
   const idleSec = running ? (now - lastActivityAt) / 1000 : 0;
   const scanStalled = events.find((e) => e.type === "scan_stalled");
-  const stalled = running && (idleSec > 300 || !!scanStalled);
+  const stalled = running && !paused && (idleSec > 300 || !!scanStalled);
 
   return (
     <div className="space-y-4">
       <div className="flex items-center justify-between">
         <div>
           <p className="text-sm font-semibold flex items-center gap-2">
-            {running ? (
+            {paused ? (
+              <Pause className="w-4 h-4 text-amber-400" />
+            ) : running ? (
               <Loader2 className="w-4 h-4 animate-spin text-primary" />
             ) : (
               <CheckCircle2 className="w-4 h-4 text-green-500" />
@@ -379,21 +393,58 @@ function LiveScanConsole({
           </p>
         </div>
         <div className="flex items-center gap-2">
-          {running ? (
+          {running || paused ? (
             <>
               <span
-                className={`w-2 h-2 rounded-full ${stalled ? "bg-amber-500 animate-ping" : "bg-green-500 animate-pulse"}`}
-                title={idleSec > 0 ? `Last activity ${Math.round(idleSec)}s ago` : "Active"}
+                className={`w-2 h-2 rounded-full ${
+                  paused
+                    ? "bg-amber-400"
+                    : stalled
+                      ? "bg-amber-500 animate-ping"
+                      : "bg-green-500 animate-pulse"
+                }`}
+                title={
+                  paused
+                    ? "Paused"
+                    : idleSec > 0
+                      ? `Last activity ${Math.round(idleSec)}s ago`
+                      : "Active"
+                }
               />
               <span className="text-[11px] text-muted-foreground">
-                {stalled ? "No activity for a while" : `active ${idleSec < 1 ? "now" : `${Math.round(idleSec)}s ago`}`}
+                {paused
+                  ? "paused at checkpoint"
+                  : stalled
+                    ? "No activity for a while"
+                    : `active ${idleSec < 1 ? "now" : `${Math.round(idleSec)}s ago`}`}
               </span>
             </>
           ) : null}
-          <Badge variant={stalled ? "destructive" : running ? "default" : "secondary"}>
-            {stalled ? "Possibly stalled" : running ? "Running" : "Completed"}
-          </Badge>
-          <span className="text-xs text-muted-foreground">{progressPct}%</span>
+          {running || paused ? (
+            <>
+              <Badge variant={stalled ? "destructive" : paused ? "secondary" : "default"}>
+                {stalled ? "Possibly stalled" : paused ? "Paused" : "Running"}
+              </Badge>
+              <span className="text-xs text-muted-foreground">{progressPct}%</span>
+              <span className="flex items-center gap-1.5">
+                {paused ? (
+                  <Button size="sm" onClick={onResume}>
+                    <Play className="w-3.5 h-3.5 mr-1" />
+                    Continue
+                  </Button>
+                ) : (
+                  <Button size="sm" variant="outline" onClick={onPause}>
+                    <Pause className="w-3.5 h-3.5 mr-1" />
+                    Pause
+                  </Button>
+                )}
+                <Button size="sm" variant="destructive" onClick={onStop}>
+                  <StopCircle className="w-3.5 h-3.5 mr-1" />
+                  Stop
+                </Button>
+              </span>
+            </>
+          ) : null}
         </div>
       </div>
 
@@ -428,8 +479,8 @@ function LiveScanConsole({
       <div className="space-y-1.5">
         {pipelineSteps.map((step, i) => {
           const hasEvents = (typeCount.get(step.id) || 0) > 0;
-          const isActive = running && hasEvents && i === lastActiveStep;
-          const isDone = running ? hasEvents && i < lastActiveStep : hasEvents;
+          const isActive = running && !paused && hasEvents && i === lastActiveStep;
+          const isDone = running && !paused ? hasEvents && i < lastActiveStep : hasEvents;
           const StepIcon = step.icon;
           return (
             <div
@@ -605,6 +656,8 @@ export default function ScansPage() {
   const [liveEvents, setLiveEvents] = useState<ScanProgressEvent[]>([]);
   const [liveScanId, setLiveScanId] = useState<string | null>(null);
   const [liveRunning, setLiveRunning] = useState(false);
+  const [livePaused, setLivePaused] = useState(false);
+  const [confirmStop, setConfirmStop] = useState(false);
   const [expandedFinding, setExpandedFinding] = useState<string | null>(null);
   const router = useRouter();
   const liveActiveRef = useRef(false);
@@ -626,16 +679,26 @@ export default function ScansPage() {
             removeScan(scanId);
             liveActiveRef.current = false;
             setLiveRunning(false);
+            setLivePaused(false);
             void refreshHistory();
             return;
           }
         }
         const status = res?.status?.status;
-        if (status && !["running", "pending", "queued", "planning"].includes(status)) {
+        if (status === "paused") {
+          setLivePaused(true);
+          updateScan(scanId, { status: "paused" });
+        } else if (status && ["running", "pending", "queued", "planning"].includes(status)) {
+          setLivePaused(false);
+          updateScan(scanId, { status: "running" });
+        }
+        if (status && !["running", "pending", "queued", "planning", "paused"].includes(status)) {
           if (status === "failed") updateScan(scanId, { status: "failed" });
+          if (status === "stopped") updateScan(scanId, { status: "stopped" });
           removeScan(scanId);
           liveActiveRef.current = false;
           setLiveRunning(false);
+          setLivePaused(false);
           void refreshHistory();
           return;
         }
@@ -643,6 +706,68 @@ export default function ScansPage() {
         // transient poll errors are ignored; scan request itself reports failure
       }
       await new Promise((r) => setTimeout(r, 2000));
+    }
+  }
+
+  async function handlePauseScan() {
+    if (!liveScanId) return;
+    try {
+      await vaptScanApi.pause(liveScanId);
+      setLivePaused(true);
+      updateScan(liveScanId, { status: "paused" });
+    } catch {
+      // ignore - console will reflect the live status on next poll
+    }
+  }
+
+  async function handleResumeScan() {
+    if (!liveScanId) return;
+    try {
+      await vaptScanApi.resume(liveScanId);
+      setLivePaused(false);
+      updateScan(liveScanId, { status: "running" });
+    } catch {
+      // ignore - console will reflect the live status on next poll
+    }
+  }
+
+  async function handleStopScan() {
+    if (!liveScanId) return;
+    setConfirmStop(false);
+    try {
+      await vaptScanApi.stop(liveScanId);
+    } catch {
+      // server may already have finished the scan; fall through to cleanup
+    }
+    liveActiveRef.current = false;
+    setLiveRunning(false);
+    setLivePaused(false);
+    updateScan(liveScanId, { status: "stopped" });
+    removeScan(liveScanId);
+    void refreshHistory();
+  }
+
+  async function handleRestartScan(scan: ScanHistoryItem) {
+    if (!scan.target) return;
+    try {
+      setLiveEvents([]);
+      setLiveScanId(scan.id);
+      setLiveRunning(true);
+      setLivePaused(false);
+      liveActiveRef.current = true;
+      addScan({
+        id: scan.id,
+        target: scan.target,
+        scanType: scan.type,
+        startedAt: Date.now(),
+        status: "running",
+      });
+      void pollProgress(scan.id);
+      await vaptScanApi.restart(scan.id);
+    } catch (e) {
+      alert(e instanceof Error ? e.message : "Failed to restart scan");
+    } finally {
+      liveActiveRef.current = false;
     }
   }
 
@@ -742,11 +867,14 @@ export default function ScansPage() {
 
   useEffect(() => {
     const restored = useActiveScansStore.getState().scans;
-    const running = Object.values(restored).filter((s) => s.status === "running");
+    const running = Object.values(restored).filter(
+      (s) => s.status === "running" || s.status === "paused"
+    );
     if (running.length === 0) return;
     const first = running[0];
     setLiveScanId(first.id);
     setLiveRunning(true);
+    setLivePaused(first.status === "paused");
     setTarget(first.target);
     setScanType(first.scanType);
     liveActiveRef.current = true;
@@ -865,6 +993,13 @@ export default function ScansPage() {
         project_id: selectedProject,
         client_scan_id: scanId,
       })) as any as VaptScanResult;
+
+      if (data.status === "stopped") {
+        setLiveRunning(false);
+        setLivePaused(false);
+        void refreshHistory();
+        return;
+      }
 
       setResult(data);
 
@@ -1084,6 +1219,10 @@ export default function ScansPage() {
                 target={target}
                 scanType={scanType}
                 running={liveRunning}
+                paused={livePaused}
+                onPause={handlePauseScan}
+                onResume={handleResumeScan}
+                onStop={() => setConfirmStop(true)}
               />
             ) : scanning ? (
               <div className="flex flex-col items-center justify-center py-8">
@@ -1353,13 +1492,14 @@ export default function ScansPage() {
                 <TableHead>Status</TableHead>
                 <TableHead>Findings</TableHead>
                 <TableHead>Started</TableHead>
+                <TableHead className="w-24 text-right">Actions</TableHead>
               </TableRow>
             </TableHeader>
             <TableBody>
               {loading ? (
                 Array.from({ length: 5 }).map((_, i) => (
                   <TableRow key={i}>
-                    <TableCell colSpan={5}>
+                    <TableCell colSpan={6}>
                       <div className="h-8 animate-pulse bg-muted rounded" />
                     </TableCell>
                   </TableRow>
@@ -1367,7 +1507,7 @@ export default function ScansPage() {
               ) : scanResults.length === 0 ? (
                 <TableRow>
                   <TableCell
-                    colSpan={5}
+                    colSpan={6}
                     className="text-center py-12 text-muted-foreground"
                   >
                     <Scan className="w-12 h-12 mx-auto mb-4 opacity-50" />
@@ -1406,6 +1546,18 @@ export default function ScansPage() {
                           ? formatDistanceToNow(new Date(scan.started_at), { addSuffix: true })
                           : "Just now"}
                       </TableCell>
+                      <TableCell className="text-right">
+                        {["completed", "failed", "stopped", "cancelled"].includes(scan.status) && (
+                          <Button
+                            size="sm"
+                            variant="outline"
+                            onClick={() => handleRestartScan(scan)}
+                          >
+                            <RotateCcw className="w-3.5 h-3.5 mr-1" />
+                            Restart
+                          </Button>
+                        )}
+                      </TableCell>
                     </TableRow>
                   );
                 })
@@ -1414,6 +1566,30 @@ export default function ScansPage() {
           </Table>
         </CardContent>
       </Card>
+
+      <Dialog open={confirmStop} onOpenChange={setConfirmStop}>
+        <DialogContent className="max-w-md">
+          <DialogHeader>
+            <DialogTitle className="flex items-center gap-2">
+              <StopCircle className="w-5 h-5 text-red-400" />
+              Stop this scan?
+            </DialogTitle>
+            <DialogDescription>
+              The scan will be stopped immediately and marked as stopped in history.
+              Findings already discovered are kept, but the remaining phases are aborted.
+            </DialogDescription>
+          </DialogHeader>
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setConfirmStop(false)}>
+              Keep Scanning
+            </Button>
+            <Button variant="destructive" onClick={handleStopScan}>
+              <StopCircle className="w-4 h-4 mr-2" />
+              Stop Scan
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
 
       <Dialog open={showNewScan} onOpenChange={setShowNewScan}>
         <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">

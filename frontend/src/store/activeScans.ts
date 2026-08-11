@@ -6,7 +6,7 @@ export interface ActiveScan {
   target: string;
   scanType: string;
   startedAt: number;
-  status: "running" | "completed" | "failed";
+  status: "running" | "paused" | "stopped" | "completed" | "failed";
 }
 
 interface ActiveScansState {

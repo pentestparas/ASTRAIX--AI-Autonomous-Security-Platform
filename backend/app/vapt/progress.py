@@ -104,6 +104,20 @@ class ScanProgressBus:
                 logger.warning("Redis status read failed, using memory: %s", e)
         return self._memory_status.get(scan_id)
 
+    async def clear(self, scan_id: str) -> None:
+        """Drop all stored events/status for a scan (used on restart)."""
+        if self._redis is not None:
+            try:
+                await self._redis.delete(
+                    self._key(scan_id, _SCAN_KEY_PREFIX),
+                    self._key(scan_id, _STATUS_KEY_PREFIX),
+                )
+                return
+            except Exception as e:
+                logger.warning("Redis clear failed, using memory: %s", e)
+        self._memory.pop(scan_id, None)
+        self._memory_status.pop(scan_id, None)
+
     async def active_scans(self) -> List[Dict[str, Any]]:
         """List scans that are still running (non-terminal status)."""
         terminal = {"completed", "failed", "cancelled", "error", "scan_completed"}

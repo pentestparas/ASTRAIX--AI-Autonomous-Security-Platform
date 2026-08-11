@@ -192,6 +192,13 @@ export const vaptScanApi = {
     ),
   detail: (assessmentId: string) =>
     apiClient.get<VaptAssessmentDetail>(`/vapt/assessments/${assessmentId}`),
+  pause: (scanId: string) => apiClient.post(`/vapt/scan/${scanId}/pause`),
+  resume: (scanId: string) => apiClient.post(`/vapt/scan/${scanId}/resume`),
+  stop: (scanId: string) => apiClient.post(`/vapt/scan/${scanId}/stop`),
+  restart: (scanId: string) =>
+    apiClient.post<ScanResponse>(`/vapt/scan/${scanId}/restart`, undefined, {
+      timeout: 600000,
+    }),
 };
 
 // --- Findings ---

@@ -7,6 +7,7 @@ from uuid import uuid4
 
 from app.core.logging import get_logger
 from app.recon_orchestrator.graph_db import get_knowledge_graph, KnowledgeGraph
+from app.vapt.control import get_scan_controller
 from app.vapt.executor import VAPTExecutor
 from app.vapt.models import (
     VAPTFinding,
@@ -69,6 +70,10 @@ class ReconOrchestrator:
             phase_tools = phases.get(phase_name, [])
             if not phase_tools:
                 continue
+
+            # Pause / stop gate: engages between phases so an in-flight
+            # docker tool is allowed to finish before the scan blocks.
+            await get_scan_controller().checkpoint(str(result.id))
 
             logger.info("Orchestrator phase=%s tools=%s", phase_name, phase_tools)
             await self._emit(str(result.id), "phase_started", {

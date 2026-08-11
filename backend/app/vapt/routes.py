@@ -20,6 +20,7 @@ from app.core.auth import get_current_active_user
 from app.domain.models.organization import User
 from app.vapt.models import VAPTScanType, VAPTTarget
 from app.vapt.orchestrator import get_vapt_orchestrator
+from app.vapt.control import ScanStoppedError, get_scan_controller
 from app.vapt.progress import get_progress_bus
 from app.vapt.tools import check_tool_availability, get_available_tools, TOOLS_REGISTRY
 from app.core.logging import get_logger
@@ -87,6 +88,115 @@ def _to_domain_finding(finding, fingerprint: str, org_id: str, proj_id: str, ass
         created_at=datetime.utcnow(),
         updated_at=datetime.utcnow(),
     )
+
+
+async def _persist_scan_result(
+    session: AsyncSession,
+    assessment_id: str,
+    result,
+    insights: dict,
+    org_id: Optional[str],
+    proj_id: Optional[str],
+    asset_id: str,
+    target: str,
+) -> None:
+    """Persist a completed scan into its assessment row and the findings
+    table (fingerprint-deduped, per-assessment snapshot in config)."""
+    # Compact snapshot of the scan's OWN findings. The findings table dedupes
+    # globally on fingerprint, so re-scans of the same target only link NEW
+    # findings to a fresh assessment - without this snapshot reports would
+    # under-report. Stored in assessment.config and consumed by the report
+    # engine (app/api/v1/reports.py).
+    finding_snapshot = []
+    for f in result.findings:
+        details = dict(f.details or {})
+        kb = details.get("kb_sources") or []
+        finding_snapshot.append({
+            "title": f.title,
+            "severity": f.severity.value,
+            "description": f.description,
+            "remediation": f.remediation,
+            "tool": f.tool_name,
+            "host": f.host,
+            "port": f.port,
+            "path": f.path,
+            "protocol": f.protocol,
+            "service": f.service,
+            "vulnerability_type": f.vulnerability_type,
+            "cve": details.get("cve") or details.get("cves") or [],
+            "cwe": details.get("cwe") or details.get("cwes") or [],
+            "confidence": f.confidence,
+            "evidence": details.get("evidence") or f.payload,
+            "kb_sources": kb if isinstance(kb, list) else [],
+        })
+
+    assessment = await session.get(Assessment, assessment_id)
+    if assessment:
+        assessment.status = result.status
+        assessment.started_at = result.started_at
+        assessment.completed_at = result.completed_at
+        assessment.findings_count = len(result.findings)
+        cfg = dict(assessment.config or {})
+        cfg["insights"] = insights
+        cfg["tool_results"] = result.tool_results
+        cfg["finding_snapshot"] = finding_snapshot
+        assessment.config = cfg
+
+    seen_fingerprints: set[str] = set()
+    for finding in result.findings:
+        fingerprint = _finding_fingerprint(finding, target)
+        if fingerprint in seen_fingerprints:
+            continue
+
+        existing_finding = await session.execute(
+            select(Finding).where(Finding.fingerprint == fingerprint).limit(1)
+        )
+        existing_finding = existing_finding.scalar_one_or_none()
+        if existing_finding:
+            seen_fingerprints.add(fingerprint)
+            continue
+
+        seen_fingerprints.add(fingerprint)
+        session.add(_to_domain_finding(finding, fingerprint, str(org_id), str(proj_id), str(asset_id), assessment_id))
+
+    try:
+        await session.commit()
+        logger.info("VAPT scan completed and persisted: %s", assessment_id)
+    except IntegrityError:
+        # Duplicate fingerprint slipped through (e.g. pending rows not
+        # visible to SELECT) - insert findings one by one, skipping
+        # rows that already exist, and persist the rest.
+        await session.rollback()
+        assessment = await session.get(Assessment, assessment_id)
+        if assessment:
+            assessment.status = result.status
+            assessment.started_at = result.started_at
+            assessment.completed_at = result.completed_at
+            assessment.findings_count = len(result.findings)
+            assessment.config = dict(assessment.config or {})
+        for finding in result.findings:
+            fingerprint = _finding_fingerprint(finding, target)
+            existing_finding = await session.execute(
+                select(Finding).where(Finding.fingerprint == fingerprint).limit(1)
+            )
+            if existing_finding.scalar_one_or_none():
+                continue
+            session.add(_to_domain_finding(finding, fingerprint, str(org_id), str(proj_id), str(asset_id), assessment_id))
+            await session.commit()
+            await session.rollback()
+
+
+async def _mark_assessment_stopped(session: AsyncSession, assessment_id: str) -> None:
+    """Mark an assessment row as stopped (user-initiated stop)."""
+    try:
+        assessment = await session.get(Assessment, assessment_id)
+        if assessment and assessment.status not in ("completed", "failed", "cancelled", "stopped"):
+            assessment.status = "stopped"
+            assessment.error = "Stopped by user"
+            assessment.completed_at = datetime.utcnow()
+            await session.commit()
+    except Exception:
+        await session.rollback()
 
 
 class ScanRequest(BaseModel):
@@ -218,6 +328,19 @@ async def run_scan(
             scan_type=request.scan_type,
             scan_id=scan_id,
         )
+    except ScanStoppedError:
+        if persisted and assessment_id:
+            await _mark_assessment_stopped(session, assessment_id)
+        return ScanResponse(
+            scan_id=scan_id or "",
+            assessment_id=assessment_id,
+            status="stopped",
+            target=request.target,
+            findings_count=0,
+            findings=[],
+            severity_breakdown={},
+            insights={},
+        )
     except Exception as e:
         logger.error(f"VAPT scan failed: {e}")
         if persisted and assessment_id:
@@ -234,91 +357,18 @@ async def run_scan(
 
     insights = orchestrator.generate_insights(result)
 
-    # Compact snapshot of the scan's OWN findings. The findings table dedupes
-    # globally on fingerprint, so re-scans of the same target only link NEW
-    # findings to a fresh assessment - without this snapshot reports would
-    # under-report. Stored in assessment.config and consumed by the report
-    # engine (app/api/v1/reports.py).
-    finding_snapshot = []
-    for f in result.findings:
-        details = dict(f.details or {})
-        kb = details.get("kb_sources") or []
-        finding_snapshot.append({
-            "title": f.title,
-            "severity": f.severity.value,
-            "description": f.description,
-            "remediation": f.remediation,
-            "tool": f.tool_name,
-            "host": f.host,
-            "port": f.port,
-            "path": f.path,
-            "protocol": f.protocol,
-            "service": f.service,
-            "vulnerability_type": f.vulnerability_type,
-            "cve": details.get("cve") or details.get("cves") or [],
-            "cwe": details.get("cwe") or details.get("cwes") or [],
-            "confidence": f.confidence,
-            "evidence": details.get("evidence") or f.payload,
-            "kb_sources": kb if isinstance(kb, list) else [],
-        })
-
     if persisted and assessment_id:
         try:
-            assessment = await session.get(Assessment, assessment_id)
-            if assessment:
-                assessment.status = result.status
-                assessment.started_at = result.started_at
-                assessment.completed_at = result.completed_at
-                assessment.findings_count = len(result.findings)
-                cfg = dict(assessment.config or {})
-                cfg["insights"] = insights
-                cfg["tool_results"] = result.tool_results
-                cfg["finding_snapshot"] = finding_snapshot
-                assessment.config = cfg
-
-            seen_fingerprints: set[str] = set()
-            for finding in result.findings:
-                fingerprint = _finding_fingerprint(finding, request.target)
-                if fingerprint in seen_fingerprints:
-                    continue
-
-                existing_finding = await session.execute(
-                    select(Finding).where(Finding.fingerprint == fingerprint).limit(1)
-                )
-                existing_finding = existing_finding.scalar_one_or_none()
-                if existing_finding:
-                    seen_fingerprints.add(fingerprint)
-                    continue
-
-                seen_fingerprints.add(fingerprint)
-                session.add(_to_domain_finding(finding, fingerprint, str(org_id), str(proj_id), str(asset_uuid), str(assessment_uuid)))
-
-            try:
-                await session.commit()
-            except IntegrityError:
-                # Duplicate fingerprint slipped through (e.g. pending rows not
-                # visible to SELECT) - insert findings one by one, skipping
-                # rows that already exist, and persist the rest.
-                await session.rollback()
-                assessment = await session.get(Assessment, assessment_id)
-                if assessment:
-                    assessment.status = result.status
-                    assessment.started_at = result.started_at
-                    assessment.completed_at = result.completed_at
-                    assessment.findings_count = len(result.findings)
-                    assessment.config = dict(assessment.config or {})
-                for finding in result.findings:
-                    fingerprint = _finding_fingerprint(finding, request.target)
-                    existing_finding = await session.execute(
-                        select(Finding).where(Finding.fingerprint == fingerprint).limit(1)
-                    )
-                    if existing_finding.scalar_one_or_none():
-                        continue
-                    session.add(_to_domain_finding(finding, fingerprint, str(org_id), str(proj_id), str(asset_uuid), str(assessment_uuid)))
-                    await session.commit()
-                    await session.rollback()
-            logger.info(f"VAPT scan completed and persisted: {assessment_id}")
-
+            await _persist_scan_result(
+                session,
+                str(assessment_id),
+                result,
+                insights,
+                str(org_id),
+                str(proj_id),
+                str(asset_uuid),
+                request.target,
+            )
         except Exception as e:
             logger.error(f"Failed to persist VAPT scan completion: {e}")
             await session.rollback()
@@ -440,6 +490,144 @@ async def get_scan_progress(
         "total": total,
         "status": status,
     }
+
+
+@router.post("/scan/{scan_id}/pause")
+async def pause_scan(
+    scan_id: str,
+    current_user: User = Depends(get_current_active_user),
+    session: AsyncSession = Depends(get_session),
+):
+    """Pause an active scan at the next checkpoint."""
+    controller = get_scan_controller()
+    if not controller.is_active(scan_id):
+        raise HTTPException(status_code=409, detail="No active scan with that ID")
+    if not controller.pause(scan_id):
+        raise HTTPException(status_code=409, detail="Scan cannot be paused")
+    await get_progress_bus().set_status(scan_id, "paused")
+    return {"scan_id": scan_id, "status": "paused"}
+
+
+@router.post("/scan/{scan_id}/resume")
+async def resume_scan(
+    scan_id: str,
+    current_user: User = Depends(get_current_active_user),
+    session: AsyncSession = Depends(get_session),
+):
+    """Resume (continue) a paused scan."""
+    controller = get_scan_controller()
+    if not controller.is_active(scan_id):
+        raise HTTPException(status_code=409, detail="No active scan with that ID")
+    if not controller.resume(scan_id):
+        raise HTTPException(status_code=409, detail="Scan cannot be resumed")
+    await get_progress_bus().set_status(scan_id, "running")
+    return {"scan_id": scan_id, "status": "running"}
+
+
+@router.post("/scan/{scan_id}/stop")
+async def stop_scan(
+    scan_id: str,
+    current_user: User = Depends(get_current_active_user),
+    session: AsyncSession = Depends(get_session),
+):
+    """Stop an active scan immediately and mark its assessment as stopped."""
+    controller = get_scan_controller()
+    stopped = await controller.stop(scan_id)
+    if not stopped:
+        raise HTTPException(status_code=409, detail="No active scan with that ID")
+    await _mark_assessment_stopped(session, scan_id)
+    return {"scan_id": scan_id, "status": "stopped"}
+
+
+@router.post("/scan/{scan_id}/restart", response_model=ScanResponse)
+async def restart_scan(
+    scan_id: str,
+    session: AsyncSession = Depends(get_session),
+    current_user: User = Depends(get_current_active_user),
+):
+    """Re-run a previous assessment against the same target and project."""
+    controller = get_scan_controller()
+    if controller.is_active(scan_id):
+        raise HTTPException(status_code=409, detail="Scan is already running")
+
+    assessment = await session.get(Assessment, scan_id)
+    if not assessment:
+        raise HTTPException(status_code=404, detail="Assessment not found")
+
+    asset = assessment.asset
+    if not asset or not asset.identifier:
+        raise HTTPException(status_code=400, detail="Assessment has no target asset")
+
+    scan_type = (assessment.config or {}).get("scan_type") or "auto"
+    org_id = str(assessment.organization_id)
+    proj_id = str(assessment.project_id)
+    asset_id = str(assessment.asset_id)
+
+    # Reset the assessment for a fresh run and clear the old progress stream
+    # so the frontend console restarts cleanly at event index 0.
+    assessment.status = "running"
+    assessment.error = None
+    assessment.started_at = datetime.utcnow()
+    assessment.completed_at = None
+    assessment.findings_count = 0
+    await session.commit()
+    await get_progress_bus().clear(scan_id)
+
+    orchestrator = get_vapt_orchestrator()
+    try:
+        result = await orchestrator.analyze_and_scan(
+            target=asset.identifier,
+            scan_type=scan_type,
+            scan_id=scan_id,
+        )
+    except ScanStoppedError:
+        await _mark_assessment_stopped(session, scan_id)
+        return ScanResponse(
+            scan_id=scan_id,
+            assessment_id=scan_id,
+            status="stopped",
+            target=asset.identifier,
+            findings_count=0,
+            findings=[],
+            severity_breakdown={},
+            insights={},
+        )
+    except Exception as e:
+        logger.error("VAPT restart scan failed: %s", e)
+        assessment = await session.get(Assessment, scan_id)
+        if assessment:
+            assessment.status = "failed"
+            assessment.error = str(e)[:500]
+            assessment.completed_at = datetime.utcnow()
+            await session.commit()
+        raise
+
+    insights = orchestrator.generate_insights(result)
+    try:
+        await _persist_scan_result(
+            session,
+            scan_id,
+            result,
+            insights,
+            org_id,
+            proj_id,
+            asset_id,
+            asset.identifier,
+        )
+    except Exception as e:
+        logger.error("Failed to persist restart scan completion: %s", e)
+        await session.rollback()
+
+    return ScanResponse(
+        scan_id=str(result.id),
+        assessment_id=scan_id,
+        status=result.status,
+        target=asset.identifier,
+        findings_count=len(result.findings),
+        findings=[f.to_dict() for f in result.findings],
+        severity_breakdown=insights["severity_breakdown"],
+        insights=insights,
+    )
 
 
 @router.get("/assessments/{assessment_id}")
