@@ -207,6 +207,7 @@ export const findingsApi = {
     params?: {
       page?: number;
       limit?: number;
+      page_size?: number;
       severity?: string;
       status?: string;
       organization_id?: string;
