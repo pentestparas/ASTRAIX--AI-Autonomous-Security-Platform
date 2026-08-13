@@ -77,10 +77,10 @@ services:
       NEO4J_PASSWORD: ${NEO4J_PASSWORD:-}
       NVIDIA_API_KEY: ${NVIDIA_API_KEY:-}
       NVIDIA_BASE_URL: ${NVIDIA_BASE_URL:-https://integrate.api.nvidia.com/v1}
-      AI_MODEL: ${AI_MODEL:-deepseek-ai/deepseek-v4-pro}
+      AI_MODEL: ${AI_MODEL:-deepseek-ai/deepseek-v4-flash-0731}
       LLM_PROVIDER: ${LLM_PROVIDER:-ollama}
       OLLAMA_BASE_URL: ${OLLAMA_BASE_URL:-http://host.docker.internal:11434}
-      OLLAMA_MODEL: ${OLLAMA_MODEL:-huihui_ai/qwen2.5-abliterate:7b-instruct}
+      OLLAMA_MODEL: ${OLLAMA_MODEL:-huihui_ai/qwen3-abliterated:14b-v2}
     volumes:
       - ./backend:/app
       - ./plugins:/app/plugins

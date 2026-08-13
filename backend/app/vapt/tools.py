@@ -6,7 +6,7 @@ Fast execution without container overhead.
 """
 
 import subprocess
-from typing import Dict, List, Optional
+from typing import Any, Dict, List, Optional
 from app.vapt.models import VAPTTool, VAPTScanType
 
 TOOLS_REGISTRY: Dict[str, VAPTTool] = {
@@ -255,6 +255,123 @@ DEFAULT_TOOLS: Dict[VAPTScanType, List[str]] = {
     VAPTScanType.CONTAINER: ["trivy"],
     VAPTScanType.FULL: ["nmap", "nikto", "nuclei", "gobuster"],
 }
+
+# =============================================================================
+# AGENT GATING (Phase 1 - autonomous agent loop)
+# phase:     recon | web | deep  (mirrors ReconOrchestrator.TOOL_PHASES)
+# dangerous: requires manual operator approval before execution (RedAmon-style)
+# =============================================================================
+TOOL_GATING: Dict[str, Dict[str, Any]] = {
+    "nmap": {"phase": "recon"},
+    "masscan": {"phase": "recon", "dangerous": True},
+    "dnsrecon": {"phase": "recon"},
+    "subfinder": {"phase": "recon"},
+    "httpx": {"phase": "web"},
+    "nikto": {"phase": "web"},
+    "whatweb": {"phase": "web"},
+    "wafw00f": {"phase": "web"},
+    "gobuster": {"phase": "web", "dangerous": True},
+    "ffuf": {"phase": "web", "dangerous": True},
+    "wfuzz": {"phase": "web", "dangerous": True},
+    "arjun": {"phase": "web"},
+    "nuclei": {"phase": "web", "dangerous": True},
+    "sqlmap": {"phase": "deep", "dangerous": True},
+    "commix": {"phase": "deep", "dangerous": True},
+    "dalfox": {"phase": "deep", "dangerous": True},
+    "hydra": {"phase": "deep", "dangerous": True},
+    "sslscan": {"phase": "deep"},
+    "testssl": {"phase": "deep"},
+    "trivy": {"phase": "deep"},
+}
+
+for _tid, _gate in TOOL_GATING.items():
+    _tool = TOOLS_REGISTRY.get(_tid)
+    if _tool:
+        _tool.dangerous = bool(_gate.get("dangerous", False))
+        _tool.phase = _gate.get("phase", "recon")
+
+PHASE_ORDER = ["recon", "web", "deep"]
+
+PHASE_LABELS = {
+    "recon": "Reconnaissance",
+    "web": "Web Enumeration & Vulnerability Testing",
+    "deep": "Deep Exploitation & Verification",
+}
+
+# Container-only scans have no web/network target for the agent loop; the
+# orchestrator falls back to the classic pipeline for them.
+AGENT_LOOP_CATEGORIES = {
+    VAPTScanType.NETWORK,
+    VAPTScanType.WEB,
+    VAPTScanType.API,
+    VAPTScanType.SSL,
+    VAPTScanType.FULL,
+}
+
+
+def get_agent_pool(scan_type: VAPTScanType) -> List[VAPTTool]:
+    """Tools the autonomous agent may call for a scan type (phase-gated)."""
+    if scan_type == VAPTScanType.CONTAINER:
+        return []
+    pool = [
+        TOOLS_REGISTRY[tid]
+        for tid, tool in TOOLS_REGISTRY.items()
+        if tool.agent_visible
+    ]
+    if scan_type == VAPTScanType.SSL:
+        pool = [t for t in pool if t.phase in ("recon", "deep")]
+    elif scan_type == VAPTScanType.NETWORK:
+        pool = [t for t in pool if t.phase != "web"]
+    elif scan_type == VAPTScanType.API:
+        pool = [t for t in pool if t.phase in ("recon", "web")]
+    return pool
+
+
+def get_tools_by_phase() -> Dict[str, List[str]]:
+    by_phase: Dict[str, List[str]] = {p: [] for p in PHASE_ORDER}
+    for tid, tool in TOOLS_REGISTRY.items():
+        if tool.agent_visible:
+            by_phase.setdefault(tool.phase, []).append(tid)
+    return by_phase
+
+
+def tool_openai_schema(tool: VAPTTool) -> Dict[str, Any]:
+    """OpenAI function-calling schema for an agent-visible tool."""
+    description = tool.description
+    if tool.dangerous:
+        description += " [REQUIRES OPERATOR APPROVAL BEFORE EXECUTION]"
+    return {
+        "type": "function",
+        "function": {
+            "name": tool.id,
+            "description": description,
+            "parameters": {
+                "type": "object",
+                "properties": {
+                    "target": {
+                        "type": "string",
+                        "description": "The scan target (host, IP or URL).",
+                    },
+                    "extra_args": {
+                        "type": "string",
+                        "description": (
+                            "Optional extra command-line arguments for the tool. "
+                            "Alphanumerics, spaces, -_.=,/ and : only."
+                        ),
+                    },
+                },
+                "required": ["target"],
+            },
+        },
+    }
+
+
+def validate_extra_args(extra_args: str) -> bool:
+    """Reject shell metacharacters in agent-supplied tool arguments."""
+    if not extra_args:
+        return True
+    allowed = set("abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789 -_.=,/:'\"")
+    return all(c in allowed for c in extra_args) and "&&" not in extra_args
 
 
 def get_tool(tool_id: str) -> Optional[VAPTTool]:

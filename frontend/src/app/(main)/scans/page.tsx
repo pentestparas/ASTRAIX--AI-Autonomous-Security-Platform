@@ -266,6 +266,8 @@ function LiveScanConsole({
   onPause,
   onResume,
   onStop,
+  scanId,
+  onResolveApproval,
 }: {
   events: ScanProgressEvent[];
   target: string;
@@ -275,6 +277,8 @@ function LiveScanConsole({
   onPause?: () => void;
   onResume?: () => void;
   onStop?: () => void;
+  scanId?: string;
+  onResolveApproval?: (approvalId: string, approved: boolean) => void;
 }) {
   const planEvent = events.find((e) => e.type === "plan_ready");
   const phases: PlanPhase[] = (planEvent?.data as { phases?: PlanPhase[] })?.phases || [];
@@ -374,6 +378,31 @@ function LiveScanConsole({
   const scanStalled = events.find((e) => e.type === "scan_stalled");
   const stalled = running && !paused && (idleSec > 300 || !!scanStalled);
 
+  const approvalRequests = events
+    .filter((e) => e.type === "tool_approval_requested")
+    .map((e) => e.data as Record<string, any>);
+  const resolvedApprovalIds = new Set(
+    events
+      .filter((e) => e.type === "tool_approval_resolved")
+      .map((e) => String(e.data?.approval_id || ""))
+      .filter(Boolean)
+  );
+  const approvalList = approvalRequests.filter(
+    (r) => r?.approval_id && !resolvedApprovalIds.has(String(r.approval_id))
+  );
+
+  const agentSteps = events
+    .filter((e) => e.type === "agent_step")
+    .map((e, i) => ({
+      key: i,
+      index: e.data?.index ?? i,
+      tool: String(e.data?.tool_id || e.data?.tool || "?"),
+      decision: String(e.data?.decision || ""),
+      reason: String(e.data?.reason || ""),
+      findingCount: Number(e.data?.findings_count || 0),
+      error: !!e.data?.error,
+    }));
+
   return (
     <div className="space-y-4">
       <div className="flex items-center justify-between">
@@ -457,6 +486,80 @@ function LiveScanConsole({
             {String(scanStalled.data?.message || "No activity detected - the target may be unresponsive.")}{" "}
             The watchdog will keep the scan alive until it recovers.
           </p>
+        </div>
+      )}
+
+      {approvalList.length > 0 && (
+        <div className="space-y-2">
+          <p className="text-xs font-semibold flex items-center gap-1.5 text-amber-500">
+            <ShieldAlert className="w-3.5 h-3.5" />
+            Dangerous tool approval required
+          </p>
+          {approvalList.map((req) => (
+            <div
+              key={req.approval_id}
+              className="p-3 rounded-lg border border-amber-500/40 bg-amber-500/10"
+            >
+              <div className="flex items-center justify-between gap-2 flex-wrap">
+                <div className="min-w-0">
+                  <p className="text-sm font-mono font-semibold truncate">
+                    {req.tool_name}
+                    {req.args?.target ? <span className="text-muted-foreground"> · {req.args.target}</span> : null}
+                  </p>
+                  <p className="text-xs text-amber-700 mt-0.5 break-words font-mono">
+                    {JSON.stringify(req.args || {})}
+                  </p>
+                  {req.reason && <p className="text-xs text-muted-foreground mt-0.5">{req.reason}</p>}
+                </div>
+                <div className="flex gap-1.5 shrink-0">
+                  <Button
+                    size="sm"
+                    onClick={() => onResolveApproval?.(req.approval_id, true)}
+                  >
+                    <Check className="w-3.5 h-3.5 mr-1" />
+                    Approve
+                  </Button>
+                  <Button
+                    size="sm"
+                    variant="outline"
+                    onClick={() => onResolveApproval?.(req.approval_id, false)}
+                  >
+                    <X className="w-3.5 h-3.5 mr-1" />
+                    Reject
+                  </Button>
+                </div>
+              </div>
+            </div>
+          ))}
+        </div>
+      )}
+
+      {agentSteps.length > 0 && (
+        <div className="p-3 rounded-lg border border-primary/20 bg-primary/5">
+          <p className="text-xs font-semibold text-primary mb-1.5 flex items-center gap-1">
+            <Brain className="w-3.5 h-3.5" /> Autonomous agent loop
+          </p>
+          <div className="space-y-1">
+            {agentSteps.slice(-8).map((s) => (
+              <div key={s.key} className="flex items-center gap-2 text-xs">
+                {s.error ? (
+                  <XCircle className="w-3 h-3 text-destructive shrink-0" />
+                ) : s.decision === "ran" ? (
+                  <Check className="w-3 h-3 text-green-500 shrink-0" />
+                ) : (
+                  <Clock className="w-3 h-3 text-muted-foreground shrink-0" />
+                )}
+                <span className="font-mono text-muted-foreground shrink-0">
+                  step {s.index}
+                </span>
+                <span className="font-mono font-medium">{s.tool}</span>
+                <span className="text-muted-foreground truncate">{s.reason}</span>
+                <span className="ml-auto text-[10px] text-muted-foreground shrink-0">
+                  {s.findingCount > 0 ? `+${s.findingCount} findings` : "no findings"}
+                </span>
+              </div>
+            ))}
+          </div>
         </div>
       )}
 
@@ -726,6 +829,15 @@ export default function ScansPage() {
       await vaptScanApi.resume(liveScanId);
       setLivePaused(false);
       updateScan(liveScanId, { status: "running" });
+    } catch {
+      // ignore - console will reflect the live status on next poll
+    }
+  }
+
+  async function handleResolveApproval(approvalId: string, approved: boolean) {
+    if (!liveScanId) return;
+    try {
+      await vaptScanApi.approve(liveScanId, approvalId, approved);
     } catch {
       // ignore - console will reflect the live status on next poll
     }
@@ -1220,6 +1332,8 @@ export default function ScansPage() {
                 scanType={scanType}
                 running={liveRunning}
                 paused={livePaused}
+                scanId={liveScanId}
+                onResolveApproval={handleResolveApproval}
                 onPause={handlePauseScan}
                 onResume={handleResumeScan}
                 onStop={() => setConfirmStop(true)}

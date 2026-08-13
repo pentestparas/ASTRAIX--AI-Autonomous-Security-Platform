@@ -492,6 +492,43 @@ async def get_scan_progress(
     }
 
 
+@router.get("/scan/{scan_id}/approvals")
+async def list_approvals(
+    scan_id: str,
+    current_user: User = Depends(get_current_active_user),
+    session: AsyncSession = Depends(get_session),
+):
+    """List pending operator approvals for dangerous agent tool calls."""
+    controller = get_scan_controller()
+    return {
+        "scan_id": scan_id,
+        "pending": controller.pending_approvals(scan_id),
+    }
+
+
+class ApprovalDecision(BaseModel):
+    approved: bool
+
+
+@router.post("/scan/{scan_id}/approvals/{approval_id}")
+async def resolve_scan_approval(
+    scan_id: str,
+    approval_id: str,
+    decision: ApprovalDecision,
+    current_user: User = Depends(get_current_active_user),
+    session: AsyncSession = Depends(get_session),
+):
+    """Approve or reject a dangerous tool execution requested by the agent."""
+    controller = get_scan_controller()
+    if not controller.resolve_approval(scan_id, approval_id, decision.approved):
+        raise HTTPException(status_code=404, detail="Approval not found or already resolved")
+    return {
+        "scan_id": scan_id,
+        "approval_id": approval_id,
+        "approved": decision.approved,
+    }
+
+
 @router.post("/scan/{scan_id}/pause")
 async def pause_scan(
     scan_id: str,

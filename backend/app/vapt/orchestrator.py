@@ -9,6 +9,7 @@ import asyncio
 import hashlib
 import os
 import time
+from datetime import datetime
 from typing import Any, Dict, List, Optional
 from uuid import UUID, uuid4
 
@@ -121,12 +122,12 @@ class AIOrchestrator:
                 "message": "Starting tool execution",
             })
 
-            # Built-in Kali toolchain and enabled external platform adapters
-            # run SIMULTANEOUSLY (Dark-Moon / Xalgorix / PentAGI / RedAmon all
-            # fan out recon in parallel). Adapters are best-effort: a failing
-            # adapter never aborts the scan.
+            # Phase 1: the autonomous agent loop runs FIRST (when enabled and an
+            # LLM is reachable); the classic phased recon pipeline is the
+            # automatic fallback. External platform adapters fan out alongside.
+            # Adapters are best-effort: a failing adapter never aborts the scan.
             result, adapter_results = await asyncio.gather(
-                self.recon.execute_scan(request, scan_id=scan_id),
+                self._run_agent_or_recon(request, scan_id, target_info, publish),
                 self._run_adapters(target, scan_type_enum, scan_id, target_info),
                 return_exceptions=True,
             )
@@ -215,6 +216,71 @@ class AIOrchestrator:
         finally:
             watchdog.cancel()
             controller.finish(scan_id)
+
+    async def _run_agent_or_recon(
+        self,
+        request: VAPTScanRequest,
+        scan_id: str,
+        target_info: Dict[str, Any],
+        publish: Any,
+    ) -> VAPTScanResult:
+        """Run the autonomous agent loop, falling back to the classic phased
+        recon pipeline when the loop is disabled or no LLM is reachable."""
+        agent_mode = os.environ.get("VAPT_AGENT_MODE", "true").lower() == "true"
+        if agent_mode:
+            from app.vapt.agents.agent_loop import agent_loop_supported, get_agent_loop
+            from app.vapt.control import get_scan_controller
+            from app.recon_orchestrator.graph_db import get_knowledge_graph
+
+            if agent_loop_supported(request.scan_type):
+                loop = get_agent_loop(
+                    self.executor,
+                    get_scan_controller(),
+                    publish,
+                    get_knowledge_graph(),
+                )
+                try:
+                    loop_out = await asyncio.wait_for(
+                        loop.run(
+                            scan_id,
+                            request.target.value,
+                            target_info,
+                            request.scan_type,
+                        ),
+                        timeout=int(os.environ.get("VAPT_AGENT_TIMEOUT", "1800")),
+                    )
+                except asyncio.TimeoutError:
+                    logger.warning(
+                        "Agent loop timed out for %s - using classic pipeline",
+                        request.target.value,
+                    )
+                    loop_out = None
+                except ScanStoppedError:
+                    raise
+                if loop_out is not None:
+                    steps, findings = loop_out
+                    result = VAPTScanResult(
+                        id=uuid4(),
+                        request=request,
+                        status="completed",
+                        started_at=datetime.utcnow(),
+                    )
+                    result.findings = findings
+                    result.tool_results["agent_loop"] = {
+                        "steps": [s.to_dict() for s in steps],
+                        "steps_count": len(steps),
+                        "findings": len(findings),
+                        "status": "ok",
+                    }
+                    result.finalize(
+                        "completed",
+                        f"Autonomous agent completed {len(steps)} steps "
+                        f"with {len(findings)} findings",
+                    )
+                    return result
+                logger.info("Agent loop unavailable - falling back to classic pipeline")
+
+        return await self.recon.execute_scan(request, scan_id=scan_id)
 
     async def _run_adapters(
         self,

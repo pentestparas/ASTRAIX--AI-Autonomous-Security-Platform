@@ -61,7 +61,7 @@ class Settings(BaseSettings):
     # NVIDIA NIM (OpenAI-compatible)
     NVIDIA_API_KEY: Optional[str] = None
     NVIDIA_BASE_URL: str = "https://integrate.api.nvidia.com/v1"
-    AI_MODEL: str = "deepseek-ai/deepseek-v4-pro"
+    AI_MODEL: str = "deepseek-ai/deepseek-v4-flash-0731"
 
     # LLM provider selection: "auto" (ollama -> nvidia), "nvidia", "ollama"
     # Ollama is preferred by default to avoid third-party API latency.
@@ -70,7 +70,7 @@ class Settings(BaseSettings):
 
     # Local Ollama fallback
     OLLAMA_BASE_URL: str = "http://host.docker.internal:11434"
-    OLLAMA_MODEL: str = "huihui_ai/qwen2.5-abliterate:7b-instruct"
+    OLLAMA_MODEL: str = "huihui_ai/qwen3-abliterated:14b-v2"
 
     # Security tools
     NMAP_PATH: str = "/usr/bin/nmap"

@@ -699,6 +699,95 @@ class VAPTExecutor:
         cmd = f"timeout --kill-after=5 {timeout}s bash -c '{cmd}'"
         return self._run_container_sync(self.KALI_IMAGE, cmd, f"astraix-vrfy-{uuid4().hex[:8]}", timeout)
 
+    # ------------------------------------------------------------------
+    # Agent-loop single-tool execution (Phase 1)
+    # ------------------------------------------------------------------
+
+    async def run_agent_tool(
+        self,
+        tool_id: str,
+        target: str,
+        extra_args: str = "",
+    ) -> "tuple[List[VAPTFinding], str, Optional[str]]":
+        """Run exactly one tool against the target for the autonomous agent.
+
+        Returns ``(findings, raw_output, error)``. Never raises for tool
+        failures - errors are returned as the third element so the agent
+        loop can decide the next step instead of aborting.
+        """
+        tool = get_tool(tool_id)
+        if not tool:
+            return [], "", f"Unknown tool: {tool_id}"
+
+        if self._demo_mode or not self._use_docker:
+            return self._demo_agent_tool(tool, target), "", None
+
+        if not await self._check_docker():
+            return self._demo_agent_tool(tool, target), "", None
+
+        target = target.strip()
+        if tool.requires_url and not target.startswith(("http://", "https://")):
+            target = f"http://{target}"
+
+        cmd = self._build_docker_command(tool, target)
+        if not cmd:
+            return [], "", f"Could not build command for {tool_id}"
+        if extra_args:
+            cmd = f"{cmd} {extra_args}"
+
+        cmd = f"timeout --kill-after=5 {tool.timeout}s bash -c '{cmd}'"
+        container_name = f"astraix-agent-{uuid4().hex[:8]}"
+
+        try:
+            output = await asyncio.wait_for(
+                asyncio.to_thread(
+                    self._run_container_sync,
+                    self.KALI_IMAGE,
+                    cmd,
+                    container_name,
+                    tool.timeout,
+                ),
+                timeout=tool.timeout + 30,
+            )
+            findings = self._parse_output(output, tool, target)
+            return findings, output, None
+        except asyncio.TimeoutError:
+            self._kill_container(container_name)
+            return [], "", f"{tool_id}: timed out after {tool.timeout}s"
+        except Exception as e:
+            return [], "", f"{tool_id}: {str(e)}"
+
+    def _demo_agent_tool(self, tool: VAPTTool, target: str) -> List[VAPTFinding]:
+        """Synthetic findings so the agent loop works in demo mode."""
+        if tool.phase == "recon":
+            return [VAPTFinding(
+                title=f"Open Port: 443/tcp",
+                description=f"{tool.name} detected an HTTPS service",
+                severity=VAPTSeverity.INFO,
+                tool_name=tool.name,
+                target=target,
+                port=443,
+                protocol="tcp",
+                service="https",
+            )]
+        if tool.phase == "deep":
+            return [VAPTFinding(
+                title=f"{tool.name} Potential Finding",
+                description=f"{tool.name} surfaced a candidate issue on {target}",
+                severity=VAPTSeverity.MEDIUM,
+                tool_name=tool.name,
+                target=target,
+                vulnerability_type="Agent-detected",
+                remediation="Review and confirm before remediation planning",
+            )]
+        return [VAPTFinding(
+            title=f"{tool.name} Discovery",
+            description=f"{tool.name} enumerated surface on {target}",
+            severity=VAPTSeverity.INFO,
+            tool_name=tool.name,
+            target=target,
+        )]
+
 
 _executor: Optional[VAPTExecutor] = None
 

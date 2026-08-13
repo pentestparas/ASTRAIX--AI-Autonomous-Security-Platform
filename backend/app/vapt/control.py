@@ -9,7 +9,10 @@ blocks at the next checkpoint until resumed, and a stopped scan raises
 """
 
 import asyncio
-from typing import Any, Dict, Optional
+import time
+import uuid
+from dataclasses import dataclass, field
+from typing import Any, Dict, List, Optional
 
 from app.core.logging import get_logger
 from app.vapt.progress import get_progress_bus, publish_scan_event
@@ -25,6 +28,33 @@ class ScanStoppedError(Exception):
         self.scan_id = scan_id
 
 
+@dataclass
+class ToolApprovalRequest:
+    """A pending operator decision for a dangerous agent tool call."""
+
+    approval_id: str
+    scan_id: str
+    tool_id: str
+    tool_name: str
+    args: Dict[str, Any]
+    reason: str = ""
+    decision: Optional[bool] = None
+    created_at: float = field(default_factory=time.time)
+    _event: asyncio.Event = field(default_factory=asyncio.Event)
+
+    def to_dict(self) -> Dict[str, Any]:
+        return {
+            "approval_id": self.approval_id,
+            "scan_id": self.scan_id,
+            "tool_id": self.tool_id,
+            "tool_name": self.tool_name,
+            "args": self.args,
+            "reason": self.reason,
+            "decision": self.decision,
+            "created_at": self.created_at,
+        }
+
+
 class ScanController:
     """Registry + control flags for scans currently executing in-process."""
 
@@ -32,6 +62,7 @@ class ScanController:
         self._tasks: Dict[str, asyncio.Task] = {}
         self._state: Dict[str, Dict[str, Any]] = {}
         self._meta: Dict[str, Dict[str, Any]] = {}
+        self._approvals: Dict[str, Dict[str, ToolApprovalRequest]] = {}
 
     def register(
         self,
@@ -52,6 +83,7 @@ class ScanController:
         """Drop runtime state when the scan ends (meta is kept for restart)."""
         self._tasks.pop(scan_id, None)
         self._state.pop(scan_id, None)
+        self._approvals.pop(scan_id, None)
 
     def is_active(self, scan_id: str) -> bool:
         return scan_id in self._tasks
@@ -124,6 +156,83 @@ class ScanController:
         logger.info("scan.stop_requested", scan_id=scan_id)
         task.cancel()
         return True
+
+    # ------------------------------------------------------------------
+    # Dangerous-tool approval gate (agent loop)
+    # ------------------------------------------------------------------
+
+    async def request_tool_approval(
+        self,
+        scan_id: str,
+        tool_id: str,
+        tool_name: str,
+        args: Dict[str, Any],
+        reason: str = "",
+    ) -> str:
+        """Register a pending operator decision for a dangerous tool call."""
+        approval = ToolApprovalRequest(
+            approval_id=str(uuid.uuid4().hex[:12]),
+            scan_id=scan_id,
+            tool_id=tool_id,
+            tool_name=tool_name,
+            args=args,
+            reason=reason,
+        )
+        self._approvals.setdefault(scan_id, {})[approval.approval_id] = approval
+        logger.info(
+            "tool.approval_requested",
+            scan_id=scan_id, tool=tool_id, approval_id=approval.approval_id,
+        )
+        await publish_scan_event(scan_id, "tool_approval_requested", approval.to_dict())
+        return approval.approval_id
+
+    def pending_approvals(self, scan_id: str) -> List[Dict[str, Any]]:
+        pending = [
+            a.to_dict()
+            for a in self._approvals.get(scan_id, {}).values()
+            if a.decision is None
+        ]
+        return pending
+
+    def resolve_approval(self, scan_id: str, approval_id: str, approved: bool) -> bool:
+        """Settle a pending approval. Returns False when unknown or already settled."""
+        approval = self._approvals.get(scan_id, {}).get(approval_id)
+        if not approval or approval.decision is not None:
+            return False
+        approval.decision = approved
+        approval._event.set()
+        logger.info(
+            "tool.approval_resolved",
+            scan_id=scan_id, approval_id=approval_id, approved=approved,
+        )
+        return True
+
+    async def await_approval(
+        self,
+        scan_id: str,
+        approval_id: str,
+        timeout: float = 300,
+    ) -> Optional[bool]:
+        """Wait for the operator's decision. None = timed out / not resolved."""
+        approval = self._approvals.get(scan_id, {}).get(approval_id)
+        if not approval:
+            return None
+        st = self._state.get(scan_id, {})
+        try:
+            while True:
+                if st.get("stop_requested"):
+                    return None
+                done, _ = await asyncio.wait(
+                    [asyncio.create_task(approval._event.wait())],
+                    timeout=min(timeout, 5),
+                )
+                if done:
+                    return approval.decision
+                timeout -= 5
+                if timeout <= 0:
+                    return None
+        except asyncio.CancelledError:
+            raise
 
 
 _controller: Optional[ScanController] = None

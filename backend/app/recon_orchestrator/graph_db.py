@@ -1,6 +1,7 @@
+import json
 import os
 import uuid
-from typing import Any, Optional
+from typing import Any, Dict, Optional
 
 from app.core.logging import get_logger
 
@@ -193,6 +194,58 @@ class KnowledgeGraph:
         except Exception as exc:
             logger.error("KnowledgeGraph add_finding failed: %s", exc)
         return fid
+
+    async def add_chain_step(
+        self,
+        target_id: str,
+        scan_id: str,
+        step_index: int,
+        tool_name: str,
+        args: Dict[str, Any],
+        decision: str,
+        success: bool,
+        summary: str = "",
+    ) -> str:
+        """Record one agent-loop step as a ChainStep node linked to the target
+        (target --HAS_CHAIN_STEP--> step, step --NEXT_STEP--> next step)."""
+        if not self._enabled:
+            return _node_id("chainstep", f"{scan_id}:{step_index}")
+        cid = _node_id("chainstep", f"{scan_id}:{step_index}")
+        try:
+            async with self._driver.session(database="neo4j") as session:
+                await session.run(
+                    """
+                    MERGE (c:ChainStep {id: $cid})
+                    SET c.scan_id = $scan_id, c.step = $step_index,
+                        c.tool = $tool_name, c.args = $args,
+                        c.decision = $decision, c.success = $success,
+                        c.summary = $summary, c.created_at = timestamp()
+                    """,
+                    cid=cid, scan_id=scan_id, step_index=step_index,
+                    tool_name=tool_name, args=json.dumps(args, default=str),
+                    decision=decision, success=success, summary=summary,
+                )
+                await session.run(
+                    """
+                    MATCH (t:Target {id: $target_id})
+                    MATCH (c:ChainStep {id: $cid})
+                    MERGE (t)-[r:HAS_CHAIN_STEP]->(c)
+                    """,
+                    target_id=target_id, cid=cid,
+                )
+                if step_index > 1:
+                    prev_id = _node_id("chainstep", f"{scan_id}:{step_index - 1}")
+                    await session.run(
+                        """
+                        MATCH (p:ChainStep {id: $prev_id})
+                        MATCH (c:ChainStep {id: $cid})
+                        MERGE (p)-[r:NEXT_STEP]->(c)
+                        """,
+                        prev_id=prev_id, cid=cid,
+                    )
+        except Exception as exc:
+            logger.error("KnowledgeGraph add_chain_step failed: %s", exc)
+        return cid
 
     async def fetch_graph(self, scan_id: str = "") -> dict:
         if not self._enabled:

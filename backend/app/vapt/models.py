@@ -67,6 +67,10 @@ class VAPTTool(BaseModel):
     requires_url: bool = False
     requires_ip: bool = False
     output_format: str = "text"
+    # Agent-gated execution (Phase 1: agent loop)
+    dangerous: bool = False
+    phase: str = "recon"
+    agent_visible: bool = True
 
     def build_command(self, target: str, extra_args: List[str] = None) -> List[str]:
         """Build full command with target."""

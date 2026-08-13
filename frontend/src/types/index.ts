@@ -176,6 +176,17 @@ export interface ScanProgressEvent {
   data: Record<string, any>;
 }
 
+export interface ToolApproval {
+  approval_id: string;
+  scan_id: string;
+  tool_id: string;
+  tool_name: string;
+  args: Record<string, any>;
+  reason: string;
+  decision: boolean | null;
+  created_at: number;
+}
+
 export interface ScanProgress {
   scan_id: string;
   events: ScanProgressEvent[];

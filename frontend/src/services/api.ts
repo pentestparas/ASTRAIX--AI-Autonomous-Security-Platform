@@ -19,6 +19,7 @@ import type {
   RecentActivity,
   SystemStatus,
   VaptAssessmentDetail,
+  ToolApproval,
 } from "@/types";
 
 const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || "/api/v1";
@@ -195,6 +196,12 @@ export const vaptScanApi = {
   pause: (scanId: string) => apiClient.post(`/vapt/scan/${scanId}/pause`),
   resume: (scanId: string) => apiClient.post(`/vapt/scan/${scanId}/resume`),
   stop: (scanId: string) => apiClient.post(`/vapt/scan/${scanId}/stop`),
+  approvals: (scanId: string) =>
+    apiClient.get<{ scan_id: string; pending: ToolApproval[] }>(
+      `/vapt/scan/${scanId}/approvals`
+    ),
+  approve: (scanId: string, approvalId: string, approved: boolean) =>
+    apiClient.post(`/vapt/scan/${scanId}/approvals/${approvalId}`, { approved }),
   restart: (scanId: string) =>
     apiClient.post<ScanResponse>(`/vapt/scan/${scanId}/restart`, undefined, {
       timeout: 600000,
