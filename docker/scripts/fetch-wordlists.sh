@@ -155,6 +155,20 @@ if [ -f /usr/share/wordlists/rockyou.txt.gz ]; then
   head -n 10000 "$WL/passwords/rockyou.txt" > "$WL/passwords/rockyou-top10k.txt"
 fi
 
+# ============================================================ KITERUNNER / ASSETNOTE
+# Compiled route lists for API/content discovery (kr) + swagger endpoint list.
+fetch_soft "https://wordlists-cdn.assetnote.io/data/kiterunner/routes-small.kite.tar.gz" kr_small.tgz
+if [ -s "$TMP/kr_small.tgz" ]; then
+  mkdir -p "$WL/kiterunner"
+  tar -xzf "$TMP/kr_small.tgz" -C "$WL/kiterunner" 2>/dev/null || true
+  find "$WL/kiterunner" -name '*.krl' -exec ln -sfn {} "$WL/content/routes.krl" \; 2>/dev/null || true
+  [ -f "$WL/content/routes.krl" ] && log "kiterunner routes.krl ready: $(du -h "$WL/content/routes.krl" | cut -f1)"
+fi
+fetch_soft "https://wordlists-cdn.assetnote.io/data/kiterunner/swagger-wordlist.txt" kr_swagger.txt
+if [ -s "$TMP/kr_swagger.txt" ]; then
+  dedupe "$TMP/kr_swagger.txt" "$WL/params/swagger-endpoints.txt"
+fi
+
 # ============================================================ SOURCES / provenance
 fetch_soft "https://raw.githubusercontent.com/gmelodie/awesome-wordlists/master/README.md" src_awesome.md
 fetch_soft "https://raw.githubusercontent.com/projectdiscovery/nuclei-templates/main/README.md" src_nuclei.md

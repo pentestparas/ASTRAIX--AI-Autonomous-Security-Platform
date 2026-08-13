@@ -155,10 +155,18 @@ class AIOrchestrator:
                 "message": "Researcher agent enriching findings from knowledge base",
             })
             t0 = time.time()
-            result.findings = await asyncio.wait_for(
-                self.researcher.enrich_findings(result.findings),
-                timeout=int(os.environ.get("VAPT_RESEARCH_TIMEOUT", "90")),
-            )
+            try:
+                result.findings = await asyncio.wait_for(
+                    self.researcher.enrich_findings(result.findings),
+                    timeout=int(os.environ.get("VAPT_RESEARCH_TIMEOUT", "90")),
+                )
+            except (asyncio.TimeoutError, asyncio.CancelledError):
+                # Research is best-effort: a slow/failed enrichment must never
+                # fail the scan. Keep the raw findings and move on.
+                logger.warning(
+                    "Research enrichment timed out after %ss - keeping raw findings",
+                    os.environ.get("VAPT_RESEARCH_TIMEOUT", "90"),
+                )
             await publish_scan_event(scan_id, "ai_research_done", {
                 "duration": round(time.time() - t0, 1),
                 "enriched_count": len(result.findings),
@@ -170,10 +178,16 @@ class AIOrchestrator:
                 "message": "Verifier agent re-confirming findings to eliminate false positives",
             })
             t0 = time.time()
-            result.findings = await asyncio.wait_for(
-                self.verifier.verify_findings(result.findings),
-                timeout=int(os.environ.get("VAPT_VERIFY_ALL_TIMEOUT", "240")),
-            )
+            try:
+                result.findings = await asyncio.wait_for(
+                    self.verifier.verify_findings(result.findings),
+                    timeout=int(os.environ.get("VAPT_VERIFY_ALL_TIMEOUT", "240")),
+                )
+            except (asyncio.TimeoutError, asyncio.CancelledError):
+                logger.warning(
+                    "Verification timed out after %ss - keeping findings",
+                    os.environ.get("VAPT_VERIFY_ALL_TIMEOUT", "240"),
+                )
             await publish_scan_event(scan_id, "ai_verification_done", {
                 "duration": round(time.time() - t0, 1),
                 "confirmed_count": len(result.findings),
@@ -280,7 +294,40 @@ class AIOrchestrator:
                     return result
                 logger.info("Agent loop unavailable - falling back to classic pipeline")
 
-        return await self.recon.execute_scan(request, scan_id=scan_id)
+        result = await self.recon.execute_scan(request, scan_id=scan_id)
+
+        # A timed-out/aborted agent loop may still have produced findings -
+        # merge them in so the classic pipeline result is enriched, never
+        # replaced, by the partial agent work.
+        try:
+            from app.vapt.control import get_scan_controller
+
+            partial = get_scan_controller().get_agent_partial(scan_id)
+            if partial:
+                p_steps, p_findings = partial
+                merged = 0
+                for f in p_findings:
+                    if not any(
+                        (x.title, x.description, x.target)
+                        == (f.title, f.description, f.target)
+                        for x in result.findings
+                    ):
+                        result.add_finding(f)
+                        merged += 1
+                result.tool_results["agent_loop_partial"] = {
+                    "steps": len(p_steps),
+                    "findings": len(p_findings),
+                    "merged": merged,
+                    "status": "partial",
+                }
+                logger.info(
+                    "Merged %d findings from partial agent loop into classic result",
+                    merged,
+                )
+        except Exception as e:
+            logger.warning("Agent partial merge failed: %s", e)
+
+        return result
 
     async def _run_adapters(
         self,

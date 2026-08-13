@@ -12,7 +12,7 @@ import asyncio
 import time
 import uuid
 from dataclasses import dataclass, field
-from typing import Any, Dict, List, Optional
+from typing import Any, Dict, List, Optional, Tuple
 
 from app.core.logging import get_logger
 from app.vapt.progress import get_progress_bus, publish_scan_event
@@ -98,6 +98,20 @@ class ScanController:
 
     def meta(self, scan_id: str) -> Optional[Dict[str, Any]]:
         return self._meta.get(scan_id)
+
+    def set_agent_partial(
+        self, scan_id: str, steps: List[Any], findings: List[Any]
+    ) -> None:
+        """Store the agent loop's partial results so an aborted/timed-out
+        loop can still contribute findings to the final report."""
+        st = self._state.setdefault(scan_id, {})
+        st["agent_partial"] = (steps, findings)
+
+    def get_agent_partial(self, scan_id: str) -> Optional[Tuple[List[Any], List[Any]]]:
+        st = self._state.get(scan_id)
+        if not st:
+            return None
+        return st.get("agent_partial")
 
     async def checkpoint(self, scan_id: str) -> None:
         """Cooperative pause/stop gate.

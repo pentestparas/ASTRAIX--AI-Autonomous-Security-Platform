@@ -51,6 +51,11 @@ services:
       CORS_ORIGINS: '["http://localhost:3000","http://localhost:3001","http://127.0.0.1:3000"]'
       VAPT_DEMO_MODE: "false"
       VAPT_USE_DOCKER: "true"
+      # Agent loop budget: 20 steps max, 40min hard timeout (a down LLM now
+      # switches to a fast deterministic rotation instead of burning retries).
+      VAPT_AGENT_MAX_STEPS: ${VAPT_AGENT_MAX_STEPS:-20}
+      VAPT_AGENT_MIN_STEPS: ${VAPT_AGENT_MIN_STEPS:-8}
+      VAPT_AGENT_TIMEOUT: ${VAPT_AGENT_TIMEOUT:-2400}
       # External VAPT platform adapters (backend/app/vapt/adapters)
       VAPT_ADAPTER_RACCOON: ${VAPT_ADAPTER_RACCOON:-true}
       VAPT_ADAPTER_LYRIE: ${VAPT_ADAPTER_LYRIE:-false}
@@ -163,6 +168,38 @@ services:
       - astraix-network
     restart: unless-stopped
 
+  # OWASP ZAP daemon — headless active/passive scanning (Burp-style) driven by
+  # the agent via the REST API. Kali tool containers reach it as `zap:8080`.
+  zap:
+    image: ghcr.io/zaproxy/zaproxy:stable
+    container_name: astraix-zap
+    command:
+      - zap.sh
+      - -daemon
+      - -host
+      - 0.0.0.0
+      - -port
+      - "8080"
+      - -config
+      - api.key=astraixzap
+      - -config
+      - api.addrs.addr.name=.*
+      - -config
+      - api.addrs.addr.regex=true
+    volumes:
+      - zap-data:/zap/wrk/:rw
+    ports:
+      - "8090:8080"
+    networks:
+      - astraix-network
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD-SHELL", "curl -sf 'http://localhost:8080/JSON/core/view/version?apikey=astraixzap' || exit 1"]
+      interval: 15s
+      timeout: 10s
+      retries: 10
+      start_period: 40s
+
 volumes:
   postgres_data:
     driver: local
@@ -173,6 +210,8 @@ volumes:
   kb-data:
     driver: local
   neo4j_data:
+    driver: local
+  zap-data:
     driver: local
 
 networks:

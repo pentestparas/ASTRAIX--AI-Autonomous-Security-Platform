@@ -42,7 +42,8 @@ from app.vapt.tools import (
 
 logger = get_logger(__name__)
 
-MAX_STEPS = int(os.environ.get("VAPT_AGENT_MAX_STEPS", "12"))
+MAX_STEPS = int(os.environ.get("VAPT_AGENT_MAX_STEPS", "20"))
+MIN_STEPS = int(os.environ.get("VAPT_AGENT_MIN_STEPS", "8"))
 APPROVAL_TIMEOUT = int(os.environ.get("VAPT_APPROVAL_TIMEOUT", "300"))
 OBSERVATION_LIMIT = int(os.environ.get("VAPT_AGENT_OBSERVATION_LIMIT", "12000"))
 
@@ -61,7 +62,10 @@ Rules:
 4. If no more testing is meaningful or you have sufficient evidence, reply with
    a FINAL REPORT as plain text starting with the line FINAL REPORT: followed by
    a concise summary (key findings by severity, confidence, and recommended
-   next steps for the client).
+   next steps for the client). You may ONLY conclude once you have run at least
+   MIN_STEPS distinct tools, attempted the deep phase (zap, sqlmap, metasploit,
+   hydra...), and covered every unlocked phase. Early final reports will be
+   rejected.
 5. Never call a tool twice in a row with identical arguments.
 6. Do not test unrelated targets or expand scope beyond the given target."""
 
@@ -106,6 +110,77 @@ class AgentLoop:
         self._controller = controller
         self._publish = publish
         self._graph = graph
+        self._kb_context: str = ""
+
+    # ------------------------------------------------------- KB grounding
+
+    def _kb_search(self, query: str, top_k: int = 3) -> List[str]:
+        try:
+            import sys
+
+            sys.path.insert(0, "/app/knowledge-base")
+            from search import get_knowledge_base
+
+            kb = get_knowledge_base()
+            results = kb.search(query, top_k=top_k)
+            return [
+                f"[{r['source']}] {r['text'][:300]}"
+                for r in results
+                if r.get("text")
+            ]
+        except Exception:
+            return []
+
+    async def _load_kb_context(
+        self,
+        target: str,
+        target_info: Dict[str, Any],
+    ) -> None:
+        """Ground the agent with knowledge-base methodology snippets."""
+        ttype = target_info.get("type", "web")
+        query = (
+            f"autonomous penetration testing methodology {ttype} web application "
+            "SQL injection XSS API endpoint enumeration exploitation best practice"
+        )
+        try:
+            snippets = await asyncio.to_thread(self._kb_search, query, 4)
+            if snippets:
+                self._kb_context = (
+                    "Knowledge base guidance (use it to choose the most effective tools "
+                    "and payload strategies):\n" + "\n".join(snippets[:4])
+                )
+        except Exception:
+            self._kb_context = ""
+
+    def _can_conclude(
+        self,
+        step_index: int,
+        steps: List[StepRecord],
+        completed_phases: set,
+        pool: List[Any],
+    ) -> Tuple[bool, str]:
+        """Return (rejected, reason) when the model may NOT write a final
+        report yet - enforces minimum tool diversity and deep-phase coverage."""
+        distinct = len({s.tool_id for s in steps if s.decision == "ran"})
+        if step_index < MIN_STEPS:
+            return True, (
+                f"You have only completed {step_index} steps. Run at least "
+                f"{MIN_STEPS} steps before concluding."
+            )
+        if distinct < 3:
+            return True, (
+                f"You have only used {distinct} distinct tools. Use at least "
+                f"3 different tools before concluding."
+            )
+        if "deep" not in completed_phases and any(
+            t.phase == "deep" for t in pool
+        ):
+            return True, (
+                "You have not attempted the deep phase yet (sqlmap, hydra, "
+                "metasploit, zap, dalfox...). Run at least one deep-phase "
+                "tool before concluding."
+            )
+        return False, ""
 
     # ------------------------------------------------------------- LLM calls
 
@@ -208,8 +283,11 @@ class AgentLoop:
             f"Target: {target} (type: {target_info.get('type', 'unknown')})",
             f"Unlocked phases: {', '.join(PHASE_LABELS[p] for p in allowed_phases)}",
             "",
-            "Steps so far:",
         ]
+        if self._kb_context:
+            lines.append(self._kb_context)
+            lines.append("")
+        lines.append("Steps so far:")
         for s in steps[-10:]:
             lines.append(
                 f"  {s.index}. {s.tool_name or s.tool_id} [{s.decision}] "
@@ -315,213 +393,315 @@ class AgentLoop:
             "tools": [t.id for t in pool],
         })
 
-        for step_index in range(1, MAX_STEPS + 1):
-            try:
-                await self._controller.checkpoint(scan_id)
-            except Exception:
-                raise
+        await self._load_kb_context(target, target_info)
 
-            await self._publish(scan_id, "agent_step_started", {
-                "step": step_index,
-                "message": "Agent deciding next tool",
-            })
+        # When the LLM stays down across steps, switch to a pure deterministic
+        # rotation instead of burning 3 retry attempts (and ~2min of sleeps)
+        # on EVERY step. Keeps a flaky Ollama from starving the scan budget.
+        llm_down_streak = 0
 
-            messages = [
-                {"role": "system", "content": SYSTEM_PROMPT},
-                {
-                    "role": "user",
-                    "content": self._build_context(
-                        target, target_info, steps, findings, allowed_phases
-                    ),
-                },
+        def _rotate_tool() -> Tuple[Optional[str], Dict[str, Any]]:
+            """Pick the next unused tool from the unlocked phases."""
+            fallback = [
+                t for t in pool
+                if t.phase in allowed_phases
+                and t.id != "sqlmap"
             ]
-            step = StepRecord(index=step_index)
+            ran = {s.tool_id for s in steps}
+            unused = [t for t in fallback if t.id not in ran]
+            pick = (unused or fallback)[0] if fallback else None
+            if pick is None:
+                return None, {}
+            return pick.id, {}
 
-            # Resolve the tool choice, retrying once with a nudge when the
-            # model returns no usable tool call.
-            tool_id = ""
-            args: Dict[str, Any] = {}
-            final_report = False
-            for attempt in range(2):
-                text, calls = await self._llm_turn(messages, _current_schemas())
-                if not text and not calls:
-                    logger.warning("Agent loop: LLM unavailable - falling back")
-                    return None
+        try:
+            for step_index in range(1, MAX_STEPS + 1):
+                try:
+                    await self._controller.checkpoint(scan_id)
+                except Exception:
+                    raise
 
+                await self._publish(scan_id, "agent_step_started", {
+                    "step": step_index,
+                    "message": "Agent deciding next tool",
+                })
+
+                messages = [
+                    {"role": "system", "content": SYSTEM_PROMPT},
+                    {
+                        "role": "user",
+                        "content": self._build_context(
+                            target, target_info, steps, findings, allowed_phases
+                        ),
+                    },
+                ]
+                step = StepRecord(index=step_index)
+
+                # Resolve the tool choice, retrying with backoff when the model
+                # is briefly unavailable, then falling back to a deterministic
+                # tool rotation so a flaky LLM never starves the scan.
                 tool_id = ""
-                args = {}
-                if calls:
-                    tool_id = str(calls[0].get("name", ""))
-                    args = calls[0].get("arguments") or {}
-                else:
-                    # Plain-text response - look for a JSON decision or FINAL REPORT.
-                    body = (text or "").strip()
-                    if body.upper().startswith("FINAL REPORT"):
-                        await self._publish(scan_id, "agent_final_report", {
-                            "step": step_index,
-                            "summary": body[:2000],
-                        })
-                        final_report = True
-                        break
-                    try:
-                        decision = json.loads(body[body.find("{"): body.rfind("}") + 1])
-                        tool_id = str(
-                            decision.get("next_tool")
-                            or decision.get("tool")
-                            or decision.get("tool_id")
-                            or decision.get("tool_name")
-                            or ""
+                args: Dict[str, Any] = {}
+                final_report = False
+                if llm_down_streak >= 2:
+                    # LLM has been down for consecutive steps - rotate directly.
+                    tool_id, args = _rotate_tool()
+                    if tool_id:
+                        logger.warning(
+                            "Agent loop: LLM down streak %d - rotating to %s",
+                            llm_down_streak, tool_id,
                         )
-                        args = decision.get("args") or {}
-                    except (json.JSONDecodeError, ValueError):
-                        await self._publish(scan_id, "agent_final_report", {
-                            "step": step_index,
-                            "summary": body[:2000],
+                    else:
+                        logger.warning(
+                            "Agent loop: no fallback tool available in rotation"
+                        )
+                    final_report = not tool_id
+                else:
+                    tool_id = ""
+                    args = {}
+                    for attempt in range(3):
+                        text, calls = await self._llm_turn(messages, _current_schemas())
+                        if not text and not calls:
+                            llm_down_streak += 1
+                            logger.warning(
+                                "Agent loop: LLM unavailable (attempt %d/3) - retrying",
+                                attempt + 1,
+                            )
+                            if attempt < 2:
+                                await asyncio.sleep(5 * (attempt + 1))
+                                continue
+                            # Deterministic fallback: rotate through the unlocked pool
+                            # (prefer tools not run yet) so the scan still executes.
+                            tool_id, args = _rotate_tool()
+                            if tool_id:
+                                logger.warning(
+                                    "Agent loop: using deterministic fallback tool %s",
+                                    tool_id,
+                                )
+                            break
+
+                    if calls:
+                        llm_down_streak = 0
+                        tool_id = str(calls[0].get("name", ""))
+                        args = calls[0].get("arguments") or {}
+                    else:
+                        # Plain-text response - look for a JSON decision or FINAL REPORT.
+                        body = (text or "").strip()
+                        if body.upper().startswith("FINAL REPORT"):
+                            rejected, reason = self._can_conclude(
+                                step_index, steps, completed_phases, pool
+                            )
+                            if rejected:
+                                messages.append({
+                                    "role": "assistant",
+                                    "content": body[:400],
+                                })
+                                messages.append({
+                                    "role": "user",
+                                    "content": (
+                                        f"Final report rejected: {reason} "
+                                        "Continue the engagement by choosing "
+                                        "another tool."
+                                    ),
+                                })
+                                continue
+                            await self._publish(scan_id, "agent_final_report", {
+                                "step": step_index,
+                                "summary": body[:2000],
+                            })
+                            final_report = True
+                            break
+                        try:
+                            decision = json.loads(body[body.find("{"): body.rfind("}") + 1])
+                            tool_id = str(
+                                decision.get("next_tool")
+                                or decision.get("tool")
+                                or decision.get("tool_id")
+                                or decision.get("tool_name")
+                                or ""
+                            )
+                            args = decision.get("args") or {}
+                        except (json.JSONDecodeError, ValueError):
+                            rejected, reason = self._can_conclude(
+                                step_index, steps, completed_phases, pool
+                            )
+                            if rejected:
+                                messages.append({
+                                    "role": "assistant",
+                                    "content": body[:400],
+                                })
+                                messages.append({
+                                    "role": "user",
+                                    "content": (
+                                        f"Unparseable reply; final report rejected: "
+                                        f"{reason} Continue the engagement by "
+                                        "choosing another tool."
+                                    ),
+                                })
+                                continue
+                            await self._publish(scan_id, "agent_final_report", {
+                                "step": step_index,
+                                "summary": body[:2000],
+                            })
+                            final_report = True
+                            break
+
+                    if tool_id not in pool_tools:
+                        messages.append({
+                            "role": "assistant",
+                            "content": text or (
+                                json.dumps({"next_tool": tool_id, "args": args})
+                                if tool_id else "No tool selected"
+                            ),
                         })
-                        final_report = True
-                        break
+                        messages.append({
+                            "role": "user",
+                            "content": (
+                                f"Your previous turn did not select a valid tool "
+                                f"(got: '{tool_id}'). The available tools are: "
+                                f"{', '.join(sorted(pool_tools))}. Choose exactly one "
+                                f"from that list now."
+                            ),
+                        })
 
-                if tool_id in pool_tools:
+                if final_report:
                     break
-                messages.append({
-                    "role": "assistant",
-                    "content": text or (
-                        json.dumps({"next_tool": tool_id, "args": args})
-                        if tool_id else "No tool selected"
-                    ),
-                })
-                messages.append({
-                    "role": "user",
-                    "content": (
-                        f"Your previous turn did not select a valid tool "
-                        f"(got: '{tool_id}'). The available tools are: "
-                        f"{', '.join(sorted(pool_tools))}. Choose exactly one "
-                        f"from that list now."
-                    ),
-                })
 
-            if final_report:
-                break
+                tool = pool_tools.get(tool_id)
+                if not tool:
+                    step.decision = "skipped"
+                    step.reason = f"Unknown or unavailable tool: {tool_id}"
+                    steps.append(step)
+                    await self._publish(scan_id, "agent_step", step.to_dict())
+                    continue
 
-            tool = pool_tools.get(tool_id)
-            if not tool:
-                step.decision = "skipped"
-                step.reason = f"Unknown or unavailable tool: {tool_id}"
-                steps.append(step)
-                await self._publish(scan_id, "agent_step", step.to_dict())
-                continue
+                target_arg = str(args.get("target") or target)
+                extra_args = str(args.get("extra_args") or "")
+                if not validate_extra_args(extra_args):
+                    step.tool_id = tool_id
+                    step.tool_name = tool.name
+                    step.decision = "skipped"
+                    step.reason = "Rejected unsafe extra_args"
+                    steps.append(step)
+                    await self._publish(scan_id, "agent_step", step.to_dict())
+                    continue
 
-            target_arg = str(args.get("target") or target)
-            extra_args = str(args.get("extra_args") or "")
-            if not validate_extra_args(extra_args):
                 step.tool_id = tool_id
                 step.tool_name = tool.name
-                step.decision = "skipped"
-                step.reason = "Rejected unsafe extra_args"
-                steps.append(step)
-                await self._publish(scan_id, "agent_step", step.to_dict())
-                continue
+                step.reason = str(args.get("reason", ""))
 
-            step.tool_id = tool_id
-            step.tool_name = tool.name
-            step.reason = str(args.get("reason", ""))
-
-            # ---- phase gate (backend-enforced)
-            if tool.phase not in allowed_phases:
-                step.decision = "skipped"
-                step.reason = f"Phase {tool.phase} not unlocked"
-                steps.append(step)
-                await self._publish(scan_id, "agent_step", step.to_dict())
-                continue
-
-            # ---- dangerous-tool approval gate
-            if tool.dangerous:
-                approval_id = await self._controller.request_tool_approval(
-                    scan_id,
-                    tool_id,
-                    tool.name,
-                    {"target": target_arg, "extra_args": extra_args},
-                    reason=step.reason or f"Agent requested {tool.name}",
-                )
-                decision = await self._controller.await_approval(
-                    scan_id, approval_id, timeout=float(APPROVAL_TIMEOUT)
-                )
-                if decision is None:
+                # ---- phase gate (backend-enforced)
+                if tool.phase not in allowed_phases:
                     step.decision = "skipped"
-                    step.reason = "Approval timed out or scan stopped"
-                    steps.append(step)
-                    await self._publish(scan_id, "agent_step", step.to_dict())
-                    continue
-                if not decision:
-                    step.decision = "rejected"
-                    step.reason = "Operator rejected execution"
+                    step.reason = f"Phase {tool.phase} not unlocked"
                     steps.append(step)
                     await self._publish(scan_id, "agent_step", step.to_dict())
                     continue
 
-            await self._publish(scan_id, "tool_started", {
-                "tool": tool_id,
-                "command": tool.command,
-            })
-
-            tool_findings, output, error = await self._executor.run_agent_tool(
-                tool_id, target_arg, extra_args
-            )
-
-            if error:
-                step.decision = "error"
-                step.error = error
-                step.summary = f"{tool.name} failed: {error}"
-            else:
-                step.decision = "ran"
-                step.findings_count = len(tool_findings)
-                sev_high = sum(
-                    1 for f in tool_findings if f.severity in (VAPTSeverity.CRITICAL, VAPTSeverity.HIGH)
-                )
-                if tool_findings:
-                    step.summary = (
-                        f"{tool.name} returned {len(tool_findings)} findings"
-                        f" ({sev_high} critical/high)"
+                # ---- dangerous-tool approval gate
+                if tool.dangerous:
+                    approval_id = await self._controller.request_tool_approval(
+                        scan_id,
+                        tool_id,
+                        tool.name,
+                        {"target": target_arg, "extra_args": extra_args},
+                        reason=step.reason or f"Agent requested {tool.name}",
                     )
-                else:
-                    # Include a short raw-output excerpt so the next decision
-                    # is grounded in the actual tool output.
-                    excerpt = (output or "").strip().replace("\n", " ")[:260]
-                    step.summary = (
-                        f"{tool.name} completed with no parsed findings. "
-                        f"Output: {excerpt}" if excerpt
-                        else f"{tool.name} completed with no findings"
+                    decision = await self._controller.await_approval(
+                        scan_id, approval_id, timeout=float(APPROVAL_TIMEOUT)
                     )
-                findings.extend(tool_findings)
-                completed_phases.add(tool.phase)
+                    if decision is None:
+                        step.decision = "skipped"
+                        step.reason = "Approval timed out or scan stopped"
+                        steps.append(step)
+                        await self._publish(scan_id, "agent_step", step.to_dict())
+                        continue
+                    if not decision:
+                        step.decision = "rejected"
+                        step.reason = "Operator rejected execution"
+                        steps.append(step)
+                        await self._publish(scan_id, "agent_step", step.to_dict())
+                        continue
 
-            await self._publish(scan_id, "tool_finished", {
-                "tool": tool_id,
-                "findings_count": len(tool_findings) if not error else 0,
-            })
-            for f in tool_findings[:25]:
-                await self._publish(scan_id, "finding_found", f.to_dict())
-
-            steps.append(step)
-            await self._publish(scan_id, "agent_step", step.to_dict())
-            await self._record_step(scan_id, target_id, step, args)
-
-            # ---- phase unlock
-            next_unlock = None
-            if "recon" in completed_phases and "web" not in allowed_phases:
-                next_unlock = "web"
-            elif "web" in completed_phases and "deep" not in allowed_phases:
-                next_unlock = "deep"
-            if next_unlock:
-                allowed_phases.append(next_unlock)
-                await self._publish(scan_id, "agent_phase_unlocked", {
-                    "phase": next_unlock,
-                    "label": PHASE_LABELS[next_unlock],
-                    "tools": [
-                        t.id for t in pool
-                        if t.phase == next_unlock and t.agent_visible
-                    ],
+                await self._publish(scan_id, "tool_started", {
+                    "tool": tool_id,
+                    "command": tool.command,
                 })
+
+                tool_findings, output, error = await self._executor.run_agent_tool(
+                    tool_id, target_arg, extra_args
+                )
+
+                if error:
+                    step.decision = "error"
+                    step.error = error
+                    step.summary = f"{tool.name} failed: {error}"
+                else:
+                    step.decision = "ran"
+                    step.findings_count = len(tool_findings)
+                    sev_high = sum(
+                        1 for f in tool_findings if f.severity in (VAPTSeverity.CRITICAL, VAPTSeverity.HIGH)
+                    )
+                    if tool_findings:
+                        step.summary = (
+                            f"{tool.name} returned {len(tool_findings)} findings"
+                            f" ({sev_high} critical/high)"
+                        )
+                    else:
+                        # Include a short raw-output excerpt so the next decision
+                        # is grounded in the actual tool output.
+                        excerpt = (output or "").strip().replace("\n", " ")[:260]
+                        step.summary = (
+                            f"{tool.name} completed with no parsed findings. "
+                            f"Output: {excerpt}" if excerpt
+                            else f"{tool.name} completed with no findings"
+                        )
+                    findings.extend(tool_findings)
+                    # Re-running a tool (or repeated scans) can yield duplicate
+                    # findings - keep a single canonical copy per (title, desc,
+                    # target) so the report stays clean.
+                    seen_f = {}
+                    for f in findings:
+                        seen_f[(f.title, f.description, f.target)] = f
+                    findings = list(seen_f.values())
+                    completed_phases.add(tool.phase)
+
+                await self._publish(scan_id, "tool_finished", {
+                    "tool": tool_id,
+                    "findings_count": len(tool_findings) if not error else 0,
+                })
+                for f in tool_findings[:25]:
+                    await self._publish(scan_id, "finding_found", f.to_dict())
+
+                steps.append(step)
+                await self._publish(scan_id, "agent_step", step.to_dict())
+                await self._record_step(scan_id, target_id, step, args)
+
+                # ---- phase unlock
+                next_unlock = None
+                if "recon" in completed_phases and "web" not in allowed_phases:
+                    next_unlock = "web"
+                elif "web" in completed_phases and "deep" not in allowed_phases:
+                    next_unlock = "deep"
+                if next_unlock:
+                    allowed_phases.append(next_unlock)
+                    await self._publish(scan_id, "agent_phase_unlocked", {
+                        "phase": next_unlock,
+                        "label": PHASE_LABELS[next_unlock],
+                        "tools": [
+                            t.id for t in pool
+                            if t.phase == next_unlock and t.agent_visible
+                        ],
+                    })
+
+        finally:
+            # Preserve partial results so a timed-out/aborted loop still
+            # contributes findings to the final report (merged by the
+            # orchestrator when it falls back to the classic pipeline).
+            try:
+                self._controller.set_agent_partial(scan_id, steps, findings)
+            except Exception:
+                pass
 
         await self._publish(scan_id, "agent_loop_done", {
             "steps": len(steps),

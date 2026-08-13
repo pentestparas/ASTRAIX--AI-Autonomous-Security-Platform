@@ -199,6 +199,20 @@ class VAPTExecutor:
         except Exception:
             pass
 
+    def _host_port_target(self, target: str) -> str:
+        """Reduce a URL target to bare host[:port] for host-oriented tools."""
+        host = target.split("://")[-1].split("/")[0]
+        return host
+
+    def _target_port(self, target: str) -> str:
+        """Extract an explicit port from a URL target, else the scheme default."""
+        host = target.split("://")[-1].split("/")[0]
+        if ":" in host:
+            port = host.rsplit(":", 1)[-1]
+            if port.isdigit():
+                return port
+        return "443" if target.startswith("https") else "80"
+
     def _build_docker_command(self, tool: VAPTTool, target: str) -> Optional[str]:
         from app.vapt.wordlists import get_wordlist
 
@@ -211,14 +225,14 @@ class VAPTExecutor:
 
         tool_cmd = {
             "nmap": f"nmap -sV -Pn -T4 --top-ports 100 -oX - {target}",
-            "sqlmap": f"sqlmap -u {target} --batch --random-agent --output-dir=/tmp",
+            "sqlmap": f"sqlmap -u {target} --batch --random-agent --crawl=1 --output-dir=/tmp",
             "nuclei": f"nuclei -u {target} -json-export - -silent -rate-limit 150",
             "nikto": f"nikto -h {target} -Format xml -output -",
             "gobuster": f"gobuster dir -u {target} -w {wl_dirs} -o - -f -q -t 10",
             "ffuf": f"ffuf -u {target}/FUZZ -w {wl_dirs_medium} -json -rate 100",
             "sslscan": f"sslscan --xml=- --no-failed {target}",
             "trivy": f"trivy image --quiet --format json alpine:latest",
-            "hydra": f"hydra -L {wl_users} -P {wl_rockyou} -t 4 -w 10 {target} ssh",
+            "hydra": f"hydra -L {wl_users} -P {wl_rockyou} -t 4 -w 10 {self._host_port_target(target)} -s {self._target_port(target)}",
             "dnsrecon": f"dnsrecon -d {target} -t std -j /tmp/dnsrecon.json > /dev/null 2>&1; cat /tmp/dnsrecon.json 2>/dev/null",
             "gobuster-dns": f"gobuster dns -d {target} -w {wl_sub} -q",
             "gobuster-vhost": f"gobuster vhost -u {target} -w {wl_dirs} -q",
@@ -233,6 +247,46 @@ class VAPTExecutor:
             "commix": f"commix -u {target} --batch --output-dir=/tmp",
             "dalfox": f"dalfox url {target} --format json --silence",
             "testssl": f"testssl --jsonfile=/tmp/testssl.json {target} > /dev/null 2>&1; cat /tmp/testssl.json 2>/dev/null",
+            "katana": f"katana -u {target} -json -silent -o /tmp/katana.json > /dev/null 2>&1; cat /tmp/katana.json 2>/dev/null",
+            "feroxbuster": f"feroxbuster -u {target} -w {wl_dirs} -q -t 10 --json 2>/dev/null",
+            "dirsearch": f"dirsearch -u {target} -w {wl_dirs} --format=json -o /tmp/ds.json -q 2>/dev/null; cat /tmp/ds.json 2>/dev/null",
+            "xsstrike": f"xsstrike -u {target} --skip-ba --skip-dom 2>/dev/null",
+            "graphqlmap": f"graphqlmap -u {target} -v 1 2>/dev/null",
+            "smuggler": f"smuggler -u {target} 2>/dev/null",
+            "kiterunner": f"kr scan {target} -w /opt/wordlists/content/routes.krl --json 2>/dev/null",
+            "gitleaks": f"git clone --depth 1 -q {target} /tmp/src 2>/dev/null; gitleaks dir /tmp/src --report-format json --redact --no-banner 2>/dev/null; rm -rf /tmp/src",
+            "trufflehog": f"git clone --depth 1 -q {target} /tmp/src 2>/dev/null; trufflehog filesystem /tmp/src --json --no-update 2>/dev/null; rm -rf /tmp/src",
+            "semgrep": f"git clone --depth 1 -q {target} /tmp/src 2>/dev/null; semgrep --config=auto --json /tmp/src 2>/dev/null; rm -rf /tmp/src",
+            "bandit": f"git clone --depth 1 -q {target} /tmp/src 2>/dev/null; bandit -r -f json /tmp/src 2>/dev/null; rm -rf /tmp/src",
+            "searchsploit": f"searchsploit --json {target} 2>/dev/null",
+            "metasploit": (
+                'H=$(echo ' + target + ' | sed -E "s#https?://([^/:]+).*#\\1#"); '
+                'P=$(echo ' + target + ' | sed -E "s#.*:([0-9]+).*#\\1#"); '
+                'echo "$P" | grep -qE "^[0-9]+$" || P=80; '
+                'printf "use auxiliary/scanner/http/http_version\\nset RHOSTS %s\\nset RPORT %s\\nrun\\n'
+                'use auxiliary/scanner/http/http_title\\nset RHOSTS %s\\nset RPORT %s\\nrun\\n'
+                'use auxiliary/scanner/http/robots_txt\\nset RHOSTS %s\\nset RPORT %s\\nrun\\n'
+                'use auxiliary/scanner/http/options\\nset RHOSTS %s\\nset RPORT %s\\nrun\\n'
+                'use auxiliary/scanner/http/trace\\nset RHOSTS %s\\nset RPORT %s\\nrun\\n'
+                'use auxiliary/scanner/http/http_put\\nset RHOSTS %s\\nset RPORT %s\\nrun\\n'
+                'use auxiliary/scanner/http/dir_listing\\nset RHOSTS %s\\nset RPORT %s\\nrun\\n'
+                'exit -y\\n" "$H" "$P" "$H" "$P" "$H" "$P" "$H" "$P" "$H" "$P" "$H" "$P" "$H" "$P" > /tmp/msf.rc; '
+                'msfconsole -q -r /tmp/msf.rc 2>/dev/null'
+            ),
+            "zap": (
+                'Z=http://zap:8080; A=astraixzap; '
+                'curl -s "$Z/JSON/core/action/newSession?name=scan&overwrite=true&apikey=$A" >/dev/null; '
+                'curl -s "$Z/JSON/core/action/accessUrl?url=' + target + '&followRedirects=true&apikey=$A" >/dev/null; '
+                'SID=$(curl -s "$Z/JSON/spider/action/scan?url=' + target + '&maxChildren=10&apikey=$A" | jq -r .scan); '
+                'for i in $(seq 1 75); do '
+                'P=$(curl -s "$Z/JSON/spider/view/status?scanId=$SID&apikey=$A" | jq -r .status); '
+                '[ "$P" = "100" ] && break; sleep 2; done; '
+                'ASID=$(curl -s "$Z/JSON/ascan/action/scan?url=' + target + '&recurse=true&apikey=$A" | jq -r .scan); '
+                'for i in $(seq 1 250); do '
+                'P=$(curl -s "$Z/JSON/ascan/view/status?scanId=$ASID&apikey=$A" | jq -r .status); '
+                '[ "$P" = "100" ] && break; sleep 2; done; '
+                'curl -s "$Z/JSON/core/view/alerts?baseurl=' + target + '&start=0&count=100&apikey=$A" 2>/dev/null'
+            ),
         }.get(tool.id)
 
         return tool_cmd
@@ -275,6 +329,21 @@ class VAPTExecutor:
             "commix": self._parse_commix,
             "hydra": self._parse_hydra,
             "testssl": self._parse_testssl,
+            "sqlmap": self._parse_sqlmap,
+            "katana": self._parse_katana,
+            "feroxbuster": self._parse_feroxbuster,
+            "dirsearch": self._parse_dirsearch,
+            "xsstrike": self._parse_xsstrike,
+            "graphqlmap": self._parse_graphqlmap,
+            "smuggler": self._parse_smuggler,
+            "kiterunner": self._parse_kiterunner,
+            "gitleaks": self._parse_gitleaks,
+            "trufflehog": self._parse_trufflehog,
+            "semgrep": self._parse_semgrep,
+            "bandit": self._parse_bandit,
+            "metasploit": self._parse_metasploit,
+            "searchsploit": self._parse_searchsploit,
+            "zap": self._parse_zap,
         }
         parser = parser_map.get(tool.id, self._parse_generic)
         return parser(output, target, tool.name)
@@ -317,27 +386,48 @@ class VAPTExecutor:
     def _parse_nikto(self, output: str, target: str, tool_name: str) -> List[VAPTFinding]:
         findings = []
         try:
+            import re
             import xml.etree.ElementTree as ET
-            root = ET.fromstring(output)
+
+            clean = re.sub(r"\x1b\[[0-9;]*m", "", output)
+            root = ET.fromstring(clean)
 
             for item in root.findall(".//item"):
-                name = item.get("name", "Nikto Finding")
-                desc = item.findtext("description", "")
-                if desc:
-                    findings.append(VAPTFinding(
-                        title=name[:200],
-                        description=desc[:500],
-                        severity=VAPTSeverity.MEDIUM,
-                        tool_name=tool_name,
-                        target=target,
-                        vulnerability_type="Web Server Misconfiguration",
-                        remediation="Review and harden web server configuration",
-                    ))
+                name = (item.get("name") or "Nikto Finding")[:200]
+                desc = (item.findtext("description", "") or "").strip()
+                # Nikto emits ERROR nodes for tool-level failures
+                # (TLS fingerprinting, update checks, host giving up).
+                # They are NOT vulnerabilities - never surface them.
+                if "ERROR" in name.upper() or "ERROR" in desc.upper():
+                    continue
+                if not desc:
+                    continue
+                # Nikto config/CLI noise: default "Nikto Finding" name with a
+                # short or directive-style description is not a vulnerability.
+                if (
+                    name == "Nikto Finding"
+                    and (
+                        len(desc) < 30
+                        or "requires a value" in desc.lower()
+                        or desc.lower().startswith(("-usage", "usage:"))
+                    )
+                ):
+                    continue
+                findings.append(VAPTFinding(
+                    title=name,
+                    description=desc[:500],
+                    severity=VAPTSeverity.MEDIUM,
+                    tool_name=tool_name,
+                    target=target,
+                    vulnerability_type="Web Server Misconfiguration",
+                    remediation="Review and harden web server configuration",
+                ))
         except Exception:
             for line in output.splitlines():
-                if "+" in line and not line.startswith("-"):
-                    desc = line[1:200].strip()
-                    if desc:
+                stripped = line.strip()
+                if "+" in stripped and not stripped.startswith("-"):
+                    desc = stripped[1:200].strip()
+                    if desc and "ERROR" not in desc.upper():
                         findings.append(VAPTFinding(
                             title="Nikto Finding",
                             description=desc,
@@ -423,13 +513,425 @@ class VAPTExecutor:
                 ))
         return findings[:10]
 
+    def _parse_sqlmap(self, output: str, target: str, tool_name: str) -> List[VAPTFinding]:
+        """Emit findings ONLY when sqlmap confirms an injection point.
+
+        sqlmap banners/status lines (ASCII art, disclaimers, INFO/WARNING
+        logs, output-dir notes) are noise and must never become findings.
+        """
+        import re
+
+        clean = re.sub(r"\x1b\[[0-9;]*m", "", output)
+        lines = clean.splitlines()
+        findings = []
+        # Parameter blocks look like:
+        #   Parameter: q (GET)
+        #       Type: boolean-based blind
+        #       Title: AND boolean-based blind - WHERE or HAVING clause
+        seen: set[str] = set()
+        current_param = ""
+        for i, line in enumerate(lines):
+            s = line.strip()
+            pm = re.match(r"Parameter:\s*(\S+)\s*\((GET|POST|Cookie|URI|Header)\)", s)
+            if pm:
+                current_param = f"{pm.group(1)} ({pm.group(2)})"
+                # Find the following Type/Title/Technique block
+                block = "\n".join(lines[i:i + 15])
+                tm = re.search(r"Type:\s*(.+)$", block, re.MULTILINE)
+                if tm:
+                    title = f"SQL Injection in parameter {pm.group(1)} ({pm.group(2)})"
+                    vuln_type = tm.group(1).strip()
+                    key = f"{title}:{vuln_type}"
+                    if key in seen:
+                        continue
+                    seen.add(key)
+                    findings.append(VAPTFinding(
+                        title=title,
+                        description=(
+                            f"sqlmap confirmed {vuln_type} injection in parameter "
+                            f"{pm.group(1)} ({pm.group(2)}) on {target}."
+                        ),
+                        severity=VAPTSeverity.HIGH,
+                        tool_name=tool_name,
+                        target=target,
+                        vulnerability_type="SQL Injection",
+                        remediation=(
+                            "Use parameterized queries / prepared statements, "
+                            "validate and sanitize all user input, and apply the "
+                            "principle of least privilege to the DB account."
+                        ),
+                    ))
+                continue
+            # Direct confirmation without a Parameter line
+            vm = re.search(
+                r"parameter\s+['\"]?(\w+)['\"]?\s+is vulnerable",
+                s,
+                re.IGNORECASE,
+            )
+            if vm:
+                title = f"SQL Injection in parameter {vm.group(1)}"
+                key = f"{title}"
+                if key in seen:
+                    continue
+                seen.add(key)
+                findings.append(VAPTFinding(
+                    title=title,
+                    description=f"sqlmap confirmed the parameter {vm.group(1)} is vulnerable on {target}.",
+                    severity=VAPTSeverity.HIGH,
+                    tool_name=tool_name,
+                    target=target,
+                    vulnerability_type="SQL Injection",
+                    remediation=(
+                        "Use parameterized queries / prepared statements, "
+                        "validate and sanitize all user input, and apply the "
+                        "principle of least privilege to the DB account."
+                    ),
+                ))
+        return findings[:10]
+
+    def _parse_katana(self, output: str, target: str, tool_name: str) -> List[VAPTFinding]:
+        findings = []
+        seen: set[str] = set()
+        for line in output.splitlines():
+            try:
+                data = json.loads(line)
+                req = data.get("request", {})
+                endpoint = req.get("endpoint", "")
+                method = req.get("method", "GET")
+                key = f"{method} {endpoint}"
+                if key in seen or not endpoint:
+                    continue
+                seen.add(key)
+                findings.append(VAPTFinding(
+                    title=f"Endpoint Discovered: {endpoint[:180]}",
+                    description=f"Crawler discovered {method} endpoint (depth {data.get('depth', '?')})",
+                    severity=VAPTSeverity.INFO,
+                    tool_name=tool_name,
+                    target=target,
+                    path=endpoint,
+                    remediation="Review if this endpoint should be publicly reachable",
+                ))
+            except (json.JSONDecodeError, KeyError, TypeError):
+                continue
+        return findings[:15]
+
+    def _parse_feroxbuster(self, output: str, target: str, tool_name: str) -> List[VAPTFinding]:
+        findings = []
+        seen: set[str] = set()
+        interesting = (200, 201, 204, 301, 302, 307, 401, 403, 405)
+        for line in output.splitlines():
+            try:
+                data = json.loads(line)
+                url = data.get("url", "")
+                status = int(data.get("status") or 0)
+                if url in seen or status not in interesting:
+                    continue
+                seen.add(url)
+                findings.append(VAPTFinding(
+                    title=f"Content Found: {url[:180]}",
+                    description=f"Feroxbuster: status {status}, size {data.get('content_length', 0)}",
+                    severity=VAPTSeverity.INFO,
+                    tool_name=tool_name,
+                    target=target,
+                    path=url,
+                    remediation="Review if this resource should be publicly accessible",
+                ))
+            except (json.JSONDecodeError, ValueError, TypeError):
+                continue
+        return findings[:15]
+
+    def _parse_dirsearch(self, output: str, target: str, tool_name: str) -> List[VAPTFinding]:
+        findings = []
+        try:
+            data = json.loads(output)
+        except (json.JSONDecodeError, TypeError):
+            return findings
+        for path, meta in (data.get("results") or {}).items():
+            status = int(meta.get("status") or 0)
+            if status in (200, 201, 204, 301, 302, 307, 401, 403):
+                findings.append(VAPTFinding(
+                    title=f"Path Found: {path[:180]}",
+                    description=f"Dirsearch: status {status}, size {meta.get('content-length', 0)}",
+                    severity=VAPTSeverity.INFO,
+                    tool_name=tool_name,
+                    target=target,
+                    path=path,
+                    remediation="Review if this path should be publicly accessible",
+                ))
+        return findings[:15]
+
+    def _parse_xsstrike(self, output: str, target: str, tool_name: str) -> List[VAPTFinding]:
+        findings = []
+        block: List[str] = []
+        for line in output.splitlines():
+            s = line.strip()
+            if s.startswith("[+]"):
+                block.append(s[3:200])
+            elif "payload" in s.lower() and block:
+                block.append(s[:200])
+        if block:
+            findings.append(VAPTFinding(
+                title="XSS Vector Detected",
+                description="XSStrike reported a potential XSS vector: " + " | ".join(block)[:500],
+                severity=VAPTSeverity.MEDIUM,
+                tool_name=tool_name,
+                target=target,
+                vulnerability_type="Cross-Site Scripting (XSS)",
+                remediation="Sanitize/encode output, implement CSP, validate input",
+            ))
+        return findings
+
+    def _parse_graphqlmap(self, output: str, target: str, tool_name: str) -> List[VAPTFinding]:
+        findings = []
+        for line in output.splitlines():
+            s = line.strip()
+            if s.startswith("[+]") or "vulnerable" in s.lower() or "injectable" in s.lower():
+                findings.append(VAPTFinding(
+                    title="GraphQL Issue",
+                    description=s[:400],
+                    severity=VAPTSeverity.MEDIUM,
+                    tool_name=tool_name,
+                    target=target,
+                    vulnerability_type="GraphQL Misconfiguration",
+                    remediation="Disable introspection in production, add rate limiting and auth",
+                ))
+        return findings[:8]
+
+    def _parse_smuggler(self, output: str, target: str, tool_name: str) -> List[VAPTFinding]:
+        findings = []
+        for line in output.splitlines():
+            s = line.strip()
+            if any(k in s.lower() for k in ("smuggle", "vulnerable", "possible h2c", "cl.te", "te.cl")):
+                findings.append(VAPTFinding(
+                    title="HTTP Request Smuggling",
+                    description=s[:400],
+                    severity=VAPTSeverity.HIGH,
+                    tool_name=tool_name,
+                    target=target,
+                    vulnerability_type="HTTP Request Smuggling",
+                    remediation="Normalize content-length/transfer-encoding handling at the edge",
+                ))
+        return findings[:8]
+
+    def _parse_kiterunner(self, output: str, target: str, tool_name: str) -> List[VAPTFinding]:
+        findings = []
+        seen: set[str] = set()
+        interesting = (200, 201, 204, 301, 302, 307, 401, 403)
+        for line in output.splitlines():
+            try:
+                data = json.loads(line)
+                path = data.get("path", "")
+                status = int(data.get("statusCode") or 0)
+                key = f"{status} {path}"
+                if key in seen or status not in interesting or not path:
+                    continue
+                seen.add(key)
+                findings.append(VAPTFinding(
+                    title=f"API Route Found: {path[:160]}",
+                    description=f"Kiterunner: status {status}, length {data.get('length', 0)}",
+                    severity=VAPTSeverity.INFO,
+                    tool_name=tool_name,
+                    target=target,
+                    path=path,
+                    remediation="Review if this route should be publicly accessible",
+                ))
+            except (json.JSONDecodeError, ValueError, TypeError):
+                continue
+        return findings[:15]
+
+    def _parse_gitleaks(self, output: str, target: str, tool_name: str) -> List[VAPTFinding]:
+        findings = []
+        try:
+            data = json.loads(output)
+        except (json.JSONDecodeError, TypeError):
+            return findings
+        for f in (data.get("Findings") or [])[:20]:
+            findings.append(VAPTFinding(
+                title=f"Leaked Secret: {f.get('RuleID', 'secret')[:120]}",
+                description=(
+                    f"Secret {f.get('Description', '')[:200]} in {f.get('File', '')[:160]}"
+                    f" line {f.get('StartLine', '?')}"
+                ),
+                severity=VAPTSeverity.HIGH,
+                tool_name=tool_name,
+                target=target,
+                vulnerability_type="Exposed Secret",
+                remediation="Rotate the exposed credential immediately and purge it from history",
+            ))
+        return findings
+
+    def _parse_trufflehog(self, output: str, target: str, tool_name: str) -> List[VAPTFinding]:
+        findings = []
+        for line in output.splitlines():
+            try:
+                data = json.loads(line)
+                if not data.get("DetectorName"):
+                    continue
+                verified = "VERIFIED" if data.get("Verified") else "possible"
+                findings.append(VAPTFinding(
+                    title=f"{verified} Secret: {data['DetectorName'][:120]}",
+                    description=(
+                        f"Raw match: {str(data.get('Raw', ''))[:120]} in "
+                        f"{str(data.get('SourceMetadata', {}).get('Data', {}).get('Filesystem', {}).get('file', ''))[:160]}"
+                    ),
+                    severity=VAPTSeverity.HIGH if data.get("Verified") else VAPTSeverity.MEDIUM,
+                    tool_name=tool_name,
+                    target=target,
+                    vulnerability_type="Exposed Secret",
+                    remediation="Rotate the exposed credential immediately and purge it from history",
+                ))
+            except (json.JSONDecodeError, TypeError):
+                continue
+        return findings[:20]
+
+    def _parse_semgrep(self, output: str, target: str, tool_name: str) -> List[VAPTFinding]:
+        findings = []
+        try:
+            data = json.loads(output)
+        except (json.JSONDecodeError, TypeError):
+            return findings
+        sev_map = {"ERROR": VAPTSeverity.HIGH, "WARNING": VAPTSeverity.MEDIUM, "INFO": VAPTSeverity.LOW}
+        for r in (data.get("results") or [])[:20]:
+            if r.get("path", "").startswith("/tmp"):
+                continue
+            sev = sev_map.get((r.get("extra") or {}).get("severity", "INFO"), VAPTSeverity.MEDIUM)
+            findings.append(VAPTFinding(
+                title=f"SAST: {str(r.get('check_id', 'rule'))[:120]}",
+                description=(
+                    f"{str((r.get('extra') or {}).get('message', ''))[:400]} in "
+                    f"{str(r.get('path'))[:160]}:{r.get('start', {}).get('line', '?')}"
+                ),
+                severity=sev,
+                tool_name=tool_name,
+                target=target,
+                vulnerability_type="Static Analysis Finding",
+                remediation="Fix the flagged pattern; add tests to prevent regression",
+            ))
+        return findings
+
+    def _parse_bandit(self, output: str, target: str, tool_name: str) -> List[VAPTFinding]:
+        findings = []
+        try:
+            data = json.loads(output)
+        except (json.JSONDecodeError, TypeError):
+            return findings
+        sev_map = {"HIGH": VAPTSeverity.HIGH, "MEDIUM": VAPTSeverity.MEDIUM, "LOW": VAPTSeverity.LOW}
+        for r in (data.get("results") or [])[:20]:
+            sev = sev_map.get(r.get("issue_severity", "LOW"), VAPTSeverity.LOW)
+            findings.append(VAPTFinding(
+                title=f"Bandit: {r.get('test_id', 'issue')[:60]}",
+                description=(
+                    f"{r.get('issue_text', '')[:350]} in "
+                    f"{r.get('filename', '')[:160]}:{r.get('line_number', '?')}"
+                ),
+                severity=sev,
+                tool_name=tool_name,
+                target=target,
+                vulnerability_type="Static Analysis Finding",
+                remediation="Fix the flagged pattern; add tests to prevent regression",
+            ))
+        return findings
+
+    def _parse_metasploit(self, output: str, target: str, tool_name: str) -> List[VAPTFinding]:
+        findings = []
+        current_module = "msf"
+        for line in output.splitlines():
+            s = line.strip()
+            m = re.match(r"\[\*\]\s+([\w:/_]+)\s*=\s*(.+)", s)
+            if m and m.group(1) in ("Module", "Auxiliary", "Exploit"):
+                current_module = m.group(2)
+            # msfconsole -q -r prints "[*] <module> is running..." per module
+            m2 = re.match(r"\[\*\]\s+([\w_-]+)\s+is running", s)
+            if m2:
+                current_module = m2.group(1)
+            m3 = re.match(r"\[\*\]\s+Running\s+([\w/]+)", s)
+            if m3:
+                current_module = m3.group(1)
+            if s.startswith("[+]"):
+                findings.append(VAPTFinding(
+                    title=f"Metasploit: {current_module.split('/')[-1][:120]}",
+                    description=s[3:400],
+                    severity=VAPTSeverity.MEDIUM,
+                    tool_name=tool_name,
+                    target=target,
+                    vulnerability_type="Metasploit Module Finding",
+                    remediation="Investigate and remediate the identified issue",
+                ))
+            elif "is vulnerable" in s.lower() and s.startswith(("[*]", "[+]")):
+                findings.append(VAPTFinding(
+                    title=f"Metasploit: vulnerable service on {target[:120]}",
+                    description=s[:400],
+                    severity=VAPTSeverity.HIGH,
+                    tool_name=tool_name,
+                    target=target,
+                    vulnerability_type="Service Vulnerability",
+                    remediation="Apply vendor patches/updates",
+                ))
+        return findings[:12]
+
+    def _parse_zap(self, output: str, target: str, tool_name: str) -> List[VAPTFinding]:
+        findings = []
+        try:
+            data = json.loads(output)
+        except (json.JSONDecodeError, TypeError):
+            return findings
+        risk_map = {"0": VAPTSeverity.INFO, "1": VAPTSeverity.LOW,
+                    "2": VAPTSeverity.MEDIUM, "3": VAPTSeverity.HIGH}
+        seen: set[str] = set()
+        for alert in data.get("alerts") or []:
+            name = alert.get("alert", "ZAP Alert")
+            url = alert.get("url", target)
+            key = f"{name}:{url}"
+            if key in seen:
+                continue
+            seen.add(key)
+            findings.append(VAPTFinding(
+                title=f"ZAP: {name[:180]}",
+                description=(
+                    f"{alert.get('description', '')[:400]} | Confidence: {alert.get('confidence', '?')} | "
+                    f"{alert.get('solution', '')[:200]}"
+                ),
+                severity=risk_map.get(str(alert.get("risk")), VAPTSeverity.MEDIUM),
+                tool_name=tool_name,
+                target=target,
+                path=url,
+                vulnerability_type=str(alert.get("cweid") or "ZAP Active Scan Alert"),
+                remediation=alert.get("solution", "Review and remediate per ZAP recommendation")[:500],
+                reference="https://www.zaproxy.org/docs/desktop/addons/active-scan-rules/",
+            ))
+        return findings[:25]
+
+    def _parse_searchsploit(self, output: str, target: str, tool_name: str) -> List[VAPTFinding]:
+        findings = []
+        try:
+            data = json.loads(output)
+        except (json.JSONDecodeError, TypeError):
+            return findings
+        for e in (data.get("RESULTS_EXPLOIT") or [])[:10]:
+            title = e.get("Title", "exploit")
+            path = e.get("Path", "")
+            findings.append(VAPTFinding(
+                title=f"Exploit Available: {title[:180]}",
+                description=f"Exploit-DB entry matches query; file: {path[:200]}",
+                severity=VAPTSeverity.LOW,
+                tool_name=tool_name,
+                target=target,
+                vulnerability_type="Known Exploit",
+                remediation="Patch the underlying software; monitor exploit activity",
+            ))
+        return findings
+
     def _parse_ffuf(self, output: str, target: str, tool_name: str) -> List[VAPTFinding]:
         findings = []
+        seen: set = set()
         for line in output.splitlines():
             try:
                 data = json.loads(line)
                 if data.get("status") in (200, 301, 302, 401, 403):
                     url = data.get("url") or data.get("input", {}).get("FUZZ", "")
+                    if url in seen:
+                        continue
+                    seen.add(url)
                     findings.append(VAPTFinding(
                         title=f"Endpoint Found: {url[:200]}",
                         description=f"Status {data.get('status')}, size {data.get('length', 0)}",
@@ -441,7 +943,9 @@ class VAPTExecutor:
                     ))
             except (json.JSONDecodeError, KeyError):
                 continue
-        return findings
+            if len(findings) >= 40:
+                break
+        return findings[:40]
 
     def _parse_dnsrecon(self, output: str, target: str, tool_name: str) -> List[VAPTFinding]:
         findings = []
@@ -577,17 +1081,34 @@ class VAPTExecutor:
     def _parse_hydra(self, output: str, target: str, tool_name: str) -> List[VAPTFinding]:
         findings = []
         for line in output.splitlines():
-            if line.startswith("["):
-                findings.append(VAPTFinding(
-                    title="Valid Credentials Found",
-                    description=line[:300],
-                    severity=VAPTSeverity.CRITICAL,
-                    tool_name=tool_name,
-                    target=target,
-                    vulnerability_type="Weak Credentials",
-                    remediation="Enforce strong password policy and rate-limit login attempts",
-                ))
-        return findings
+            # A genuine hydra success is a [port][module] line carrying BOTH
+            # login: and password:. [ERROR] lines, progress bars and other
+            # [..] noise are NOT credentials - never surface them.
+            if not line.strip().startswith("["):
+                continue
+            if "[error]" in line.lower():
+                continue
+            if "login:" not in line.lower() or "password:" not in line.lower():
+                continue
+            findings.append(VAPTFinding(
+                title="Valid Credentials Found",
+                description=line[:300],
+                severity=VAPTSeverity.CRITICAL,
+                tool_name=tool_name,
+                target=target,
+                vulnerability_type="Weak Credentials",
+                remediation="Enforce strong password policy and rate-limit login attempts",
+            ))
+        # Deduplicate identical credential lines
+        seen: set = set()
+        unique = []
+        for f in findings:
+            key = (f.description, f.target)
+            if key in seen:
+                continue
+            seen.add(key)
+            unique.append(f)
+        return unique
 
     def _parse_testssl(self, output: str, target: str, tool_name: str) -> List[VAPTFinding]:
         findings = []
