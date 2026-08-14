@@ -213,9 +213,35 @@ class VAPTExecutor:
                 return port
         return "443" if target.startswith("https") else "80"
 
+    def _resolve_target(self, target: str) -> str:
+        """Map loopback targets to the Docker gateway host.
+
+        Tool containers run in isolation, so 'localhost' / '127.0.0.1'
+        inside them points at the container itself. Rewrite loopback
+        hosts to host.docker.internal so users can scan host-published
+        services (e.g. localhost:3002) and the tools still reach them.
+        """
+        loopback = {"localhost", "127.0.0.1", "0.0.0.0", "::1", "[::1]"}
+        scheme, _, after = target.partition("://")
+        if after:
+            hostport, _, path = after.partition("/")
+        else:
+            scheme = ""
+            hostport, _, path = target.partition("/")
+        h, _, p = hostport.rpartition(":")
+        host = h if (h and p.isdigit()) else hostport
+        if host in loopback:
+            new = f"host.docker.internal:{p}" if (h and p.isdigit()) else "host.docker.internal"
+            resolved = f"{scheme}://{new}" if scheme else new
+            if path:
+                resolved = f"{resolved}/{path}"
+            return resolved
+        return target
+
     def _build_docker_command(self, tool: VAPTTool, target: str) -> Optional[str]:
         from app.vapt.wordlists import get_wordlist
 
+        target = self._resolve_target(target)
         wl_dirs = get_wordlist("dirs")
         wl_dirs_medium = get_wordlist("dirs_medium")
         wl_sub = get_wordlist("subdomains")
@@ -272,6 +298,9 @@ class VAPTExecutor:
                 'use auxiliary/scanner/http/dir_listing\\nset RHOSTS %s\\nset RPORT %s\\nrun\\n'
                 'exit -y\\n" "$H" "$P" "$H" "$P" "$H" "$P" "$H" "$P" "$H" "$P" "$H" "$P" "$H" "$P" > /tmp/msf.rc; '
                 'msfconsole -q -r /tmp/msf.rc 2>/dev/null'
+            ),
+            "forms": (
+                f"python3 /opt/vapt/web_form_scanner.py {target} 2>/dev/null"
             ),
             "zap": (
                 'Z=http://zap:8080; A=astraixzap; '
@@ -343,6 +372,7 @@ class VAPTExecutor:
             "bandit": self._parse_bandit,
             "metasploit": self._parse_metasploit,
             "searchsploit": self._parse_searchsploit,
+            "forms": self._parse_forms,
             "zap": self._parse_zap,
         }
         parser = parser_map.get(tool.id, self._parse_generic)
@@ -920,6 +950,37 @@ class VAPTExecutor:
                 remediation="Patch the underlying software; monitor exploit activity",
             ))
         return findings
+
+    def _parse_forms(self, output: str, target: str, tool_name: str) -> List[VAPTFinding]:
+        findings = []
+        sev_map = {
+            "critical": VAPTSeverity.CRITICAL,
+            "high": VAPTSeverity.HIGH,
+            "medium": VAPTSeverity.MEDIUM,
+            "low": VAPTSeverity.LOW,
+            "info": VAPTSeverity.INFO,
+        }
+        for line in output.splitlines():
+            try:
+                data = json.loads(line)
+            except (json.JSONDecodeError, TypeError):
+                continue
+            title = data.get("title") or "Web Form / API Finding"
+            severity = sev_map.get(str(data.get("severity", "")).lower(), VAPTSeverity.MEDIUM)
+            path = data.get("path") or target
+            findings.append(VAPTFinding(
+                title=str(title)[:200],
+                description=(
+                    f"{data.get('description', '')[:400]} | Evidence: {data.get('evidence', '')[:200]}"
+                ),
+                severity=severity,
+                tool_name=tool_name,
+                target=target,
+                path=str(path)[:300],
+                vulnerability_type="Web Form / API Injection",
+                remediation="Validate and sanitize all input; use parameterized queries; harden JSON query handling",
+            ))
+        return findings[:25]
 
     def _parse_ffuf(self, output: str, target: str, tool_name: str) -> List[VAPTFinding]:
         findings = []

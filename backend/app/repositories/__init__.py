@@ -32,10 +32,14 @@ class BaseRepository(Generic[T]):
 
     async def list(self, db: AsyncSession, skip: int = 0, limit: int = 100, **filters) -> List[T]:
         """List with pagination and optional filters."""
+        from sqlalchemy import String
         query = select(self.model)
+        exclude_status = filters.pop("exclude_status", None)
         for key, value in filters.items():
             if hasattr(self.model, key):
                 query = query.where(getattr(self.model, key) == value)
+        if exclude_status and hasattr(self.model, "status"):
+            query = query.where(self.model.status != str(exclude_status))
         query = query.offset(skip).limit(limit)
         result = await db.execute(query)
         return result.scalars().all()
@@ -44,9 +48,12 @@ class BaseRepository(Generic[T]):
         """Count records with optional filters."""
         from sqlalchemy import func
         query = select(func.count()).select_from(self.model)
+        exclude_status = filters.pop("exclude_status", None)
         for key, value in filters.items():
             if hasattr(self.model, key):
                 query = query.where(getattr(self.model, key) == value)
+        if exclude_status and hasattr(self.model, "status"):
+            query = query.where(self.model.status != str(exclude_status))
         result = await db.execute(query)
         return result.scalar() or 0
 

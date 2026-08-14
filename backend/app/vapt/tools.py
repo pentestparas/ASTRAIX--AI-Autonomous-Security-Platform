@@ -284,6 +284,21 @@ TOOLS_REGISTRY: Dict[str, VAPTTool] = {
         requires_url=True,
         output_format="text",
     ),
+    "forms": VAPTTool(
+        id="forms",
+        name="Web Form & API Scanner",
+        command="forms",
+        description=(
+            "Form, API and AI chatbot scanner - probes REST/API endpoints, "
+            "tests query params for SQLi, JSON bodies for NoSQLi, form fields "
+            "for reflected XSS, and chatbot inputs for prompt/SQL injection"
+        ),
+        category=VAPTScanType.WEB,
+        args=[],
+        timeout=900,
+        requires_url=True,
+        output_format="jsonl",
+    ),
     "smuggler": VAPTTool(
         id="smuggler",
         name="Smuggler",
@@ -437,6 +452,7 @@ TOOL_GATING: Dict[str, Dict[str, Any]] = {
     "katana": {"phase": "web"},
     "feroxbuster": {"phase": "web", "dangerous": True},
     "dirsearch": {"phase": "web"},
+    "forms": {"phase": "web", "dangerous": True},
     "nuclei": {"phase": "web", "dangerous": True},
     "graphqlmap": {"phase": "web"},
     "smuggler": {"phase": "web", "dangerous": True},

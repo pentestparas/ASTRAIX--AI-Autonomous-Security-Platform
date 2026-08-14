@@ -520,7 +520,7 @@ async def resolve_scan_approval(
 ):
     """Approve or reject a dangerous tool execution requested by the agent."""
     controller = get_scan_controller()
-    if not controller.resolve_approval(scan_id, approval_id, decision.approved):
+    if not await controller.resolve_approval(scan_id, approval_id, decision.approved):
         raise HTTPException(status_code=404, detail="Approval not found or already resolved")
     return {
         "scan_id": scan_id,

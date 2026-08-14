@@ -9,6 +9,7 @@ blocks at the next checkpoint until resumed, and a stopped scan raises
 """
 
 import asyncio
+import os
 import time
 import uuid
 from dataclasses import dataclass, field
@@ -201,14 +202,16 @@ class ScanController:
         return approval.approval_id
 
     def pending_approvals(self, scan_id: str) -> List[Dict[str, Any]]:
+        now = time.time()
+        ttl = float(os.environ.get("VAPT_APPROVAL_TIMEOUT", "300"))
         pending = [
             a.to_dict()
             for a in self._approvals.get(scan_id, {}).values()
-            if a.decision is None
+            if a.decision is None and now - a.created_at < ttl
         ]
         return pending
 
-    def resolve_approval(self, scan_id: str, approval_id: str, approved: bool) -> bool:
+    async def resolve_approval(self, scan_id: str, approval_id: str, approved: bool) -> bool:
         """Settle a pending approval. Returns False when unknown or already settled."""
         approval = self._approvals.get(scan_id, {}).get(approval_id)
         if not approval or approval.decision is not None:
@@ -218,6 +221,17 @@ class ScanController:
         logger.info(
             "tool.approval_resolved",
             scan_id=scan_id, approval_id=approval_id, approved=approved,
+        )
+        await publish_scan_event(
+            scan_id,
+            "tool_approval_resolved",
+            {
+                "approval_id": approval.approval_id,
+                "scan_id": scan_id,
+                "tool_id": approval.tool_id,
+                "tool_name": approval.tool_name,
+                "approved": approved,
+            },
         )
         return True
 

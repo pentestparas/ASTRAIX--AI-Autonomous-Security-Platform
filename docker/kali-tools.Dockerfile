@@ -95,4 +95,6 @@ RUN pip3 install --no-cache-dir --break-system-packages \
 # paths that tools look for by default (dirb package provides the base tree).
 COPY docker/scripts/fetch-wordlists.sh /opt/astraix/fetch-wordlists.sh
 RUN chmod +x /opt/astraix/fetch-wordlists.sh && /opt/astraix/fetch-wordlists.sh
+# Web form / API / chatbot scanner used by the 'forms' tool
+COPY docker/scripts/web_form_scanner.py /opt/vapt/web_form_scanner.py
 CMD ["bash"]

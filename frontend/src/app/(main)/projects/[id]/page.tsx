@@ -4,7 +4,7 @@ import { Fragment, useEffect, useMemo, useState } from "react";
 import { useParams } from "next/navigation";
 import { projectsApi, assessmentsApi, assetsApi, findingsApi } from "@/services/api";
 import { Button } from "@/components/ui/button";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import {
   Table,
@@ -15,16 +15,42 @@ import {
   TableRow,
 } from "@/components/ui/table";
 import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog";
+import {
   ArrowLeft,
   Activity,
   ShieldAlert,
   Server,
-  Play,
   ChevronDown,
   ChevronRight,
+  Globe,
+  ExternalLink,
+  CalendarClock,
+  Fingerprint,
 } from "lucide-react";
 import Link from "next/link";
+import { formatDistanceToNow } from "date-fns";
 import type { Project, Assessment, Asset, Finding } from "@/types";
+
+const severityConfig = {
+  critical: { label: "Critical", className: "bg-red-500/15 text-red-400 border-red-500/30" },
+  high: { label: "High", className: "bg-orange-500/15 text-orange-400 border-orange-500/30" },
+  medium: { label: "Medium", className: "bg-yellow-500/15 text-yellow-400 border-yellow-500/30" },
+  low: { label: "Low", className: "bg-blue-500/15 text-blue-400 border-blue-500/30" },
+  info: { label: "Info", className: "bg-secondary text-secondary-foreground border-border/60" },
+};
+
+const cvssColor = (s: number) =>
+  s >= 9 ? "text-red-400 font-bold" : s >= 7 ? "text-orange-400 font-bold" : s >= 4 ? "text-yellow-400" : "text-green-400";
+
+const statusOptions: Finding["status"][] = ["open", "triaged", "resolved", "false_positive", "accepted"];
+
+const fmtLabel = (s: string) =>
+  s.replace("_", " ").replace(/\b\w/g, (c: string) => c.toUpperCase());
 
 function registrableDomain(host: string): string {
   const clean = host.trim().replace(/^https?:\/\//, "").replace(/\/.*$/, "");
@@ -45,6 +71,7 @@ export default function ProjectDetailPage() {
   const [loading, setLoading] = useState(true);
   const [activeTab, setActiveTab] = useState<"assessments" | "assets" | "findings">("assessments");
   const [expandedDomains, setExpandedDomains] = useState<Set<string>>(new Set());
+  const [selected, setSelected] = useState<Finding | null>(null);
 
   useEffect(() => {
     async function load() {
@@ -86,6 +113,24 @@ export default function ProjectDetailPage() {
     }
     if (projectId) load();
   }, [projectId]);
+
+  async function handleStatusChange(id: string, newStatus: Finding["status"]) {
+    try {
+      await findingsApi.update(id, { status: newStatus });
+      setSelected((prev) => (prev && prev.id === id ? { ...prev, status: newStatus } : prev));
+      const [findingRes] = await Promise.all([
+        findingsApi.list({ project_id: projectId, limit: 50 }),
+      ]);
+      if (findingRes.success && findingRes.data)
+        setFindings(
+          Array.isArray(findingRes.data)
+            ? findingRes.data
+            : findingRes.data.items ?? []
+        );
+    } catch (e) {
+      console.error("Failed to update finding:", e);
+    }
+  }
 
   const groupedAssessments = useMemo(() => {
     const map = new Map<string, Assessment[]>();
@@ -173,14 +218,6 @@ export default function ProjectDetailPage() {
       </div>
     );
   }
-
-  const severityColors: Record<string, string> = {
-    critical: "bg-red-500/15 text-red-400 border-red-500/30",
-    high: "bg-orange-500/15 text-orange-400 border-orange-500/30",
-    medium: "bg-yellow-500/15 text-yellow-400 border-yellow-500/30",
-    low: "bg-blue-500/15 text-blue-400 border-blue-500/30",
-    info: "bg-secondary text-secondary-foreground border-border/60",
-  };
 
   return (
     <div className="max-w-7xl mx-auto space-y-6">
@@ -455,43 +492,204 @@ export default function ProjectDetailPage() {
                   <TableHead>Asset</TableHead>
                   <TableHead>Status</TableHead>
                   <TableHead>CVSS</TableHead>
+                  <TableHead>Age</TableHead>
                 </TableRow>
               </TableHeader>
               <TableBody>
                 {findings.length === 0 ? (
                   <TableRow>
-                    <TableCell colSpan={5} className="text-center py-8 text-muted-foreground">
-                      No findings yet for this project
+                    <TableCell colSpan={6} className="text-center py-8 text-muted-foreground">
+                      No vulnerabilities yet for this project
                     </TableCell>
                   </TableRow>
                 ) : (
-                  findings.map((f) => (
-                    <TableRow key={f.id}>
-                      <TableCell>
-                        <Badge className={severityColors[f.severity] ?? severityColors.info}>
-                          {f.severity}
-                        </Badge>
-                      </TableCell>
-                      <TableCell className="font-medium">{f.title}</TableCell>
-                      <TableCell className="text-muted-foreground">
-                        {f.asset?.name ?? "—"}
-                      </TableCell>
-                      <TableCell>
-                        <Badge variant="secondary" className="capitalize">
-                          {f.status}
-                        </Badge>
-                      </TableCell>
-                      <TableCell>
-                        {f.cvss_score ?? "—"}
-                      </TableCell>
-                    </TableRow>
-                  ))
+                  findings.map((f) => {
+                    const sev = severityConfig[f.severity] || severityConfig.info;
+                    return (
+                      <TableRow
+                        key={f.id}
+                        className="cursor-pointer hover:bg-muted/50"
+                        onClick={() => setSelected(f)}
+                      >
+                        <TableCell>
+                          <Badge className={sev.className} variant="default">
+                            {sev.label}
+                          </Badge>
+                        </TableCell>
+                        <TableCell className="font-medium max-w-md truncate">
+                          {f.title || "—"}
+                        </TableCell>
+                        <TableCell className="text-muted-foreground max-w-xs truncate">
+                          {f.asset?.name ?? f.asset_id ?? "—"}
+                        </TableCell>
+                        <TableCell>
+                          <Badge variant="secondary" className="capitalize">
+                            {fmtLabel(f.status)}
+                          </Badge>
+                        </TableCell>
+                        <TableCell>
+                          {f.cvss_score != null ? (
+                            <span className={cvssColor(f.cvss_score)}>
+                              {f.cvss_score.toFixed(1)}
+                            </span>
+                          ) : (
+                            "—"
+                          )}
+                        </TableCell>
+                        <TableCell className="text-muted-foreground text-sm">
+                          {formatDistanceToNow(new Date(f.created_at), {
+                            addSuffix: true,
+                          })}
+                        </TableCell>
+                      </TableRow>
+                    );
+                  })
                 )}
               </TableBody>
             </Table>
           </CardContent>
         </Card>
       )}
+
+      <Dialog open={!!selected} onOpenChange={(open) => !open && setSelected(null)}>
+        <DialogContent className="max-w-2xl max-h-[85vh] overflow-y-auto">
+          {selected && (
+            <>
+              <DialogHeader>
+                <DialogTitle className="text-left pr-8">
+                  <div className="text-base font-semibold text-foreground break-words">
+                    {selected.title || "Untitled finding"}
+                  </div>
+                  <div className="mt-2 flex items-center gap-2 flex-wrap">
+                    <Badge
+                      className={
+                        (severityConfig[selected.severity] || severityConfig.info).className
+                      }
+                      variant="default"
+                    >
+                      {(severityConfig[selected.severity] || severityConfig.info).label}
+                    </Badge>
+                    <Badge variant="outline" className="font-mono">
+                      {fmtLabel(selected.status)}
+                    </Badge>
+                    {selected.cvss_score != null && (
+                      <span className={`text-sm ${cvssColor(selected.cvss_score)}`}>
+                        CVSS {selected.cvss_score.toFixed(1)}
+                      </span>
+                    )}
+                  </div>
+                </DialogTitle>
+              </DialogHeader>
+
+              <div className="space-y-4 text-sm">
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
+                  <div className="flex items-center gap-2 text-muted-foreground">
+                    <Globe className="w-4 h-4 shrink-0" />
+                    <span className="font-medium text-foreground">
+                      {selected.asset?.name ?? selected.asset_id ?? "Unknown asset"}
+                    </span>
+                  </div>
+                  <div className="flex items-center gap-2 text-muted-foreground">
+                    <CalendarClock className="w-4 h-4 shrink-0" />
+                    Found {formatDistanceToNow(new Date(selected.created_at), { addSuffix: true })}
+                  </div>
+                </div>
+
+                {selected.description ? (
+                  <div>
+                    <p className="text-xs font-semibold text-muted-foreground uppercase tracking-wide mb-1">
+                      Description
+                    </p>
+                    <p className="whitespace-pre-wrap text-foreground/90 leading-relaxed">
+                      {selected.description}
+                    </p>
+                  </div>
+                ) : null}
+
+                {selected.asset_id && (
+                  <div>
+                    <p className="text-xs font-semibold text-muted-foreground uppercase tracking-wide mb-1">
+                      Asset ID
+                    </p>
+                    <p className="font-mono text-xs break-all">{selected.asset_id}</p>
+                  </div>
+                )}
+
+                {selected.assessment_id && (
+                  <div>
+                    <p className="text-xs font-semibold text-muted-foreground uppercase tracking-wide mb-1">
+                      Assessment ID
+                    </p>
+                    <p className="font-mono text-xs break-all">{selected.assessment_id}</p>
+                  </div>
+                )}
+
+                {selected.plugin_id && (
+                  <div className="flex items-center gap-2 text-muted-foreground">
+                    <Fingerprint className="w-4 h-4 shrink-0" />
+                    <span className="font-mono text-xs">{selected.plugin_id}</span>
+                  </div>
+                )}
+
+                {selected.remediation ? (
+                  <div>
+                    <p className="text-xs font-semibold text-muted-foreground uppercase tracking-wide mb-1">
+                      Remediation
+                    </p>
+                    <p className="whitespace-pre-wrap text-foreground/90 leading-relaxed">
+                      {selected.remediation}
+                    </p>
+                  </div>
+                ) : null}
+
+                {selected.reference ? (
+                  <div>
+                    <p className="text-xs font-semibold text-muted-foreground uppercase tracking-wide mb-1">
+                      References
+                    </p>
+                    {String(selected.reference)
+                      .split(/[\n,]/)
+                      .filter(Boolean)
+                      .map((ref, i) => (
+                        <p key={i} className="text-blue-400 flex items-center gap-1 break-all">
+                          <ExternalLink className="w-3.5 h-3.5 shrink-0" />
+                          {ref.trim()}
+                        </p>
+                      ))}
+                  </div>
+                ) : null}
+
+                {selected.details && Object.keys(selected.details).length > 0 ? (
+                  <div>
+                    <p className="text-xs font-semibold text-muted-foreground uppercase tracking-wide mb-1">
+                      Evidence & Metadata
+                    </p>
+                    <pre className="p-3 rounded-lg bg-muted/60 border border-border text-xs overflow-x-auto max-h-64">
+                      {JSON.stringify(selected.details, null, 2)}
+                    </pre>
+                  </div>
+                ) : null}
+
+                <div className="flex justify-end pt-2 border-t border-border">
+                  <select
+                    className="text-xs px-2 py-1.5 border rounded bg-background"
+                    value={selected.status}
+                    onChange={(e) =>
+                      handleStatusChange(selected.id, e.target.value as Finding["status"])
+                    }
+                  >
+                    {statusOptions.map((s) => (
+                      <option key={s} value={s}>
+                        {fmtLabel(s)}
+                      </option>
+                    ))}
+                  </select>
+                </div>
+              </div>
+            </>
+          )}
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }

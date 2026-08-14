@@ -37,12 +37,18 @@ async def list_findings(
     project_id: Optional[str] = None,
     db: AsyncSession = Depends(get_session),
 ):
-    """List findings with pagination."""
+    """List findings with pagination. Only true positives by default.
+
+    When no explicit ``status`` filter is given, ``false_positive`` findings
+    are excluded so the list represents confirmed vulnerabilities.
+    """
     filters = {}
     if severity:
         filters["severity"] = severity
     if status:
         filters["status"] = status
+    elif not status:
+        filters["exclude_status"] = "false_positive"
     if assessment_id:
         filters["assessment_id"] = assessment_id
     if asset_id:

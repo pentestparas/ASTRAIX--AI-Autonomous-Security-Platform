@@ -1,9 +1,10 @@
 from datetime import datetime
 from typing import Optional, Dict, Any, List
 from uuid import UUID
-from pydantic import BaseModel
+from pydantic import BaseModel, ConfigDict
 
 from app.schemas.base import BaseSchema
+from app.domain.schemas.asset import AssetRead
 
 
 class FindingBase(BaseModel):
@@ -16,6 +17,7 @@ class FindingBase(BaseModel):
 
 
 class FindingRead(FindingBase, BaseSchema):
+    model_config = ConfigDict(from_attributes=True)
     id: UUID
     organization_id: Optional[str] = None
     project_id: Optional[str] = None
@@ -27,6 +29,7 @@ class FindingRead(FindingBase, BaseSchema):
     fingerprint: str
     created_at: datetime
     updated_at: datetime
+    asset: Optional[AssetRead] = None
 
 
 class FindingUpdate(BaseModel):

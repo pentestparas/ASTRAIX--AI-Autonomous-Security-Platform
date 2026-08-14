@@ -193,6 +193,12 @@ class AIOrchestrator:
                 "confirmed_count": len(result.findings),
             })
 
+            # Canonical vulnerability names + CVSS scores so reports and the
+            # findings UI show standard titles instead of raw tool output.
+            from app.vapt.normalizer import normalize_findings
+
+            result.findings = normalize_findings(result.findings)
+
             await controller.checkpoint(scan_id)
 
             await publish_scan_event(scan_id, "report_generating", {

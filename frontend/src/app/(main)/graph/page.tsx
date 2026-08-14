@@ -10,7 +10,6 @@ import ReactFlow, {
   type Edge,
   type NodeProps,
 } from "reactflow";
-import dagre from "dagre";
 import {
   forceSimulation,
   forceLink,
@@ -22,8 +21,6 @@ import {
 } from "d3-force";
 import { apiClient, projectsApi, assessmentsApi, findingsApi } from "@/services/api";
 import {
-  LayoutGrid,
-  MoveHorizontal,
   Orbit,
   RotateCw,
   CircleDot,
@@ -102,41 +99,13 @@ const nodeTypes = { graphNode: GraphNode };
 
 type RawNode = { id: string; label: string; group: string; severity: string; title: string };
 type RawEdge = { from: string; to: string; label: string };
-type LayoutMode = "lr" | "tb" | "radial" | "force";
+type LayoutMode = "radial" | "force";
 type Scope = { kind: "graph" } | { kind: "project"; id: string } | { kind: "scan"; id: string };
 
 function edgeColor(e: RawEdge): string {
   if (e.to === "finding" || e.label === "finding") return "#f87171";
   if (e.from === "tool") return "#fbbf24";
   return "#64748b";
-}
-
-function layoutDagre(rawNodes: RawNode[], rawEdges: RawEdge[], rankdir: "LR" | "TB") {
-  const g = new dagre.graphlib.Graph();
-  g.setDefaultEdgeLabel(() => ({}));
-  g.setGraph({
-    rankdir,
-    nodesep: 18,
-    ranksep: 90,
-    marginx: 40,
-    marginy: 40,
-  });
-  rawNodes.forEach((n) => {
-    g.setNode(n.id, { width: GROUP_WIDTH[n.group] || 84, height: 34 });
-  });
-  rawEdges.forEach((e) => {
-    if (!g.hasNode(e.from) || !g.hasNode(e.to)) return;
-    g.setEdge(e.from, e.to);
-  });
-  dagre.layout(g);
-
-  const positions = new Map<string, { x: number; y: number }>();
-  rawNodes.forEach((n) => {
-    const layout = g.node(n.id);
-    if (!layout) return;
-    positions.set(n.id, { x: layout.x - (GROUP_WIDTH[n.group] || 84) / 2, y: layout.y - 17 });
-  });
-  return positions;
 }
 
 function layoutRadial(rawNodes: RawNode[], rawEdges: RawEdge[]) {
@@ -217,8 +186,7 @@ function layoutForce(rawNodes: RawNode[], rawEdges: RawEdge[]) {
 
 function computeLayout(rawNodes: RawNode[], rawEdges: RawEdge[], mode: LayoutMode) {
   if (mode === "force") return layoutForce(rawNodes, rawEdges);
-  if (mode === "radial") return layoutRadial(rawNodes, rawEdges);
-  return layoutDagre(rawNodes, rawEdges, mode === "lr" ? "LR" : "TB");
+  return layoutRadial(rawNodes, rawEdges);
 }
 
 type GroupedFinding = {
@@ -280,7 +248,7 @@ export default function GraphPage() {
   const containerRef = useRef<HTMLDivElement>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
-  const [layoutMode, setLayoutMode] = useState<LayoutMode>("lr");
+  const [layoutMode, setLayoutMode] = useState<LayoutMode>("radial");
   const [selectedNode, setSelectedNode] = useState<{ id: string; label: string; info: string } | null>(null);
   const [nodes, setNodes] = useState<Node[]>([]);
   const [edges, setEdges] = useState<Edge[]>([]);
@@ -463,9 +431,7 @@ export default function GraphPage() {
     return { bySeverity, total };
   }, [bubbles]);
 
-  const layoutOptions: { id: LayoutMode; label: string; icon: typeof MoveHorizontal }[] = [
-    { id: "lr", label: "Left → Right", icon: MoveHorizontal },
-    { id: "tb", label: "Top → Bottom", icon: LayoutGrid },
+  const layoutOptions: { id: LayoutMode; label: string; icon: typeof Orbit }[] = [
     { id: "radial", label: "Radial", icon: Orbit },
     { id: "force", label: "Force", icon: Waypoints },
   ];

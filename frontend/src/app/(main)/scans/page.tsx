@@ -268,6 +268,7 @@ function LiveScanConsole({
   onStop,
   scanId,
   onResolveApproval,
+  pendingApprovalIds,
 }: {
   events: ScanProgressEvent[];
   target: string;
@@ -279,6 +280,7 @@ function LiveScanConsole({
   onStop?: () => void;
   scanId?: string;
   onResolveApproval?: (approvalId: string, approved: boolean) => void;
+  pendingApprovalIds?: string[] | null;
 }) {
   const planEvent = events.find((e) => e.type === "plan_ready");
   const phases: PlanPhase[] = (planEvent?.data as { phases?: PlanPhase[] })?.phases || [];
@@ -388,7 +390,11 @@ function LiveScanConsole({
       .filter(Boolean)
   );
   const approvalList = approvalRequests.filter(
-    (r) => r?.approval_id && !resolvedApprovalIds.has(String(r.approval_id))
+    (r) =>
+      r?.approval_id &&
+      !resolvedApprovalIds.has(String(r.approval_id)) &&
+      (!pendingApprovalIds ||
+        pendingApprovalIds.includes(String(r.approval_id)))
   );
 
   const agentSteps = events
@@ -760,6 +766,7 @@ export default function ScansPage() {
   const [liveScanId, setLiveScanId] = useState<string | null>(null);
   const [liveRunning, setLiveRunning] = useState(false);
   const [livePaused, setLivePaused] = useState(false);
+  const [pendingApprovalIds, setPendingApprovalIds] = useState<string[] | null>(null);
   const [confirmStop, setConfirmStop] = useState(false);
   const [expandedFinding, setExpandedFinding] = useState<string | null>(null);
   const router = useRouter();
@@ -777,6 +784,16 @@ export default function ScansPage() {
         if (events.length) {
           setLiveEvents((prev) => [...prev, ...events]);
           since = res?.total ?? since + events.length;
+          if (events.some((e) => e.type === "tool_approval_requested")) {
+            try {
+              const apr = (await vaptScanApi.approvals(scanId)) as any;
+              setPendingApprovalIds(
+                (apr?.pending || []).map((p: any) => String(p.approval_id))
+              );
+            } catch {
+              // ignore - keep current pending list
+            }
+          }
           if (events.some((e) => e.type === "scan_completed")) {
             updateScan(scanId, { status: "completed" });
             removeScan(scanId);
@@ -838,6 +855,14 @@ export default function ScansPage() {
     if (!liveScanId) return;
     try {
       await vaptScanApi.approve(liveScanId, approvalId, approved);
+      setLiveEvents((prev) => [
+        ...prev,
+        {
+          type: "tool_approval_resolved",
+          ts: Date.now() / 1000,
+          data: { approval_id: approvalId, approved },
+        } as ScanProgressEvent,
+      ]);
     } catch {
       // ignore - console will reflect the live status on next poll
     }
@@ -862,7 +887,7 @@ export default function ScansPage() {
   async function handleRestartScan(scan: ScanHistoryItem) {
     if (!scan.target) return;
     try {
-      setLiveEvents([]);
+      setLiveEvents([]); setPendingApprovalIds(null);
       setLiveScanId(scan.id);
       setLiveRunning(true);
       setLivePaused(false);
@@ -1026,7 +1051,7 @@ export default function ScansPage() {
         };
 
         const scanId = crypto.randomUUID();
-        setLiveEvents([]);
+        setLiveEvents([]); setPendingApprovalIds(null);
         setLiveScanId(scanId);
         setLiveRunning(true);
         liveActiveRef.current = true;
@@ -1080,7 +1105,7 @@ export default function ScansPage() {
     setShowResults(false);
     setResult(null);
     setFindings([]);
-    setLiveEvents([]);
+    setLiveEvents([]); setPendingApprovalIds(null);
 
     const scanId = crypto.randomUUID();
     setLiveScanId(scanId);
