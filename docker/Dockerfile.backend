@@ -41,8 +41,12 @@ RUN pip install --no-cache-dir -r requirements.txt
 
 # Copy application code
 COPY backend/app ./app
+COPY backend/ai_secos_core ./ai_secos_core
 COPY backend/alembic.ini .
 COPY backend/alembic ./alembic
+
+# Bake plugins into the image as well (no host bind mount) for AV immunity
+COPY plugins /app/plugins
 
 # Bake the complete cybersecurity knowledge base (sources + FAISS/TF-IDF index)
 # into the image. The image copy lives inside the Docker VM filesystem, so it
