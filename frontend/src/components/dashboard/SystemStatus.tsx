@@ -70,7 +70,7 @@ function DockerDetails({ details }: { details: any }) {
           {toolList.map((t) => (
             <span
               key={t}
-              className="text-[10px] px-1.5 py-0.5 bg-muted rounded font-mono"
+              className="text-[11px] px-1.5 py-0.5 bg-muted rounded font-mono"
             >
               {t}
             </span>

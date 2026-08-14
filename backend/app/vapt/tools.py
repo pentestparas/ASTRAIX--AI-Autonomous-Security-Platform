@@ -393,15 +393,45 @@ TOOLS_REGISTRY: Dict[str, VAPTTool] = {
         requires_url=True,
         output_format="json",
     ),
+    "garak": VAPTTool(
+        id="garak",
+        name="Garak",
+        command="garak",
+        description=(
+            "AI/LLM security scanner - OWASP LLM Top 10 probes: prompt injection, "
+            "jailbreaks (dan/encoding), data leak replay, misdirection"
+        ),
+        category=VAPTScanType.LLM,
+        args=[],
+        timeout=1500,
+        requires_url=True,
+        output_format="jsonl",
+    ),
+    "api-surface": VAPTTool(
+        id="api-surface",
+        name="API Surface Discovery",
+        command="api_surface_scanner",
+        description=(
+            "Endpoint surface discovery - probes REST API routes and hidden "
+            "paths (generic + OWASP Juice Shop route map) and reports every "
+            "reachable endpoint, flagging sensitive ones"
+        ),
+        category=VAPTScanType.API,
+        args=[],
+        timeout=600,
+        requires_url=True,
+        output_format="jsonl",
+    ),
 }
 
 TOOLS_BY_CATEGORY: Dict[VAPTScanType, List[str]] = {
     VAPTScanType.NETWORK: ["nmap", "masscan", "dnsrecon", "subfinder"],
-    VAPTScanType.WEB: ["nikto", "nuclei", "gobuster", "ffuf", "whatweb", "httpx"],
-    VAPTScanType.API: ["nuclei", "ffuf", "arjun"],
+    VAPTScanType.WEB: ["nikto", "nuclei", "gobuster", "ffuf", "whatweb", "httpx", "api-surface"],
+    VAPTScanType.API: ["nuclei", "ffuf", "arjun", "api-surface"],
     VAPTScanType.SSL: ["sslscan", "testssl"],
     VAPTScanType.CONTAINER: ["trivy"],
-    VAPTScanType.FULL: ["nmap", "nikto", "nuclei", "gobuster", "sslscan", "masscan", "ffuf", "hydra"],
+    VAPTScanType.LLM: ["garak"],
+    VAPTScanType.FULL: ["nmap", "nikto", "nuclei", "gobuster", "sslscan", "masscan", "ffuf", "hydra", "api-surface"],
 }
 
 DEFAULT_TOOLS: Dict[VAPTScanType, List[str]] = {
@@ -410,6 +440,7 @@ DEFAULT_TOOLS: Dict[VAPTScanType, List[str]] = {
     VAPTScanType.API: ["nuclei", "ffuf"],
     VAPTScanType.SSL: ["sslscan"],
     VAPTScanType.CONTAINER: ["trivy"],
+    VAPTScanType.LLM: ["garak"],
     VAPTScanType.FULL: ["nmap", "nikto", "nuclei", "gobuster"],
 }
 
@@ -419,6 +450,7 @@ TOOLS_BY_CATEGORY: Dict[VAPTScanType, List[str]] = {
     VAPTScanType.API: ["nuclei", "ffuf"],
     VAPTScanType.SSL: ["sslscan"],
     VAPTScanType.CONTAINER: ["trivy"],
+    VAPTScanType.LLM: ["garak"],
     VAPTScanType.FULL: ["nmap", "nikto", "nuclei", "gobuster", "sslscan"],
 }
 
@@ -428,6 +460,7 @@ DEFAULT_TOOLS: Dict[VAPTScanType, List[str]] = {
     VAPTScanType.API: ["nuclei", "ffuf"],
     VAPTScanType.SSL: ["sslscan"],
     VAPTScanType.CONTAINER: ["trivy"],
+    VAPTScanType.LLM: ["garak"],
     VAPTScanType.FULL: ["nmap", "nikto", "nuclei", "gobuster"],
 }
 
@@ -472,6 +505,8 @@ TOOL_GATING: Dict[str, Dict[str, Any]] = {
     "bandit": {"phase": "deep"},
     "searchsploit": {"phase": "deep"},
     "zap": {"phase": "deep", "dangerous": True},
+    "garak": {"phase": "deep"},
+    "api-surface": {"phase": "web"},
 }
 
 for _tid, _gate in TOOL_GATING.items():
@@ -581,6 +616,17 @@ def check_tool_availability() -> Dict[str, bool]:
     """
     from app.vapt.executor import VAPTExecutor
 
+    def _probe_cmd(tool_id: str, tool: VAPTTool) -> str:
+        # Scanner scripts live in /opt/vapt inside the Kali image (not PATH).
+        script_file = {
+            "forms": "web_form_scanner.py",
+            "api-surface": "api_surface_scanner.py",
+            "garak": "garak_scanner.py",
+        }.get(tool_id)
+        if script_file:
+            return f"test -f /opt/vapt/{script_file} && echo 'OK {tool_id}' || echo 'MISS {tool_id}'"
+        return f"command -v {tool.command} >/dev/null 2>&1 && echo 'OK {tool_id}' || echo 'MISS {tool_id}'"
+
     try:
         result = subprocess.run(
             ["docker", "image", "inspect", VAPTExecutor.KALI_IMAGE],
@@ -589,7 +635,7 @@ def check_tool_availability() -> Dict[str, bool]:
         )
         if result.returncode == 0:
             script = "; ".join(
-                f"command -v {tool.command} >/dev/null 2>&1 && echo 'OK {tool_id}' || echo 'MISS {tool_id}'"
+                _probe_cmd(tool_id, tool)
                 for tool_id, tool in TOOLS_REGISTRY.items()
             )
             probe = subprocess.run(

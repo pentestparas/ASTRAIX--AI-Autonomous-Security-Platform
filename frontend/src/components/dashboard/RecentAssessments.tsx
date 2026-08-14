@@ -141,12 +141,12 @@ export function RecentAssessments() {
   return (
     <Card>
       <CardHeader className="flex flex-row items-center justify-between">
-        <CardTitle>Recent Assessments</CardTitle>
+        <CardTitle className="text-[15px]">Recent Assessments</CardTitle>
         <div className="flex items-center gap-2">
-          <button className="p-2 hover:bg-muted rounded-lg transition-colors">
+          <button className="p-1.5 hover:bg-muted rounded-md transition-colors">
             <Filter className="w-4 h-4" />
           </button>
-          <button className="p-2 hover:bg-muted rounded-lg transition-colors">
+          <button className="p-1.5 hover:bg-muted rounded-md transition-colors">
             <Search className="w-4 h-4" />
           </button>
         </div>
@@ -188,7 +188,7 @@ export function RecentAssessments() {
                       <TableCell className="font-medium">
                         {assessment.asset?.name ?? assessment.id}
                       </TableCell>
-                      <TableCell className="capitalize">
+                      <TableCell className="capitalize tech text-xs text-muted-foreground">
                         {assessment.type}
                       </TableCell>
                       <TableCell>
@@ -206,6 +206,7 @@ export function RecentAssessments() {
                                 ? "secondary"
                                 : "outline"
                           }
+                          className="tech tabular-nums"
                         >
                           {assessment.findings_count}
                         </Badge>

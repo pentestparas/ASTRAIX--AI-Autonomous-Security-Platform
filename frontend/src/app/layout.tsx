@@ -4,9 +4,16 @@ import "../styles/globals.css";
 import "reactflow/dist/style.css";
 
 const inter = localFont({
-  src: "./fonts/inter-var.ttf",
+  src: "./fonts/inter-var.woff2",
   variable: "--font-inter",
   weight: "100 900",
+  display: "swap",
+});
+
+const jetbrainsMono = localFont({
+  src: "./fonts/jetbrains-mono-var.woff2",
+  variable: "--font-mono",
+  weight: "100 800",
   display: "swap",
 });
 
@@ -23,7 +30,7 @@ export default function RootLayout({
 }) {
   return (
     <html lang="en" suppressHydrationWarning>
-      <body className={`${inter.variable} font-sans antialiased`}>
+      <body className={`${inter.variable} ${jetbrainsMono.variable} font-sans antialiased`}>
         {children}
       </body>
     </html>

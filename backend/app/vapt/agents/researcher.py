@@ -1,34 +1,14 @@
 import asyncio
-import os
-import sys
-from typing import List, Optional
+from typing import List
 from app.vapt.models import VAPTFinding
+from app.vapt.agents.kb import (
+    get_kb,
+    apply_finding_relevance_floor,
+    sanitize_finding_query,
+)
 from app.core.logging import get_logger
 
 logger = get_logger(__name__)
-
-KB_PATH = "/app/knowledge-base"
-_kb = None
-
-
-def _load_kb():
-    global _kb
-    if _kb is not None:
-        return
-    try:
-        sys.path.insert(0, KB_PATH)
-        from search import get_knowledge_base
-        _kb = get_knowledge_base()
-        logger.info("ResearcherAgent: knowledge base loaded (%s sources)", _kb.stats()["total_sources"])
-    except Exception as e:
-        logger.warning("ResearcherAgent: knowledge base unavailable: %s", e)
-
-
-def _get_kb():
-    global _kb
-    if _kb is None:
-        _load_kb()
-    return _kb
 
 
 class ResearcherAgent:
@@ -44,12 +24,21 @@ class ResearcherAgent:
         return enriched
 
     def _enrich_one(self, finding: VAPTFinding) -> VAPTFinding:
-        kb = _get_kb()
+        kb = get_kb()
         if kb is None:
             return finding
 
-        query = f"{finding.title} {finding.description[:200]} {finding.vulnerability_type or ''}"
-        results = kb.search(query, top_k=3)
+        # Discovery noise (endpoint enumeration, tech fingerprinting) carries
+        # no CVE/exploitation signal and only drags in unrelated sources.
+        if finding.severity is not None and finding.severity.value in ("info", "informational"):
+            return finding
+
+        query = sanitize_finding_query(
+            finding.title, finding.description or "", finding.vulnerability_type or ""
+        )
+        if not query:
+            return finding
+        results = apply_finding_relevance_floor(kb.search(query, top_k=3))
         if not results:
             return finding
 

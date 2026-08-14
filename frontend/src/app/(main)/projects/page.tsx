@@ -120,8 +120,8 @@ export default function ProjectsPage() {
       <div className="max-w-7xl mx-auto space-y-6">
         <div className="flex items-center justify-between">
         <div>
-          <h1 className="text-3xl font-bold tracking-tight">Projects</h1>
-          <p className="text-muted-foreground mt-1">
+          <h1 className="text-2xl font-semibold tracking-tight">Projects</h1>
+          <p className="text-sm text-muted-foreground mt-0.5">
             Manage your security assessment projects
           </p>
         </div>
@@ -148,8 +148,8 @@ export default function ProjectsPage() {
       ) : projects.length === 0 ? (
         <Card className="p-12 text-center">
           <FolderKanban className="w-12 h-12 mx-auto text-muted-foreground mb-4" />
-          <h3 className="text-lg font-medium mb-2">No projects yet</h3>
-          <p className="text-muted-foreground mb-4">
+          <h3 className="text-base font-semibold mb-1.5">No projects yet</h3>
+          <p className="text-sm text-muted-foreground mb-5">
             Create your first project to start organizing security assessments
           </p>
           <Button onClick={() => setShowCreateProject(true)}>
@@ -164,20 +164,20 @@ export default function ProjectsPage() {
               <Link href={`/projects/${project.id}`}>
                 <Card className="hover:border-primary/50 transition-colors cursor-pointer h-full">
                   <CardHeader className="flex flex-row items-center justify-between space-y-0">
-                    <CardTitle className="text-lg">{project.name}</CardTitle>
+                    <CardTitle className="text-base font-semibold">{project.name}</CardTitle>
                   </CardHeader>
                   <CardContent>
                     <p className="text-sm text-muted-foreground mb-4 line-clamp-2">
                       {project.description || "No description"}
                     </p>
                     <div className="flex items-center gap-4 text-sm">
-                      <div className="flex items-center gap-1 text-muted-foreground">
-                        <Activity className="w-4 h-4" />
-                        {project.assessments_count ?? 0} scans
+                      <div className="flex items-center gap-1.5 text-muted-foreground">
+                        <Activity className="w-3.5 h-3.5" />
+                        <span className="tech">{project.assessments_count ?? 0}</span> scans
                       </div>
-                      <div className="flex items-center gap-1 text-muted-foreground">
-                        <ShieldAlert className="w-4 h-4" />
-                        {project.open_findings_count ?? 0} open
+                      <div className="flex items-center gap-1.5 text-muted-foreground">
+                        <ShieldAlert className="w-3.5 h-3.5" />
+                        <span className="tech">{project.open_findings_count ?? 0}</span> open
                       </div>
                     </div>
                     <div className="mt-3">
@@ -187,6 +187,7 @@ export default function ProjectsPage() {
                             ? "destructive"
                             : "secondary"
                         }
+                        className="tech"
                       >
                         {project.critical_findings_count ?? 0} critical
                       </Badge>

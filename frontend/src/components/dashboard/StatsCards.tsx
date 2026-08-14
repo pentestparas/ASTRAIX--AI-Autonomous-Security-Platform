@@ -36,18 +36,18 @@ function StatCard({
   return (
     <Card className="hover:border-primary/30 transition-colors">
       <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-        <CardTitle className="text-sm font-medium text-muted-foreground">{title}</CardTitle>
-        <div className={`w-11 h-11 p-2.5 rounded-lg bg-secondary/60 border border-border/60 flex items-center justify-center ${iconColor}`}>{icon}</div>
+        <CardTitle className="text-[12.5px] font-medium text-muted-foreground">{title}</CardTitle>
+        <div className={`w-9 h-9 p-2 rounded-md bg-secondary/60 border border-border/60 flex items-center justify-center ${iconColor}`}>{icon}</div>
       </CardHeader>
       <CardContent>
         {loading ? (
           <div className="h-8 w-20 animate-pulse bg-muted rounded" />
         ) : (
-          <div className="text-3xl font-bold tracking-tight">{value}</div>
+          <div className="tech-stat text-[28px] font-medium tracking-tight">{value}</div>
         )}
         {change && (
           <p
-            className={`text-xs mt-1 ${
+            className={`text-[11.5px] mt-1 ${
               changeType === "increase"
                 ? "text-green-400"
                 : changeType === "decrease"
@@ -115,8 +115,8 @@ export function StatsCards() {
         value={stats?.total_projects ?? 0}
         change="Active projects"
         changeType="neutral"
-        icon={<Server className="w-5 h-5" />}
-        iconColor="text-purple-500"
+        icon={<Server className="w-4 h-4" />}
+        iconColor="text-primary"
         loading={loading}
       />
       <StatCard
@@ -124,8 +124,8 @@ export function StatsCards() {
         value={stats?.active_scans ?? 0}
         change={loading ? undefined : `${stats?.active_scans ?? 0} running`}
         changeType="neutral"
-        icon={<Activity className="w-5 h-5" />}
-        iconColor="text-blue-500"
+        icon={<Activity className="w-4 h-4" />}
+        iconColor="text-primary"
         loading={loading}
       />
       <StatCard
@@ -135,8 +135,8 @@ export function StatsCards() {
         changeType={
           (stats?.total_findings ?? 0) > 0 ? "increase" : "decrease"
         }
-        icon={<AlertTriangle className="w-5 h-5" />}
-        iconColor="text-red-500"
+        icon={<AlertTriangle className="w-4 h-4" />}
+        iconColor="text-red-400"
         loading={loading}
       />
       <StatCard
@@ -144,8 +144,8 @@ export function StatsCards() {
         value={`${remediationRate}%`}
         change="Findings resolved"
         changeType={remediationRate >= 70 ? "increase" : "decrease"}
-        icon={<CheckCircle className="w-5 h-5" />}
-        iconColor="text-green-500"
+        icon={<CheckCircle className="w-4 h-4" />}
+        iconColor="text-green-400"
         loading={loading}
       />
     </div>

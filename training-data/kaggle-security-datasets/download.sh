@@ -41,42 +41,44 @@ EXISTING=(
   "hussainsheikh03/nlp-based-cyber-security-dataset"
 )
 
-# --- new batch (22 datasets) -------------------------------------------------
+# --- new batch (22 datasets, ALL verified via GET /api/v1/datasets/view on 2026-08-10) ---
 # Format: "<slug>|<theme>" where theme ∈ {cve, ids, malware, phish, siem, ai}
 declare -a BATCH=(
   # A. CVE / exploit
-  "sujaykapadnis/cybersecurity-cve-dataset|cve"
-  "asad7an/cve-mitre-attack-mapping|cve"
-  "aymane200/cve-vulnerabilities-dataset-2014-2024|cve"
-  "ravikumarmn/cve-dataset-2002-2024|cve"
-  "manavyadav25/cve-vulnerability-records|cve"
-  "davidcampos/cve-database|cve"
+  "krooz0/cve-and-cwe-mapping-dataset|cve"
+  "andrewkronser/cve-common-vulnerabilities-and-exposures|cve"
+  "um3rfar00q/2021-2025-all-cves-cleaned-dataset|cve"
+  "stanislavvinokur/cve-and-cwe-dataset-1999-2025|cve"
+  "junaidmohammad9248/cisa-cve-vulnrichment|cve"
 
-  # B. Intrusion / malware
+  # B. Network intrusion
+  "dhoogla/unswnb15|ids"
+  "dhoogla/nslkdd|ids"
+  "dhoogla/cicddos2019|ids"
   "sampadab17/network-intrusion-detection|ids"
-  "chethuhn/network-intrusion-detection|ids"
-  "mrwells/cicids2017|ids"
-  "mnassrib/cicids2017|ids"
-  "ahmedhamdy0/network-intrusion-dataset|ids"
-  "rohitgupta24/network-malware-detection|malware"
-  "sgk1590/malware-detection|malware"
-  "danielcompetition/cybersecurity-attacks|ids"
+  "arnobbhowmik/ton-iot-network-dataset|ids"
 
-  # C. Phishing / URL / email
-  "shantanudhakadd/email-spam-dataset|phish"
-  "akashkr/phishing-url-detection|phish"
+  # C. Malware
+  "subhajournal/malware-detection-from-memory-dump|malware"
+  "luccagodoy/obfuscated-malware-memory-2022-cic|malware"
+  "amdj3dax/ransomware-detection-data-set|malware"
+
+  # D. Phishing / URL / email
+  "subhajournal/phishingemails|phish"
+  "shashwatwork/web-page-phishing-detection-dataset|phish"
+  "hasibur013/phishing-data|phish"
   "eswarchandt/phishing-website-detector|phish"
-  "naserabdullah079/phishing-email-detection|phish"
 
-  # D. Threat intel / SIEM / logs
-  "casperribrib/siem-data|siem"
-  "mkalimer/loghub-windows-event-log|siem"
-  "mvonsteinkirch/loghub-zeek-http-logs|siem"
+  # E. Threat intel / SIEM / logs
+  "rawaldelhi/secureops-security-incident-logs-dataset|siem"
+  "jacobvs/ddos-attack-network-logs|siem"
+  "solvedinfoam/2022-04-20-emotet-epoch4-zeek-logs|siem"
 
-  # E. AI / LLM security
-  "deepakcode21/llm-jailbreak-prompts|ai"
-  "deepakcode21/prompt-injection-attacks|ai"
-  "noahsiegel/prompt-injection-dataset|ai"
+  # F. AI / LLM security
+  "awwdudee/llm-safety-dataset-for-chatbot-applications|ai"
+  "krishnayadav456wrsty/prompt-injection-and-jailbreak-detection-dataset|ai"
+  "shreyashautomation/llm-jailbreak-prompt-dataset|ai"
+  "cyberprince/prompt-injection-and-benign-prompt-dataset|ai"
 )
 
 FILTER="${1:-}"  # optional substring filter on theme

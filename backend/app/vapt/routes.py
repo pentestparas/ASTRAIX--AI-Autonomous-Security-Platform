@@ -5,6 +5,7 @@ Fast API endpoints for VAPT operations with database persistence.
 """
 
 from datetime import datetime
+import asyncio
 import hashlib
 import json
 from sqlalchemy import select
@@ -355,7 +356,7 @@ async def run_scan(
                 await session.rollback()
         raise
 
-    insights = orchestrator.generate_insights(result)
+    insights = await asyncio.to_thread(orchestrator.generate_insights, result)
 
     if persisted and assessment_id:
         try:
@@ -639,7 +640,7 @@ async def restart_scan(
             await session.commit()
         raise
 
-    insights = orchestrator.generate_insights(result)
+    insights = await asyncio.to_thread(orchestrator.generate_insights, result)
     try:
         await _persist_scan_result(
             session,

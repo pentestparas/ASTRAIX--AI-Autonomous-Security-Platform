@@ -57,6 +57,8 @@ Rules:
    ffuf, nuclei...). After a web step, deep tools unlock (sqlmap, hydra, sslscan...).
 2. Use the target as-is; do not invent targets. extra_args must be plain
    command-line flags, never shell metacharacters.
+3. Ground every decision in the Knowledge Base guidance and KB observations in
+   the context: cite them when choosing a tool or payload strategy.
 3. Tools marked [REQUIRES OPERATOR APPROVAL] will pause for a human decision.
    That is expected - proceed normally and describe why each is needed.
 4. If no more testing is meaningful or you have sufficient evidence, reply with
@@ -111,46 +113,105 @@ class AgentLoop:
         self._publish = publish
         self._graph = graph
         self._kb_context: str = ""
+        self._kb_observations: List[str] = []
 
     # ------------------------------------------------------- KB grounding
 
+    TARGET_TYPE_QUERIES = {
+        "url": (
+            "web application penetration testing methodology OWASP top 10 "
+            "enumeration injection XSS broken access control exploitation"
+        ),
+        "api": (
+            "API security testing methodology OWASP API top 10 authentication "
+            "authorization injection enumeration"
+        ),
+        "ip": (
+            "network penetration testing methodology reconnaissance port scanning "
+            "service enumeration exploitation"
+        ),
+        "domain": (
+            "web application penetration testing methodology subdomain enumeration "
+            "DNS recon attack surface mapping"
+        ),
+        "hostname": (
+            "web application penetration testing methodology subdomain enumeration "
+            "DNS recon attack surface mapping"
+        ),
+        "unknown": (
+            "penetration testing methodology reconnaissance attack surface "
+            "enumeration exploitation"
+        ),
+    }
+
+    SCAN_TYPE_QUERIES = {
+        VAPTScanType.LLM: (
+            "AI LLM security testing OWASP LLM top 10 prompt injection "
+            "jailbreak data poisoning model security"
+        ),
+        VAPTScanType.API: (
+            "API security testing OWASP API top 10 methodology"
+        ),
+        VAPTScanType.SSL: (
+            "SSL TLS penetration testing certificate cipher configuration audit"
+        ),
+        VAPTScanType.CONTAINER: (
+            "container security scanning image vulnerabilities kubernetes"
+        ),
+    }
+
     def _kb_search(self, query: str, top_k: int = 3) -> List[str]:
-        try:
-            import sys
+        from app.vapt.agents.kb import kb_snippets
 
-            sys.path.insert(0, "/app/knowledge-base")
-            from search import get_knowledge_base
-
-            kb = get_knowledge_base()
-            results = kb.search(query, top_k=top_k)
-            return [
-                f"[{r['source']}] {r['text'][:300]}"
-                for r in results
-                if r.get("text")
-            ]
-        except Exception:
-            return []
+        return kb_snippets(query, top_k=top_k)
 
     async def _load_kb_context(
         self,
         target: str,
         target_info: Dict[str, Any],
+        scan_type: VAPTScanType,
     ) -> None:
-        """Ground the agent with knowledge-base methodology snippets."""
-        ttype = target_info.get("type", "web")
-        query = (
-            f"autonomous penetration testing methodology {ttype} web application "
-            "SQL injection XSS API endpoint enumeration exploitation best practice"
-        )
-        try:
-            snippets = await asyncio.to_thread(self._kb_search, query, 4)
-            if snippets:
-                self._kb_context = (
-                    "Knowledge base guidance (use it to choose the most effective tools "
-                    "and payload strategies):\n" + "\n".join(snippets[:4])
-                )
-        except Exception:
-            self._kb_context = ""
+        """Ground the agent with methodology guidance from the knowledge base,
+        specific to the detected target type and chosen scan type."""
+        ttype = target_info.get("type", "unknown")
+        queries = []
+        queries.append(self.TARGET_TYPE_QUERIES.get(ttype, self.TARGET_TYPE_QUERIES["unknown"]))
+        extra = self.SCAN_TYPE_QUERIES.get(scan_type)
+        if extra:
+            queries.append(extra)
+        for query in queries:
+            try:
+                snippets = await asyncio.to_thread(self._kb_search, query, 3)
+                if snippets:
+                    self._kb_context += (
+                        "Knowledge base guidance (use it to choose the most effective "
+                        "tools and payload strategies):\n"
+                        + "\n".join(snippets[:3])
+                        + "\n"
+                    )
+            except Exception:
+                continue
+
+    async def _ground_observations(self, findings: List[VAPTFinding]) -> None:
+        """Ground newly observed vuln classes in KB so the next tool decision
+        exploits them (e.g. KB says deepen SQLi with sqlmap, not gobuster)."""
+        if not findings:
+            return
+        seen = set()
+        for f in findings[-3:]:
+            key = (f.title or "")[:80]
+            if key in seen:
+                continue
+            seen.add(key)
+            query = f"{f.title} {f.vulnerability_type or ''} exploitation technique"
+            try:
+                snippets = await asyncio.to_thread(self._kb_search, query, 2)
+            except Exception:
+                continue
+            for s in snippets[:2]:
+                obs = f"KB guidance on observed '{f.title[:60]}': {s[:260]}"
+                if obs not in self._kb_observations:
+                    self._kb_observations.append(obs)
 
     def _can_conclude(
         self,
@@ -287,6 +348,10 @@ class AgentLoop:
         if self._kb_context:
             lines.append(self._kb_context)
             lines.append("")
+        if self._kb_observations:
+            lines.append("KB observations on findings so far:")
+            lines.extend(self._kb_observations[-4:])
+            lines.append("")
         lines.append("Steps so far:")
         for s in steps[-10:]:
             lines.append(
@@ -393,7 +458,7 @@ class AgentLoop:
             "tools": [t.id for t in pool],
         })
 
-        await self._load_kb_context(target, target_info)
+        await self._load_kb_context(target, target_info, scan_type)
 
         # When the LLM stays down across steps, switch to a pure deterministic
         # rotation instead of burning 3 retry attempts (and ~2min of sleeps)
@@ -657,6 +722,7 @@ class AgentLoop:
                             else f"{tool.name} completed with no findings"
                         )
                     findings.extend(tool_findings)
+                    await self._ground_observations(tool_findings)
                     # Re-running a tool (or repeated scans) can yield duplicate
                     # findings - keep a single canonical copy per (title, desc,
                     # target) so the report stays clean.

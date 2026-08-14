@@ -18,6 +18,7 @@ class VAPTScanType(str, Enum):
     API = "api"
     SSL = "ssl"
     CONTAINER = "container"
+    LLM = "llm"
     FULL = "full"
 
 

@@ -73,6 +73,8 @@ import {
   Activity,
   StopCircle,
   RotateCcw,
+  Braces,
+  Box,
 } from "lucide-react";
 import { formatDistanceToNow } from "date-fns";
 import type { Project, ScanProgressEvent } from "@/types";
@@ -167,6 +169,14 @@ const scanTypesInfo = [
     icon: Globe,
   },
   {
+    id: "llm",
+    label: "AI Security",
+    description: "OWASP LLM Top 10 - prompt injection, jailbreaks, data leakage",
+    tools: ["Garak", "OWASP LLM Top 10 Probes"],
+    color: "cyan",
+    icon: Brain,
+  },
+  {
     id: "cloud",
     label: "Cloud Security",
     description: "Review cloud infrastructure for misconfigurations",
@@ -185,8 +195,12 @@ const scanTypesInfo = [
 ];
 
 const vaptScanTypes = [
+  { id: "auto", label: "Auto Detect", icon: Brain, desc: "Intelligently picks tools based on target" },
   { id: "network", label: "Network Scan", icon: Server, desc: "Ports, services, network mapping" },
   { id: "web", label: "Web Application", icon: Globe, desc: "OWASP Top 10, SQLi, XSS, etc." },
+  { id: "api", label: "API Security", icon: Braces, desc: "REST/GraphQL API endpoints, auth flaws" },
+  { id: "container", label: "Container Security", icon: Box, desc: "Docker images, misconfigurations" },
+  { id: "llm", label: "AI Security", icon: Brain, desc: "OWASP LLM Top 10 - jailbreaks, prompt injection" },
   { id: "ssl", label: "SSL/TLS Audit", icon: Lock, desc: "Certificate and protocol analysis" },
   { id: "full", label: "Full Scan", icon: Shield, desc: "All checks - comprehensive" },
 ];
@@ -219,12 +233,15 @@ const statusConfig: Record<string, { label: string; icon: typeof Clock; classNam
 const typeLabels: Record<string, string> = {
   network_vapt: "Network VAPT", web_vapt: "Web App VAPT", cloud_posture: "Cloud Security",
   code_audit: "Code Audit", network: "Network Scan", web: "Web Application",
-  ssl: "SSL/TLS Audit", full: "Full Scan",
+  api: "API Security", container: "Container Security", auto: "Auto Detect",
+  llm: "AI Security", ssl: "SSL/TLS Audit", full: "Full Scan",
 };
 
 const typeIcons: Record<string, typeof Shield> = {
   network_vapt: Network, web_vapt: Globe, cloud_posture: Cloud,
-  code_audit: Code2, network: Server, web: Globe, ssl: Lock, full: Shield,
+  code_audit: Code2, network: Server, web: Globe,
+  api: Braces, container: Box, auto: Brain, llm: Brain,
+  ssl: Lock, full: Shield,
 };
 
 function getTypeLabel(type: string): string {
@@ -446,7 +463,7 @@ function LiveScanConsole({
                       : "Active"
                 }
               />
-              <span className="text-[11px] text-muted-foreground">
+              <span className="text-xs text-muted-foreground">
                 {paused
                   ? "paused at checkpoint"
                   : stalled
@@ -560,7 +577,7 @@ function LiveScanConsole({
                 </span>
                 <span className="font-mono font-medium">{s.tool}</span>
                 <span className="text-muted-foreground truncate">{s.reason}</span>
-                <span className="ml-auto text-[10px] text-muted-foreground shrink-0">
+                <span className="ml-auto text-[11px] text-muted-foreground shrink-0">
                   {s.findingCount > 0 ? `+${s.findingCount} findings` : "no findings"}
                 </span>
               </div>
@@ -610,7 +627,7 @@ function LiveScanConsole({
                 {step.label}
               </span>
               {hasEvents && (
-                <span className="ml-auto text-[11px] text-muted-foreground font-mono">
+                <span className="ml-auto text-xs text-muted-foreground font-mono">
                   {fmtClock(
                     typeCount.get(step.id) ? (events.find((e) => e.type === step.id)?.ts || 0) * 1000 : 0,
                   )}
@@ -695,14 +712,14 @@ function LiveScanConsole({
                       )}
                       <span className="font-mono">{t.name}</span>
                       {durMs > 0 && (
-                        <span className="ml-1 text-[10px] opacity-80">{fmtDur(durMs)}</span>
+                        <span className="ml-1 text-[11px] opacity-80">{fmtDur(durMs)}</span>
                       )}
                     </span>
                   );
                 })}
               </div>
               {runningTool && toolCommands.get(runningTool.id) && (
-                <p className="mt-2 text-[11px] font-mono text-muted-foreground truncate">
+                <p className="mt-2 text-xs font-mono text-muted-foreground truncate">
                   $ {toolCommands.get(runningTool.id)}
                 </p>
               )}
@@ -1048,6 +1065,7 @@ export default function ScansPage() {
         const capabilityMap: Record<string, string> = {
           network: "network_vapt", web: "web_vapt",
           cloud: "cloud_posture", code: "code_audit",
+          llm: "llm",
         };
 
         const scanId = crypto.randomUUID();
@@ -1199,8 +1217,8 @@ export default function ScansPage() {
     <div className="max-w-7xl mx-auto space-y-6">
       <div className="flex items-center justify-between">
         <div>
-          <h1 className="text-3xl font-bold tracking-tight">Scans</h1>
-          <p className="text-muted-foreground mt-1">
+          <h1 className="text-2xl font-semibold tracking-tight">Scans</h1>
+          <p className="text-sm text-muted-foreground mt-0.5">
             Run instant security scans or launch comprehensive assessments
           </p>
         </div>
@@ -1220,27 +1238,27 @@ export default function ScansPage() {
       {!loading && scanResults.length > 0 && (
         <div className="grid gap-4 grid-cols-2 sm:grid-cols-4">
           <Card>
-            <CardContent className="pt-6">
-              <div className="text-2xl font-bold">{totalScans}</div>
-              <p className="text-sm text-muted-foreground">Total Scans</p>
+            <CardContent className="pt-5">
+              <div className="tech-stat text-[26px] font-medium text-foreground">{totalScans}</div>
+              <p className="text-[13px] text-muted-foreground mt-0.5">Total Scans</p>
             </CardContent>
           </Card>
           <Card>
-            <CardContent className="pt-6">
-              <div className="text-2xl font-bold text-green-400">{completedScans}</div>
-              <p className="text-sm text-muted-foreground">Completed</p>
+            <CardContent className="pt-5">
+              <div className="tech-stat text-[26px] font-medium text-green-400">{completedScans}</div>
+              <p className="text-[13px] text-muted-foreground mt-0.5">Completed</p>
             </CardContent>
           </Card>
           <Card>
-            <CardContent className="pt-6">
-              <div className="text-2xl font-bold text-red-400">{failedScans}</div>
-              <p className="text-sm text-muted-foreground">Failed</p>
+            <CardContent className="pt-5">
+              <div className="tech-stat text-[26px] font-medium text-red-400">{failedScans}</div>
+              <p className="text-[13px] text-muted-foreground mt-0.5">Failed</p>
             </CardContent>
           </Card>
           <Card>
-            <CardContent className="pt-6">
-              <div className="text-2xl font-bold">{totalFindings}</div>
-              <p className="text-sm text-muted-foreground">Total Findings</p>
+            <CardContent className="pt-5">
+              <div className="tech-stat text-[26px] font-medium text-foreground">{totalFindings}</div>
+              <p className="text-[13px] text-muted-foreground mt-0.5">Total Findings</p>
             </CardContent>
           </Card>
         </div>
@@ -1399,24 +1417,24 @@ export default function ScansPage() {
                 </div>
 
                 <div className="grid grid-cols-5 gap-2 text-center">
-                  <div className="p-2 bg-red-500/10 border border-red-500/25 rounded-lg">
-                    <div className="text-2xl font-bold text-red-400">{result.severity_breakdown.critical}</div>
+                  <div className="p-2 bg-red-500/10 border border-red-500/25 rounded-md">
+                    <div className="tech-stat text-[22px] font-medium text-red-400">{result.severity_breakdown.critical}</div>
                     <div className="text-xs text-muted-foreground">Critical</div>
                   </div>
-                  <div className="p-2 bg-orange-500/10 border border-orange-500/25 rounded-lg">
-                    <div className="text-2xl font-bold text-orange-400">{result.severity_breakdown.high}</div>
+                  <div className="p-2 bg-orange-500/10 border border-orange-500/25 rounded-md">
+                    <div className="tech-stat text-[22px] font-medium text-orange-400">{result.severity_breakdown.high}</div>
                     <div className="text-xs text-muted-foreground">High</div>
                   </div>
-                  <div className="p-2 bg-yellow-500/10 border border-yellow-500/25 rounded-lg">
-                    <div className="text-2xl font-bold text-yellow-400">{result.severity_breakdown.medium}</div>
+                  <div className="p-2 bg-yellow-500/10 border border-yellow-500/25 rounded-md">
+                    <div className="tech-stat text-[22px] font-medium text-yellow-400">{result.severity_breakdown.medium}</div>
                     <div className="text-xs text-muted-foreground">Medium</div>
                   </div>
-                  <div className="p-2 bg-blue-500/10 border border-blue-500/25 rounded-lg">
-                    <div className="text-2xl font-bold text-blue-400">{result.severity_breakdown.low}</div>
+                  <div className="p-2 bg-blue-500/10 border border-blue-500/25 rounded-md">
+                    <div className="tech-stat text-[22px] font-medium text-blue-400">{result.severity_breakdown.low}</div>
                     <div className="text-xs text-muted-foreground">Low</div>
                   </div>
-                  <div className="p-2 bg-secondary/40 border border-border/60 rounded-lg">
-                    <div className="text-2xl font-bold text-foreground">{result.severity_breakdown.info}</div>
+                  <div className="p-2 bg-secondary/40 border border-border/60 rounded-md">
+                    <div className="tech-stat text-[22px] font-medium text-foreground">{result.severity_breakdown.info}</div>
                     <div className="text-xs text-muted-foreground">Info</div>
                   </div>
                 </div>

@@ -126,8 +126,8 @@ export default function ReportsPage() {
   return (
     <div className="max-w-7xl mx-auto space-y-6">
       <div>
-        <h1 className="text-3xl font-bold tracking-tight">Reports</h1>
-        <p className="text-muted-foreground mt-1">
+        <h1 className="text-2xl font-semibold tracking-tight">Reports</h1>
+        <p className="text-sm text-muted-foreground mt-0.5">
           Generate security assessment reports
         </p>
       </div>
@@ -137,13 +137,13 @@ export default function ReportsPage() {
           <CardHeader>
             <CardTitle>Generate Report</CardTitle>
           </CardHeader>
-          <CardContent className="space-y-6">
+          <CardContent className="space-y-5">
             <div>
-              <label className="text-sm font-medium mb-2 block">
+              <label className="text-sm font-medium mb-1.5 block">
                 Select Assessment
               </label>
               <select
-                className="w-full px-3 py-2 border rounded-lg bg-background text-sm"
+                className="w-full px-2.5 py-1.5 border rounded-md bg-background text-sm"
                 value={selectedAssessment}
                 onChange={(e) => setSelectedAssessment(e.target.value)}
               >
@@ -157,35 +157,35 @@ export default function ReportsPage() {
             </div>
 
             <div>
-              <label className="text-sm font-medium mb-2 block">
+              <label className="text-sm font-medium mb-1.5 block">
                 Report Template
               </label>
               {templates.length === 0 ? (
-                <p className="text-xs text-muted-foreground">No templates available.</p>
+                <p className="text-[13px] text-muted-foreground">No templates available.</p>
               ) : (
-                <div className="grid gap-3">
+                <div className="grid gap-2.5">
                   {templates.map((t) => {
                     const Icon = templateIcons[t.id] ?? FileBarChart;
                     return (
                       <button
                         key={t.id}
                         onClick={() => setSelectedTemplate(t.id)}
-                        className={`flex items-start gap-3 p-3 border rounded-lg text-left transition-colors ${
+                        className={`flex items-start gap-3 p-3 border rounded-md text-left transition-colors ${
                           selectedTemplate === t.id
                             ? "border-primary bg-primary/5"
                             : "hover:border-primary/50"
                         }`}
                       >
-                        <Icon className="w-5 h-5 text-primary mt-0.5" />
+                        <Icon className="w-4.5 h-4.5 text-primary mt-0.5" />
                         <div>
                           <div className="font-medium text-sm">{t.name}</div>
-                          <div className="text-xs text-muted-foreground">
+                          <div className="text-[13px] text-muted-foreground">
                             {t.description}
                           </div>
                           {(t.frameworks ?? []).length > 0 && (
-                            <div className="flex gap-1 mt-1">
+                            <div className="flex gap-1 mt-1.5">
                               {t.frameworks.map((f) => (
-                                <Badge key={f} variant="secondary" className="text-xs">
+                                <Badge key={f} variant="secondary" className="tech text-[11px]">
                                   {f}
                                 </Badge>
                               ))}
@@ -200,13 +200,13 @@ export default function ReportsPage() {
             </div>
 
             <div>
-              <label className="text-sm font-medium mb-2 block">Format</label>
+              <label className="text-sm font-medium mb-1.5 block">Format</label>
               <div className="flex gap-2">
                 {formats.map((f) => (
                   <button
                     key={f.id}
                     onClick={() => setSelectedFormat(f.id)}
-                    className={`flex items-center gap-2 px-4 py-2 border rounded-lg text-sm transition-colors ${
+                    className={`flex items-center gap-2 px-3.5 py-1.5 border rounded-md text-sm transition-colors ${
                       selectedFormat === f.id
                         ? "border-primary bg-primary/5 text-primary"
                         : "hover:border-primary/50"
@@ -220,13 +220,13 @@ export default function ReportsPage() {
             </div>
 
             {successMessage && (
-              <div className="flex items-center gap-2 text-sm text-green-400 bg-green-500/10 border border-green-500/30 px-3 py-2 rounded-lg">
+              <div className="flex items-center gap-2 text-sm text-green-400 bg-green-500/10 border border-green-500/30 px-3 py-2 rounded-md">
                 <CheckCircle2 className="w-4 h-4" />
                 {successMessage}
               </div>
             )}
             {error && (
-              <div className="flex items-center gap-2 text-sm text-red-400 bg-red-500/10 border border-red-500/30 px-3 py-2 rounded-lg">
+              <div className="flex items-center gap-2 text-sm text-red-400 bg-red-500/10 border border-red-500/30 px-3 py-2 rounded-md">
                 <AlertCircle className="w-4 h-4" />
                 {error}
               </div>
@@ -287,15 +287,15 @@ export default function ReportsPage() {
                 <div key={fw.name} className="space-y-1">
                   <div className="flex items-center justify-between text-sm">
                     <span className="font-medium">{fw.name}</span>
-                    <span className="text-muted-foreground">{fw.progress}%</span>
+                    <span className="tech text-xs text-muted-foreground">{fw.progress}%</span>
                   </div>
-                  <div className="h-2 bg-muted rounded-full overflow-hidden">
+                  <div className="h-1.5 bg-muted rounded-full overflow-hidden">
                     <div
                       className="h-full bg-primary rounded-full transition-all"
                       style={{ width: `${fw.progress}%` }}
                     />
                   </div>
-                  <p className="text-xs text-muted-foreground">{fw.desc}</p>
+                  <p className="text-[13px] text-muted-foreground">{fw.desc}</p>
                 </div>
               ))}
             </div>

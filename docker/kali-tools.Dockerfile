@@ -97,4 +97,15 @@ COPY docker/scripts/fetch-wordlists.sh /opt/astraix/fetch-wordlists.sh
 RUN chmod +x /opt/astraix/fetch-wordlists.sh && /opt/astraix/fetch-wordlists.sh
 # Web form / API / chatbot scanner used by the 'forms' tool
 COPY docker/scripts/web_form_scanner.py /opt/vapt/web_form_scanner.py
+# garak: NVIDIA's AI/LLM security scanner (OWASP LLM Top 10 probes). Not in
+# Kali repos - pip only. Pulls torch/transformers as deps (image stays
+# single-purpose: AI security testing). Driver script handles endpoint
+# discovery + OpenAI-compatible chat templating for arbitrary targets.
+RUN pip3 install --no-cache-dir --break-system-packages \
+    garak \
+    > /dev/null 2>&1 && \
+    python3 -m garak --version 2>&1 | head -1
+COPY docker/scripts/garak_scanner.py /opt/vapt/garak_scanner.py
+# API/endpoint surface discovery scanner used by the 'api-surface' tool
+COPY docker/scripts/api_surface_scanner.py /opt/vapt/api_surface_scanner.py
 CMD ["bash"]

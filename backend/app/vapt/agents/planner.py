@@ -12,10 +12,10 @@ the knowledge-base heuristics stand on their own.
 import asyncio
 import json
 import os
-import sys
 from typing import Any, Awaitable, Callable, Dict, List, Optional, Tuple
 
 from app.core.logging import get_logger
+from app.vapt.agents.kb import kb_snippets
 from app.vapt.models import VAPTScanType
 from app.vapt.tools import TOOLS_REGISTRY, get_available_tools
 
@@ -86,41 +86,8 @@ TOOL_KB_QUERIES: Dict[str, str] = {
 class PlannerAgent:
     """Knowledge-base-grounded plan generator for VAPT scans."""
 
-    def __init__(self):
-        self._kb = None
-
-    def _load_kb(self) -> Any:
-        try:
-            if KB_PATH not in sys.path:
-                sys.path.insert(0, KB_PATH)
-            from search import get_knowledge_base
-
-            kb = get_knowledge_base()
-            logger.info("PlannerAgent knowledge base ready: %s", kb.stats())
-            return kb
-        except Exception as e:
-            logger.warning("PlannerAgent KB unavailable: %s", e)
-            return None
-
-    def _get_kb(self) -> Any:
-        if self._kb is None:
-            self._kb = self._load_kb()
-        return self._kb
-
     def _kb_search(self, query: str, top_k: int = 3) -> List[str]:
-        if not self._get_kb():
-            return []
-        try:
-            results = self._kb.search(query, top_k=top_k)
-            snippets = []
-            for r in results:
-                title = r.get("title") or r.get("source") or "source"
-                snippet = (r.get("content") or r.get("snippet") or "")[:220]
-                snippets.append(f"[{title}] {snippet}")
-            return snippets
-        except Exception as e:
-            logger.warning("KB search failed: %s", e)
-            return []
+        return kb_snippets(query, top_k=top_k)
 
     def _parse_json(self, text: str) -> Optional[Dict[str, Any]]:
         if not text:

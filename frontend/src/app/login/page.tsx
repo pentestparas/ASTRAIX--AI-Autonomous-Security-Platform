@@ -94,45 +94,45 @@ export default function LoginPage() {
 
   return (
     <div className="min-h-screen flex bg-background">
-      <div className="relative hidden lg:flex w-1/2 items-center justify-center overflow-hidden border-r border-border/70 bg-grid">
+      <div className="relative hidden lg:flex w-1/2 items-center justify-center overflow-hidden border-r border-border/60 bg-grid">
         <div
           className="absolute inset-0"
           style={{
             background:
-              "radial-gradient(ellipse 60% 50% at 30% 20%, hsl(188 94% 47% / 0.14), transparent 60%), radial-gradient(ellipse 50% 40% at 75% 80%, hsl(262 83% 63% / 0.12), transparent 60%)",
+              "radial-gradient(ellipse 55% 45% at 30% 25%, hsl(153 100% 45% / 0.09), transparent 60%), radial-gradient(ellipse 45% 35% at 75% 80%, hsl(170 90% 42% / 0.07), transparent 60%)",
           }}
         />
         <div className="relative z-10 max-w-md text-center px-8">
-          <div className="flex items-center justify-center gap-3 mb-6">
-            <div className="relative flex items-center justify-center w-14 h-14 rounded-2xl btn-gradient glow-primary shadow-lg">
-              <Radar className="w-8 h-8 text-primary-foreground" />
+          <div className="flex items-center justify-center gap-3 mb-8">
+            <div className="relative flex items-center justify-center w-12 h-12 rounded-xl btn-gradient glow-primary shadow-lg">
+              <Radar className="w-7 h-7 text-primary-foreground" />
             </div>
             <div className="text-left leading-tight">
-              <span className="block text-3xl font-bold tracking-tight">
+              <span className="block text-2xl font-semibold tracking-tight">
                 Astra<span className="text-gradient">IX</span>
               </span>
-              <span className="block text-xs uppercase tracking-[0.2em] text-muted-foreground">
+              <span className="block text-[11px] uppercase tracking-[0.2em] text-muted-foreground">
                 Security Analyst
               </span>
             </div>
           </div>
-          <h1 className="text-3xl font-bold tracking-tight mb-3">
+          <h1 className="text-[28px] font-semibold tracking-tight mb-3">
             Autonomous AI Security{" "}
             <span className="text-gradient">Operations</span>
           </h1>
-          <p className="text-muted-foreground leading-relaxed">
+          <p className="text-sm text-muted-foreground leading-relaxed max-w-sm mx-auto">
             Real Kali container scanning · multi-agent vulnerability
             analysis · AI executive reports · attack surface graphs
           </p>
           <div className="mt-8 grid grid-cols-3 gap-3">
             {[
-              { label: "18+ tools", value: "Kali fleet" },
+              { label: "18+ tools", value: "kali fleet" },
               { label: "3 agents", value: "recon · research · verify" },
-              { label: "3 formats", value: "HTML · PDF · JSON" },
+              { label: "3 formats", value: "html · pdf · json" },
             ].map((f) => (
-              <div key={f.label} className="rounded-xl border border-border/70 bg-card/50 p-3">
-                <p className="text-[10px] uppercase tracking-wider text-muted-foreground">{f.label}</p>
-                <p className="text-sm font-semibold mt-1">{f.value}</p>
+              <div key={f.label} className="rounded-md border border-border/70 bg-card/50 px-3 py-3">
+                <p className="text-[9.5px] uppercase tracking-wider text-muted-foreground">{f.label}</p>
+                <p className="tech-stat text-foreground mt-1">{f.value}</p>
               </div>
             ))}
           </div>
@@ -140,21 +140,23 @@ export default function LoginPage() {
       </div>
 
       <div className="flex-1 flex items-center justify-center p-4">
-        <div className="w-full max-w-md space-y-6 animate-slide-up">
+        <div className="w-full max-w-[400px] space-y-6 animate-slide-up">
           <div className="text-center lg:hidden">
             <div className="flex items-center justify-center gap-2 mb-4">
-              <div className="relative flex items-center justify-center w-10 h-10 rounded-xl btn-gradient glow-primary">
+              <div className="relative flex items-center justify-center w-9 h-9 rounded-lg btn-gradient glow-primary">
                 <Radar className="w-5 h-5 text-primary-foreground" />
               </div>
               <div className="leading-tight text-left">
-                <span className="block text-xl font-bold tracking-tight">Astra<span className="text-gradient">IX</span></span>
-                <span className="block text-[10px] uppercase tracking-[0.16em] text-muted-foreground">Security Analyst</span>
+                <span className="block text-lg font-semibold tracking-tight">Astra<span className="text-gradient">IX</span></span>
+                <span className="block text-[9.5px] uppercase tracking-[0.16em] text-muted-foreground">Security Analyst</span>
               </div>
             </div>
           </div>
           <div className="hidden lg:block">
-            <p className="eyebrow mb-2">Workspace</p>
-            <h2 className="text-2xl font-bold tracking-tight">{isLogin ? "Sign in" : "Create your workspace"}</h2>
+            <h2 className="text-xl font-semibold tracking-tight">{isLogin ? "Sign in" : "Create your workspace"}</h2>
+            <p className="text-sm text-muted-foreground mt-1">
+              {isLogin ? "Access your security assessment platform" : "Start scanning in minutes"}
+            </p>
           </div>
 
         <Card className="glass-card-hover">

@@ -54,16 +54,16 @@ class VerifierAgent:
 
     def _kb_exploit_sync(self, finding: VAPTFinding) -> Optional[str]:
         try:
-            import sys
-            from app.vapt.agents.planner import KB_PATH
+            from app.vapt.agents.kb import search_kb, sanitize_finding_query, apply_finding_relevance_floor
 
-            if KB_PATH not in sys.path:
-                sys.path.insert(0, KB_PATH)
-            from search import get_knowledge_base
-
-            kb = get_knowledge_base()
-            query = f"{finding.title} {finding.tool_name} exploit technique CVE"
-            hits = kb.search(query, top_k=3)
+            query = sanitize_finding_query(finding.title)
+            if finding.tool_name:
+                query = f"{query} {finding.tool_name}".strip()
+            if not query:
+                return None
+            hits = apply_finding_relevance_floor(
+                search_kb(f"{query} exploit technique CVE", top_k=3)
+            )
             if hits:
                 return " | ".join(
                     str(h.get("source", "") or h.get("title", "")) for h in hits

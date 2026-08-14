@@ -90,14 +90,14 @@ export default function FindingsPage() {
     <div className="max-w-7xl mx-auto space-y-6">
       <div className="flex items-center justify-between">
         <div>
-          <h1 className="text-3xl font-bold tracking-tight">Vulnerabilities</h1>
-          <p className="text-muted-foreground mt-1">
+          <h1 className="text-2xl font-semibold tracking-tight">Vulnerabilities</h1>
+          <p className="text-sm text-muted-foreground mt-0.5">
             True-positive security findings confirmed by verification
           </p>
         </div>
         <div className="flex items-center gap-2">
           <select
-            className="px-3 py-2 text-sm border rounded-lg bg-background"
+            className="px-2.5 py-1.5 text-sm border rounded-md bg-background"
             value={severity}
             onChange={(e) => setSeverity(e.target.value)}
           >
@@ -109,7 +109,7 @@ export default function FindingsPage() {
             ))}
           </select>
           <select
-            className="px-3 py-2 text-sm border rounded-lg bg-background"
+            className="px-2.5 py-1.5 text-sm border rounded-md bg-background"
             value={status}
             onChange={(e) => setStatus(e.target.value)}
           >
@@ -192,7 +192,7 @@ export default function FindingsPage() {
                       </TableCell>
                       <TableCell>
                         {finding.cvss_score != null ? (
-                          <span className={cvssColor(finding.cvss_score)}>
+                          <span className={`tech tabular-nums ${cvssColor(finding.cvss_score)}`}>
                             {finding.cvss_score.toFixed(1)}
                           </span>
                         ) : (

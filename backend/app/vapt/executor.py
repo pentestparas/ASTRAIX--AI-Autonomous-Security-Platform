@@ -302,6 +302,12 @@ class VAPTExecutor:
             "forms": (
                 f"python3 /opt/vapt/web_form_scanner.py {target} 2>/dev/null"
             ),
+            "garak": (
+                f"python3 /opt/vapt/garak_scanner.py {target} 2>/dev/null"
+            ),
+            "api-surface": (
+                f"python3 /opt/vapt/api_surface_scanner.py {target} 2>/dev/null"
+            ),
             "zap": (
                 'Z=http://zap:8080; A=astraixzap; '
                 'curl -s "$Z/JSON/core/action/newSession?name=scan&overwrite=true&apikey=$A" >/dev/null; '
@@ -373,6 +379,8 @@ class VAPTExecutor:
             "metasploit": self._parse_metasploit,
             "searchsploit": self._parse_searchsploit,
             "forms": self._parse_forms,
+            "garak": self._parse_garak,
+            "api-surface": self._parse_api_surface,
             "zap": self._parse_zap,
         }
         parser = parser_map.get(tool.id, self._parse_generic)
@@ -982,6 +990,39 @@ class VAPTExecutor:
             ))
         return findings[:25]
 
+    def _parse_garak(self, output: str, target: str, tool_name: str) -> List[VAPTFinding]:
+        findings = []
+        sev_map = {
+            "critical": VAPTSeverity.CRITICAL,
+            "high": VAPTSeverity.HIGH,
+            "medium": VAPTSeverity.MEDIUM,
+            "low": VAPTSeverity.LOW,
+            "info": VAPTSeverity.INFO,
+        }
+        for line in output.splitlines():
+            try:
+                data = json.loads(line)
+            except (json.JSONDecodeError, TypeError):
+                continue
+            title = data.get("title") or "AI / LLM Security Finding"
+            severity = sev_map.get(str(data.get("severity", "")).lower(), VAPTSeverity.MEDIUM)
+            path = data.get("path") or target
+            findings.append(VAPTFinding(
+                title=str(title)[:200],
+                description=(
+                    f"{data.get('description', '')[:400]} | Evidence: {data.get('evidence', '')[:200]}"
+                ),
+                severity=severity,
+                tool_name="Garak",
+                target=target,
+                path=str(path)[:300],
+                vulnerability_type=str(data.get("category") or "AI / LLM Security"),
+                remediation=str(data.get("remediation") or "Harden LLM input handling; see OWASP LLM Top 10")[:500],
+                reference=str(data.get("reference") or "https://genai.owasp.org/llm-top-10/")[:300],
+                cwe=data.get("cwe"),
+            ))
+        return findings[:30]
+
     def _parse_ffuf(self, output: str, target: str, tool_name: str) -> List[VAPTFinding]:
         findings = []
         seen: set = set()
@@ -1036,6 +1077,44 @@ class VAPTExecutor:
                         target=target,
                     ))
         return findings[:20]
+
+    def _parse_api_surface(self, output: str, target: str, tool_name: str) -> List[VAPTFinding]:
+        """Parse API surface discovery JSONL findings, preserving severity,
+        category, evidence and remediation fields."""
+        findings = []
+        seen: set = set()
+        sev_map = {
+            "critical": VAPTSeverity.CRITICAL,
+            "high": VAPTSeverity.HIGH,
+            "medium": VAPTSeverity.MEDIUM,
+            "low": VAPTSeverity.LOW,
+            "info": VAPTSeverity.INFO,
+        }
+        for line in output.splitlines():
+            try:
+                data = json.loads(line)
+            except (json.JSONDecodeError, TypeError):
+                continue
+            path = data.get("path") or target
+            if path in seen:
+                continue
+            seen.add(path)
+            severity = sev_map.get(str(data.get("severity", "")).lower(), VAPTSeverity.INFO)
+            findings.append(VAPTFinding(
+                title=str(data.get("title") or "API Endpoint Discovered")[:200],
+                description=(
+                    f"{data.get('description', '')[:400]} | Evidence: {data.get('evidence', '')[:200]}"
+                ),
+                severity=severity,
+                tool_name=tool_name,
+                target=target,
+                path=str(path)[:300],
+                vulnerability_type=str(data.get("category") or "API Security"),
+                remediation=str(data.get("remediation") or "Restrict access to this endpoint.")[:500],
+                reference=str(data.get("reference") or "https://owasp.org/API-Security/")[:300],
+                cwe=data.get("cwe"),
+            ))
+        return findings[:80]
 
     def _parse_jsonl_findings(self, output: str, target: str, tool_name: str) -> List[VAPTFinding]:
         findings = []
