@@ -164,6 +164,7 @@ class PlannerAgent:
                         "messages": messages,
                         "stream": False,
                         "format": "json",
+                        "keep_alive": "30m",
                     },
                 )
                 resp.raise_for_status()
@@ -233,13 +234,22 @@ class PlannerAgent:
 
             kb_snippets = await asyncio.to_thread(self._kb_search, phase_def["kb_query"])
             tools = []
+            reason_futs = []
             for tool_id in phase_def["tools"]:
                 if tool_id not in TOOLS_REGISTRY:
                     continue
                 if tool_id not in available:
                     continue
                 tool = TOOLS_REGISTRY[tool_id]
-                reason = await asyncio.to_thread(self._kb_search, TOOL_KB_QUERIES[tool_id], top_k=1)
+                reason_futs.append(
+                    asyncio.to_thread(self._kb_search, TOOL_KB_QUERIES[tool_id], top_k=1)
+                )
+            reasons = await asyncio.gather(*reason_futs) if reason_futs else []
+            for tool_id, reason in zip(
+                [tid for tid in phase_def["tools"] if tid in available and tid in TOOLS_REGISTRY],
+                reasons,
+            ):
+                tool = TOOLS_REGISTRY[tool_id]
                 tools.append({
                     "id": tool_id,
                     "name": tool.name,

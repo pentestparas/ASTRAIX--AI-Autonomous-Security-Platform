@@ -308,7 +308,7 @@ async def run_scan(
                 asset_id=str(asset_uuid),
                 status="running",
                 type="vapt",
-                config={"scan_type": request.scan_type, "tools": request.tools},
+                config={"scan_type": request.scan_type, "tools": request.tools, "target": request.target},
                 started_at=datetime.utcnow(),
                 findings_count=0,
             )
@@ -327,7 +327,7 @@ async def run_scan(
         result = await orchestrator.analyze_and_scan(
             target=request.target,
             scan_type=request.scan_type,
-            scan_id=scan_id,
+            scan_id=scan_id or assessment_id,
         )
     except ScanStoppedError:
         if persisted and assessment_id:

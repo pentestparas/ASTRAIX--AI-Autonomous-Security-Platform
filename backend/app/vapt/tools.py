@@ -6,8 +6,11 @@ Fast execution without container overhead.
 """
 
 import subprocess
+import time
 from typing import Any, Dict, List, Optional
 from app.vapt.models import VAPTTool, VAPTScanType
+
+AVAILABILITY_TTL = 300
 
 TOOLS_REGISTRY: Dict[str, VAPTTool] = {
     "nmap": VAPTTool(
@@ -601,8 +604,20 @@ def check_tool_availability() -> Dict[str, bool]:
 
     Probes the actual binaries in the image with a single container run;
     falls back to host `which` checks only when the image is missing.
+    Cached for AVAILABILITY_TTL seconds - the probe launches a container
+    run (~18s) and the planner calls this once per scan plan.
     """
     from app.vapt.executor import VAPTExecutor
+
+    cached = getattr(check_tool_availability, "_cached", None)
+    cached_at = getattr(check_tool_availability, "_cached_at", 0.0)
+    if cached is not None and time.time() - cached_at < AVAILABILITY_TTL:
+        return cached
+
+    def _store(result: Dict[str, bool]) -> Dict[str, bool]:
+        check_tool_availability._cached = result
+        check_tool_availability._cached_at = time.time()
+        return result
 
     def _probe_cmd(tool_id: str, tool: VAPTTool) -> str:
         # Scanner scripts live in /opt/vapt inside the Kali image (not PATH).
@@ -639,7 +654,7 @@ def check_tool_availability() -> Dict[str, bool]:
                 parts = line.split()
                 if len(parts) == 2 and parts[0] in ("OK", "MISS"):
                     availability[parts[1]] = parts[0] == "OK"
-            return availability
+            return _store(availability)
     except Exception:
         pass
 
@@ -654,7 +669,7 @@ def check_tool_availability() -> Dict[str, bool]:
             available[tool_id] = result.returncode == 0
         except Exception:
             available[tool_id] = False
-    return available
+    return _store(available)
 
 
 def get_available_tools() -> List[str]:

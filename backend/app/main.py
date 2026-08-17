@@ -81,6 +81,18 @@ async def lifespan(app: FastAPI):
     # Recover assessments orphaned by a previous process exit
     await _recover_orphaned_assessments()
 
+    # Warm the knowledge-base index in the background so the first scan's
+    # planner does not blow the plan budget on the 2-3min index load.
+    try:
+        import threading
+
+        from app.vapt.agents.kb import get_kb
+
+        threading.Thread(target=get_kb, daemon=True, name="kb-warmup").start()
+        logger.info("knowledge_base.warmup_started (background)")
+    except Exception as exc:
+        logger.warning("knowledge_base.warmup_failed", error=str(exc))
+
     yield
 
     await close_db()

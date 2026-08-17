@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState, useRef, Fragment } from "react";
+import { useEffect, useState, useRef, Fragment, type ReactNode } from "react";
 import { useRouter } from "next/navigation";
 import { projectsApi, apiClient, assessmentsApi, vaptScanApi } from "@/services/api";
 import { Button } from "@/components/ui/button";
@@ -234,7 +234,7 @@ const typeLabels: Record<string, string> = {
   network_vapt: "Network VAPT", web_vapt: "Web App VAPT", cloud_posture: "Cloud Security",
   code_audit: "Code Audit", network: "Network Scan", web: "Web Application",
   api: "API Security", container: "Container Security", auto: "Auto Detect",
-  llm: "AI Security", ssl: "SSL/TLS Audit", full: "Full Scan",
+  llm: "AI Security", ssl: "SSL/TLS Audit", full: "Full Scan", vapt: "VAPT",
 };
 
 const typeIcons: Record<string, typeof Shield> = {
@@ -426,6 +426,180 @@ function LiveScanConsole({
       error: !!e.data?.error,
     }));
 
+  const lastEventOf = (type: string) =>
+    events.filter((e) => e.type === type).sort((a, b) => a.ts - b.ts).at(-1);
+  const kbGrounding = lastEventOf("ai_kb_grounding");
+  const researchDone = lastEventOf("ai_research_done");
+  const verificationDone = lastEventOf("ai_verification_done");
+  const reportReady = lastEventOf("report_ready");
+  const decision = lastEventOf("ai_decision");
+
+  const stageDetail = (stepId: string): ReactNode => {
+    switch (stepId) {
+      case "ai_analyzing":
+        if (!kbGrounding) return null;
+        return (
+          <div className="p-3 rounded-lg border border-primary/15 bg-card/60 text-xs space-y-1.5">
+            <p className="font-semibold text-primary flex items-center gap-1.5">
+              <BookOpen className="w-3 h-3" /> Knowledge-base grounding
+            </p>
+            <p className="text-muted-foreground font-mono break-words">
+              query: {String(kbGrounding.data?.query || "")}
+            </p>
+            {(kbGrounding.data?.snippets || []).slice(0, 3).map((s: string, i: number) => (
+              <p key={i} className="text-muted-foreground line-clamp-2">{s}</p>
+            ))}
+          </div>
+        );
+      case "tool_started": {
+        if (totalTools === 0) return null;
+        const runningTools = phases
+          .flatMap((p) => p.tools.map((t) => ({ ...t, phase: p.name })))
+          .filter((t) => toolState(t.id) === "running");
+        return (
+          <div className="p-3 rounded-lg border border-primary/15 bg-card/60 text-xs space-y-1.5">
+            <p className="font-semibold text-primary flex items-center gap-1.5">
+              <Terminal className="w-3 h-3" /> Tool execution
+            </p>
+            <p className="text-muted-foreground">
+              {doneTools}/{totalTools} tools completed
+            </p>
+            {runningTools.map((t) => (
+              <div key={t.id} className="space-y-0.5">
+                <p className="font-mono flex items-center gap-1.5">
+                  <Loader2 className="w-3 h-3 animate-spin text-primary" />
+                  <span className="text-foreground">{t.name}</span>
+                  <span className="text-muted-foreground opacity-70">· {t.phase}</span>
+                </p>
+                {toolCommands.get(t.id) && (
+                  <p className="font-mono text-muted-foreground truncate pl-5">
+                    $ {toolCommands.get(t.id)}
+                  </p>
+                )}
+              </div>
+            ))}
+            {phases.map((p) => {
+              const counts = { done: 0, running: 0, failed: 0, queued: 0 };
+              p.tools.forEach((t) => counts[toolState(t.id)]++);
+              if (counts.done + counts.running + counts.failed === 0) return null;
+              return (
+                <p key={p.id} className="font-mono text-muted-foreground">
+                  {p.name}: {counts.done} done, {counts.running} running
+                  {counts.failed > 0 ? `, ${counts.failed} failed` : ""}
+                  {counts.queued > 0 ? `, ${counts.queued} queued` : ""}
+                </p>
+              );
+            })}
+          </div>
+        );
+      }
+      case "plan_ready": {
+        if (phases.length === 0 && !decision) return null;
+        return (
+          <div className="p-3 rounded-lg border border-primary/15 bg-card/60 text-xs space-y-1">
+            <p className="font-semibold text-primary flex items-center gap-1.5">
+              <ListChecks className="w-3 h-3" /> Plan
+            </p>
+            {decision && (
+              <p className="text-muted-foreground">{String(decision.data?.message || "")}</p>
+            )}
+            {phases.map((p) => (
+              <p key={p.id} className="font-mono text-muted-foreground">
+                {p.name} <span className="opacity-60">({p.tools.length} tools)</span>
+              </p>
+            ))}
+          </div>
+        );
+      }
+      case "ai_research": {
+        if (!lastEventOf("ai_research") && !researchDone) return null;
+        const enriching = !researchDone;
+        return (
+          <div className="p-3 rounded-lg border border-primary/15 bg-card/60 text-xs space-y-1">
+            <p className="font-semibold text-primary flex items-center gap-1.5">
+              {enriching ? (
+                <Loader2 className="w-3 h-3 animate-spin" />
+              ) : (
+                <CheckCircle2 className="w-3 h-3 text-green-500" />
+              )}
+              Enriching findings with CVE context from knowledge base
+            </p>
+            {!enriching && (
+              <p className="text-muted-foreground">
+                Enriched {String(researchDone?.data?.enriched_count ?? 0)} findings in{" "}
+                {String(researchDone?.data?.duration ?? 0)}s
+              </p>
+            )}
+          </div>
+        );
+      }
+      case "ai_verification": {
+        if (!lastEventOf("ai_verification") && !verificationDone) return null;
+        const verifying = !verificationDone;
+        return (
+          <div className="p-3 rounded-lg border border-primary/15 bg-card/60 text-xs space-y-1">
+            <p className="font-semibold text-primary flex items-center gap-1.5">
+              {verifying ? (
+                <Loader2 className="w-3 h-3 animate-spin" />
+              ) : (
+                <CheckCircle2 className="w-3 h-3 text-green-500" />
+              )}
+              Re-executing tools to confirm findings, eliminating false positives
+            </p>
+            {!verifying && (
+              <p className="text-muted-foreground">
+                Confirmed {String(verificationDone?.data?.confirmed_count ?? 0)} findings in{" "}
+                {String(verificationDone?.data?.duration ?? 0)}s
+              </p>
+            )}
+          </div>
+        );
+      }
+      case "report_generating": {
+        if (!lastEventOf("report_generating") && !reportReady) return null;
+        const insights = reportReady?.data as
+          | { risk_level?: string; executive_summary?: string; recommendations?: string[] }
+          | undefined;
+        return (
+          <div className="p-3 rounded-lg border border-primary/15 bg-card/60 text-xs space-y-1.5">
+            <p className="font-semibold text-primary flex items-center gap-1.5">
+              {reportReady ? (
+                <CheckCircle2 className="w-3 h-3 text-green-500" />
+              ) : (
+                <Loader2 className="w-3 h-3 animate-spin" />
+              )}
+              Building executive summary, risk scoring and remediation plan
+            </p>
+            {reportReady && insights && (
+              <>
+                <p>
+                  Risk level:{" "}
+                  <Badge
+                    className={getSeverityBadge(String(insights.risk_level || "info").toLowerCase())}
+                  >
+                    {String(insights.risk_level || "UNKNOWN").toUpperCase()}
+                  </Badge>
+                </p>
+                {insights.executive_summary && (
+                  <p className="text-muted-foreground line-clamp-3">
+                    {insights.executive_summary}
+                  </p>
+                )}
+                {(insights.recommendations || []).slice(0, 3).map((r: string, i: number) => (
+                  <p key={i} className="text-muted-foreground flex gap-1.5">
+                    <span className="text-primary">→</span> <span className="line-clamp-1">{r}</span>
+                  </p>
+                ))}
+              </>
+            )}
+          </div>
+        );
+      }
+      default:
+        return null;
+    }
+  };
+
   return (
     <div className="space-y-4">
       <div className="flex items-center justify-between">
@@ -609,12 +783,12 @@ function LiveScanConsole({
           const isDone = running && !paused ? hasEvents && i < lastActiveStep : hasEvents;
           const StepIcon = step.icon;
           return (
-            <div
-              key={step.id}
-              className={`flex items-center gap-2.5 px-2.5 py-1.5 rounded-md ${
-                isActive ? "bg-primary/10 border border-primary/20" : ""
-              }`}
-            >
+            <Fragment key={step.id}>
+              <div
+                className={`flex items-center gap-2.5 px-2.5 py-1.5 rounded-md ${
+                  isActive ? "bg-primary/10 border border-primary/20" : ""
+                }`}
+              >
               {isActive ? (
                 <Loader2 className="w-3.5 h-3.5 text-primary animate-spin shrink-0" />
               ) : isDone ? (
@@ -633,7 +807,9 @@ function LiveScanConsole({
                   )}
                 </span>
               )}
-            </div>
+              </div>
+              {isActive && stageDetail(step.id)}
+            </Fragment>
           );
         })}
       </div>

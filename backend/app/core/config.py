@@ -66,7 +66,7 @@ class Settings(BaseSettings):
     # LLM provider selection: "auto" (ollama -> nvidia), "nvidia", "ollama"
     # Ollama is preferred by default to avoid third-party API latency.
     LLM_PROVIDER: str = "ollama"
-    LLM_TIMEOUT: int = 45
+    LLM_TIMEOUT: int = 300
 
     # Local Ollama fallback
     OLLAMA_BASE_URL: str = "http://host.docker.internal:11434"

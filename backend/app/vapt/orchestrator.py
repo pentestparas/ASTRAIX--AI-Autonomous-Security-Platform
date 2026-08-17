@@ -140,7 +140,7 @@ class AIOrchestrator:
             try:
                 plan = await asyncio.wait_for(
                     self.planner.plan_scan(target, scan_type_enum, target_info),
-                    timeout=int(os.environ.get("VAPT_PLAN_TIMEOUT", "60")),
+                    timeout=int(os.environ.get("VAPT_PLAN_TIMEOUT", "300")),
                 )
             except asyncio.TimeoutError:
                 logger.warning("Planner timed out for %s - using KB fallback plan", target)
@@ -153,8 +153,6 @@ class AIOrchestrator:
                     "strategy": "Planner timed out - knowledge-base fallback",
                 }
 
-            await publish_scan_event(scan_id, "plan_ready", plan)
-
             if not plan["phases"]:
                 fallback = self._select_tools(scan_type_enum, target_info)
                 plan["phases"] = [{
@@ -163,6 +161,9 @@ class AIOrchestrator:
                     "description": "Fallback tool set",
                     "tools": [{"id": t, "name": t, "description": "", "reason": "fallback"} for t in fallback],
                 }]
+                plan["tool_count"] = len(fallback)
+
+            await publish_scan_event(scan_id, "plan_ready", plan)
 
             if scan_type_enum == VAPTScanType.LLM:
                 llm_reason = "Dedicated LLM vulnerability scanner"
