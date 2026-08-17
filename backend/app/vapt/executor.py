@@ -280,7 +280,11 @@ class VAPTExecutor:
             "gobuster-dns": f"gobuster dns -d {host_only} -w {wl_sub} -q",
             "gobuster-vhost": f"gobuster vhost -u {target} -w {wl_dirs} -q",
             "ffuf-params": f"ffuf -u {target}?FUZZ=1 -w {wl_fuzz} -json",
-            "masscan": f"masscan -Pn -p {port_scope} -oX - --rate 1000 {host_only}",
+            "masscan": (
+                f'IP=$(getent ahostsv4 {host_only} | awk \'{{print $1; exit}}\'); '
+                f'[ -z "$IP" ] && IP={host_only}; '
+                f"masscan -Pn -p {port_scope} -oX - --wait 0 --rate 1000 \"$IP\""
+            ),
             "subfinder": f"subfinder -d {host_only} -json -silent",
             "httpx": f"httpx-toolkit -u {target} -json -silent -threads 20",
             "whatweb": f"whatweb -a 3 --log-json=/tmp/whatweb.json {target} > /dev/null 2>&1; cat /tmp/whatweb.json",
@@ -407,7 +411,10 @@ class VAPTExecutor:
         findings = []
         try:
             import xml.etree.ElementTree as ET
-            root = ET.fromstring(output)
+            start = output.find("<?xml")
+            if start < 0:
+                return findings
+            root = ET.fromstring(output[start:])
 
             for host in root.findall(".//host"):
                 addr = host.find(".//address[@addrtype='ipv4']")
