@@ -431,7 +431,11 @@ TOOLS_BY_CATEGORY: Dict[VAPTScanType, List[str]] = {
     VAPTScanType.SSL: ["sslscan", "testssl"],
     VAPTScanType.CONTAINER: ["trivy"],
     VAPTScanType.LLM: ["garak"],
-    VAPTScanType.FULL: ["nmap", "nikto", "nuclei", "gobuster", "sslscan", "masscan", "ffuf", "hydra", "api-surface"],
+    # FULL = every agent-visible tool (all scan types: network, web, API,
+    # SSL/TLS, container, AI/LLM security).
+    VAPTScanType.FULL: sorted(
+        tid for tid, tool in TOOLS_REGISTRY.items() if tool.agent_visible
+    ),
 }
 
 DEFAULT_TOOLS: Dict[VAPTScanType, List[str]] = {
@@ -441,27 +445,11 @@ DEFAULT_TOOLS: Dict[VAPTScanType, List[str]] = {
     VAPTScanType.SSL: ["sslscan"],
     VAPTScanType.CONTAINER: ["trivy"],
     VAPTScanType.LLM: ["garak"],
-    VAPTScanType.FULL: ["nmap", "nikto", "nuclei", "gobuster"],
-}
-
-TOOLS_BY_CATEGORY: Dict[VAPTScanType, List[str]] = {
-    VAPTScanType.NETWORK: ["nmap"],
-    VAPTScanType.WEB: ["nikto", "nuclei", "gobuster"],
-    VAPTScanType.API: ["nuclei", "ffuf"],
-    VAPTScanType.SSL: ["sslscan"],
-    VAPTScanType.CONTAINER: ["trivy"],
-    VAPTScanType.LLM: ["garak"],
-    VAPTScanType.FULL: ["nmap", "nikto", "nuclei", "gobuster", "sslscan"],
-}
-
-DEFAULT_TOOLS: Dict[VAPTScanType, List[str]] = {
-    VAPTScanType.NETWORK: ["nmap"],
-    VAPTScanType.WEB: ["nikto", "nuclei", "gobuster"],
-    VAPTScanType.API: ["nuclei", "ffuf"],
-    VAPTScanType.SSL: ["sslscan"],
-    VAPTScanType.CONTAINER: ["trivy"],
-    VAPTScanType.LLM: ["garak"],
-    VAPTScanType.FULL: ["nmap", "nikto", "nuclei", "gobuster"],
+    # FULL = every agent-visible tool (all scan types: network, web, API,
+    # SSL/TLS, container, AI/LLM security).
+    VAPTScanType.FULL: sorted(
+        tid for tid, tool in TOOLS_REGISTRY.items() if tool.agent_visible
+    ),
 }
 
 # =============================================================================

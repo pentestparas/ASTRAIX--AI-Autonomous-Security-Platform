@@ -59,6 +59,13 @@ PHASE_DEFS: List[Dict[str, Any]] = [
         "tools": ["sslscan", "testssl"],
         "kb_query": "SSL TLS certificate weak ciphers protocol audit testssl",
     },
+    {
+        "id": "ai_security",
+        "name": "AI / LLM Security",
+        "description": "Probe AI/LLM endpoints for OWASP LLM Top 10: prompt injection, jailbreaks, data leakage.",
+        "tools": ["garak", "forms"],
+        "kb_query": "AI LLM security prompt injection jailbreak OWASP LLM top 10 garak",
+    },
 ]
 
 TOOL_KB_QUERIES: Dict[str, str] = {
@@ -80,6 +87,8 @@ TOOL_KB_QUERIES: Dict[str, str] = {
     "dalfox": "dalfox XSS scanning parameter based",
     "hydra": "hydra brute force weak credentials ssh http",
     "testssl": "testssl TLS SSL configuration audit cipher suite",
+    "garak": "garak LLM security prompt injection jailbreak data leakage probe",
+    "forms": "web form API chatbot scanner prompt injection SQL injection XSS",
 }
 
 
@@ -211,6 +220,10 @@ class PlannerAgent:
 
         phases: List[Dict[str, Any]] = []
         for phase_def in PHASE_DEFS:
+            if phase_def["id"] == "ai_security" and scan_type not in (
+                VAPTScanType.FULL, VAPTScanType.LLM,
+            ):
+                continue
             if scan_type == VAPTScanType.SSL and phase_def["id"] not in ("recon", "crypto"):
                 continue
             if scan_type == VAPTScanType.NETWORK and phase_def["id"] not in ("recon", "crypto"):
@@ -257,8 +270,10 @@ class PlannerAgent:
             f"{target!r} (type {target_info.get('type')}), select the best Kali tools "
             "per VAPT phase from: nmap, masscan, dnsrecon, subfinder, nikto, nuclei, "
             "sqlmap, gobuster, ffuf, httpx, whatweb, wafw00f, arjun, commix, dalfox, "
-            "hydra, sslscan, testssl. "
-            "Return JSON {\"phases\":[{\"id\":\"recon|enumeration|vuln_scan|brute_force|crypto\","
+            "hydra, sslscan, testssl, garak. "
+            "For FULL scans include ALL scan types (network, web, API, SSL/TLS, "
+            "container, AI/LLM security - garak). "
+            "Return JSON {\"phases\":[{\"id\":\"recon|enumeration|vuln_scan|brute_force|crypto|ai_security\","
             "\"tools\":[\"nmap\",...]}]}. Only include tools above and phases relevant to the target type."
         )
         if llm_plan and isinstance(llm_plan, dict) and llm_plan.get("phases"):

@@ -590,7 +590,7 @@ class AIOrchestrator:
             VAPTScanType.SSL: ["sslscan", "nmap"],
             VAPTScanType.CONTAINER: ["trivy"],
             VAPTScanType.LLM: ["garak"],
-            VAPTScanType.FULL: ["nmap", "nikto", "nuclei", "gobuster", "sslscan"],
+            VAPTScanType.FULL: ["nmap", "masscan", "dnsrecon", "subfinder", "nikto", "nuclei", "gobuster", "ffuf", "whatweb", "httpx", "api-surface", "sslscan", "testssl", "trivy", "garak", "forms"],
         }
         return tool_selection.get(scan_type, ["nmap"])
 
