@@ -26,7 +26,6 @@ class VAPTExecutor:
     def __init__(self):
         self._last_run: Dict[str, float] = {}
         self._rate_limit = 1.0
-        self._demo_mode = os.environ.get("VAPT_DEMO_MODE", "false").lower() == "true"
         self._use_docker = os.environ.get("VAPT_USE_DOCKER", "true").lower() == "true"
         self._docker_client = None
 
@@ -47,13 +46,18 @@ class VAPTExecutor:
             started_at=datetime.utcnow(),
         )
 
-        if self._demo_mode or not self._use_docker:
-            return await self._execute_demo_scan(request, result)
+        if not self._use_docker:
+            result.errors.append("Docker execution disabled (VAPT_USE_DOCKER=false) and no fallback available")
+            result.status = "failed"
+            result.finalize("failed", "Docker execution required for real scans")
+            return result
 
         try:
             if not await self._check_docker():
-                result.errors.append("Docker not available, using demo mode")
-                return await self._execute_demo_scan(request, result)
+                result.errors.append("Docker not available - cannot execute real scans")
+                result.status = "failed"
+                result.finalize("failed", "Docker unavailable")
+                return result
 
             tools = self._resolve_tools(request)
 
@@ -204,6 +208,15 @@ class VAPTExecutor:
         host = target.split("://")[-1].split("/")[0]
         return host
 
+    def _explicit_port(self, target: str) -> Optional[str]:
+        """Return the port explicitly present in the target URL, else None."""
+        host = target.split("://")[-1].split("/")[0]
+        if ":" in host:
+            port = host.rsplit(":", 1)[-1]
+            if port.isdigit():
+                return port
+        return None
+
     def _target_port(self, target: str) -> str:
         """Extract an explicit port from a URL target, else the scheme default."""
         host = target.split("://")[-1].split("/")[0]
@@ -242,6 +255,10 @@ class VAPTExecutor:
         from app.vapt.wordlists import get_wordlist
 
         target = self._resolve_target(target)
+        host_port = self._host_port_target(target)
+        host_only = host_port.split(":", 1)[0]
+        explicit_port = self._explicit_port(target)
+        port_scope = explicit_port or "1-10000"
         wl_dirs = get_wordlist("dirs")
         wl_dirs_medium = get_wordlist("dirs_medium")
         wl_sub = get_wordlist("subdomains")
@@ -250,7 +267,7 @@ class VAPTExecutor:
         wl_fuzz = get_wordlist("fuzz")
 
         tool_cmd = {
-            "nmap": f"nmap -sV -Pn -T4 --top-ports 100 -oX - {target}",
+            "nmap": f"nmap -sV -Pn -T4 -p {port_scope} -oX - {host_only}",
             "sqlmap": f"sqlmap -u {target} --batch --random-agent --crawl=1 --output-dir=/tmp",
             "nuclei": f"nuclei -u {target} -json-export - -silent -rate-limit 150",
             "nikto": f"nikto -h {target} -Format xml -output -",
@@ -259,13 +276,13 @@ class VAPTExecutor:
             "sslscan": f"sslscan --xml=- --no-failed {target}",
             "trivy": f"trivy image --quiet --format json alpine:latest",
             "hydra": f"hydra -L {wl_users} -P {wl_rockyou} -t 4 -w 10 {self._host_port_target(target)} -s {self._target_port(target)}",
-            "dnsrecon": f"dnsrecon -d {target} -t std -j /tmp/dnsrecon.json > /dev/null 2>&1; cat /tmp/dnsrecon.json 2>/dev/null",
-            "gobuster-dns": f"gobuster dns -d {target} -w {wl_sub} -q",
+            "dnsrecon": f"dnsrecon -d {host_only} -t std -j /tmp/dnsrecon.json > /dev/null 2>&1; cat /tmp/dnsrecon.json 2>/dev/null",
+            "gobuster-dns": f"gobuster dns -d {host_only} -w {wl_sub} -q",
             "gobuster-vhost": f"gobuster vhost -u {target} -w {wl_dirs} -q",
             "ffuf-params": f"ffuf -u {target}?FUZZ=1 -w {wl_fuzz} -json",
-            "masscan": f"masscan -Pn --top-ports 100 -oX - --rate 1000 {target}",
-            "subfinder": f"subfinder -d {target} -jsonl -silent",
-            "httpx": f"httpx -u {target} -json -silent -threads 20",
+            "masscan": f"masscan -Pn -p {port_scope} -oX - --rate 1000 {host_only}",
+            "subfinder": f"subfinder -d {host_only} -json -silent",
+            "httpx": f"httpx-toolkit -u {target} -json -silent -threads 20",
             "whatweb": f"whatweb -a 3 --log-json=/tmp/whatweb.json {target} > /dev/null 2>&1; cat /tmp/whatweb.json",
             "wafw00f": f"wafw00f -f json -o /tmp/waf.json {target} > /dev/null 2>&1; cat /tmp/waf.json",
             "arjun": f"arjun -u {target} -oJ -q",
@@ -1280,74 +1297,6 @@ class VAPTExecutor:
         }
         return mapping.get(severity, VAPTSeverity.INFO)
 
-    async def _execute_demo_scan(
-        self,
-        request: VAPTScanRequest,
-        result: VAPTScanResult,
-    ) -> VAPTScanResult:
-        await asyncio.sleep(2)
-
-        demo_findings = [
-            VAPTFinding(
-                title="Open Port: 22/tcp",
-                description="SSH service detected - verify only authorized users have access",
-                severity=VAPTSeverity.MEDIUM,
-                tool_name="nmap",
-                target=request.target.value,
-                port=22,
-                protocol="tcp",
-                service="ssh",
-                remediation="Restrict SSH access to known IP addresses or disable password authentication",
-            ),
-            VAPTFinding(
-                title="Open Port: 443/tcp",
-                description="HTTPS service detected",
-                severity=VAPTSeverity.INFO,
-                tool_name="nmap",
-                target=request.target.value,
-                port=443,
-                protocol="tcp",
-                service="https",
-            ),
-            VAPTFinding(
-                title="SQL Injection Potential",
-                description="Possible SQL injection in user input fields",
-                severity=VAPTSeverity.HIGH,
-                tool_name="sqlmap",
-                target=request.target.value,
-                vulnerability_type="SQL Injection",
-                remediation="Use parameterized queries and input validation",
-            ),
-            VAPTFinding(
-                title="XSS in Search Parameter",
-                description="Reflected XSS detected",
-                severity=VAPTSeverity.HIGH,
-                tool_name="nuclei",
-                target=request.target.value,
-                path="/search?q=",
-                vulnerability_type="Cross-Site Scripting (XSS)",
-                remediation="Implement output encoding and CSP headers",
-            ),
-            VAPTFinding(
-                title="Missing Security Headers",
-                description="X-Frame-Options, CSP not set",
-                severity=VAPTSeverity.LOW,
-                tool_name="nuclei",
-                target=request.target.value,
-                vulnerability_type="Security Misconfiguration",
-                remediation="Add security headers",
-            ),
-        ]
-
-        for finding in demo_findings:
-            result.add_finding(finding)
-
-        result.status = "completed"
-        result.message = f"Found {len(result.findings)} vulnerabilities"
-        result.finalize("completed", result.message)
-        return result
-
-
     def run_tool_sync(self, tool_id: str, target: str, timeout: int = 120) -> str:
         tool = get_tool(tool_id)
         if not tool:
@@ -1380,11 +1329,11 @@ class VAPTExecutor:
         if not tool:
             return [], "", f"Unknown tool: {tool_id}"
 
-        if self._demo_mode or not self._use_docker:
-            return self._demo_agent_tool(tool, target), "", None
+        if not self._use_docker:
+            return [], "", "Docker execution disabled (VAPT_USE_DOCKER=false)"
 
         if not await self._check_docker():
-            return self._demo_agent_tool(tool, target), "", None
+            return [], "", "Docker not available - cannot execute real scans"
 
         target = target.strip()
         if tool.requires_url and not target.startswith(("http://", "https://")):
@@ -1417,37 +1366,6 @@ class VAPTExecutor:
             return [], "", f"{tool_id}: timed out after {tool.timeout}s"
         except Exception as e:
             return [], "", f"{tool_id}: {str(e)}"
-
-    def _demo_agent_tool(self, tool: VAPTTool, target: str) -> List[VAPTFinding]:
-        """Synthetic findings so the agent loop works in demo mode."""
-        if tool.phase == "recon":
-            return [VAPTFinding(
-                title=f"Open Port: 443/tcp",
-                description=f"{tool.name} detected an HTTPS service",
-                severity=VAPTSeverity.INFO,
-                tool_name=tool.name,
-                target=target,
-                port=443,
-                protocol="tcp",
-                service="https",
-            )]
-        if tool.phase == "deep":
-            return [VAPTFinding(
-                title=f"{tool.name} Potential Finding",
-                description=f"{tool.name} surfaced a candidate issue on {target}",
-                severity=VAPTSeverity.MEDIUM,
-                tool_name=tool.name,
-                target=target,
-                vulnerability_type="Agent-detected",
-                remediation="Review and confirm before remediation planning",
-            )]
-        return [VAPTFinding(
-            title=f"{tool.name} Discovery",
-            description=f"{tool.name} enumerated surface on {target}",
-            severity=VAPTSeverity.INFO,
-            tool_name=tool.name,
-            target=target,
-        )]
 
 
 _executor: Optional[VAPTExecutor] = None

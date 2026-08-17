@@ -79,7 +79,7 @@ curl http://localhost:8000/health
 
 - **Frontend**: http://localhost:3000
 - **API Docs**: http://localhost:8000/docs
-- **Login**: `demo@astraix.com` / `demo123456`
+- **Login**: Register a new account at `http://localhost:3000/register` or use the API to create an organization and user
 
 ---
 
@@ -209,10 +209,10 @@ uvicorn app.main:app --reload --host 0.0.0.0 --port 8000
 ### Testing API
 
 ```bash
-# Login
+# Login (after registering an account)
 curl -X POST http://localhost:8000/api/v1/auth/login/json \
   -H "Content-Type: application/json" \
-  -d '{"email":"demo@astraix.com","password":"demo123456"}'
+  -d '{"email":"your@email.com","password":"yourpassword"}'
 
 # Run VAPT scan
 curl -X POST http://localhost:8000/api/v1/vapt/scan/quick \

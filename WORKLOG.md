@@ -30,7 +30,7 @@ Todo list (ordered):
 
 - NGINX `:3001` → backend:8000; Next.js `:3000`; Redis 7 `:6379`; Postgres 16 `:5432` (db `astraix`, IDs varchar(36)); Neo4j 5.
 - Backend code volume-mounted (`./backend:/app`, NO `--reload` → container restart required after backend edits). Frontend: `docker-compose up -d --build frontend`.
-- Auth: `POST /api/v1/auth/login/json`, demo@astraix.com / demo123456 → Bearer access_token.
+- Auth: `POST /api/v1/auth/login/json` with registered credentials → Bearer access_token.
 - LLM: default `LLM_PROVIDER=ollama` (host.docker.internal:11434, huihui_ai/qwen2.5-abliterate:7b-instruct); NVIDIA NIM fallback deepseek-ai/deepseek-v4-pro (key in gitignored .env).
 - Stage caps: `VAPT_PLAN_TIMEOUT=60`, `VAPT_RESEARCH_TIMEOUT=90`, `VAPT_VERIFY_ALL_TIMEOUT=240`, `VAPT_REPORT_TIMEOUT=60`, `VAPT_STALL_SECONDS=300`, `KB_EMBEDDER_TIMEOUT=25`. Verifier: Semaphore(3), 60s/tool, VAPT_VERIFY_TIMEOUT=75, HIGH/CRITICAL only.
 - docker-py 7.2.0 removed `docker.errors.TimeoutError` → executor catches Exception, re-raises asyncio.TimeoutError when type name in (TimeoutError, ReadTimeout, ReadTimeoutError).

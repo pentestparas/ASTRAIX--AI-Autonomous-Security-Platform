@@ -19,7 +19,7 @@ curl http://localhost:8000/health          # backend 200
 curl http://localhost:3000                 # frontend 200
 ```
 
-- Login: `demo@astraix.com` / `demo123456`
+- Login: Register at `/register` then login (credentials stored in Postgres)
 - Auth token: `/tmp/astraix_token.txt` (re-login on 401 via `/api/v1/auth/login/json`)
 - Backend code is bind-mounted → restarts pick up changes; frontend is a baked image → `docker compose build frontend && docker compose up -d --no-deps frontend` after FE changes.
 - Kali tool image: `astraix-kali:latest` (includes `/opt/vapt/web_form_scanner.py` — forms tool).

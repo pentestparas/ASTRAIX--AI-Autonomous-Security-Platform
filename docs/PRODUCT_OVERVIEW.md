@@ -215,8 +215,6 @@ Access:
 - **API**: http://localhost:8000/api/v1
 - **Docs**: http://localhost:8000/docs
 
-**Demo Credentials**: `demo@astraix.com` / `demo123456`
-
 ---
 
 ## Roadmap

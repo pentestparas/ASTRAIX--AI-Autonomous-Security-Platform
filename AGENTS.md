@@ -30,16 +30,11 @@
 | `backend/app/vapt/agents/researcher.py` | Researcher Agent — enriches findings via knowledge base |
 | `backend/app/vapt/agents/verifier.py` | Verifier Agent — re-exploits findings to eliminate FPs |
 
-## Demo Credentials
-
-- **Email**: `demo@astraix.com`
-- **Password**: `demo123456`
-
 ## Docker Environment
 
 - Backend container runs as **root** (no gosu, no USER directive)
 - Docker socket mounted at `/var/run/docker.sock`
-- `VAPT_USE_DOCKER=true`, `VAPT_DEMO_MODE=false`
+- `VAPT_USE_DOCKER=true`
 - Kali image: `astraix-kali:latest` (NOT `kalilinux/kali-rolling:latest` which has zero tools)
 - **Knowledge base lives INSIDE Docker**: baked into the image at `/opt/astraix-kb` (via `COPY knowledge-base` in `docker/Dockerfile.backend`) and seeded on first boot by `docker/entrypoint.sh` into the named volume `kb-data` mounted at `/app/knowledge-base`. The host folder is NOT bind-mounted — host AV (Bitdefender) cannot delete/quarantine it. Seed condition: `/app/knowledge-base/embeddings/chunks.json` missing → reseed (edit sources inside the volume with `docker cp` or remove `kb-data` volume + restart to reseed from image).
 - Knowledge base is accessible over HTTP (no direct FS access needed): `GET /api/v1/knowledge/search?q=...`, `/knowledge/stats`, `/knowledge/sources`, `/knowledge/source?path=sources/...` (path-traversal safe). AI agents consume it: planner (`KB_PATH=/app/knowledge-base`, TF-IDF/FAISS grounding), researcher (enrichment), verifier (best-effort `kb_exploit_context` on confirmed findings).
@@ -83,8 +78,7 @@ Multi-agent pipeline:
 
 | Variable | Value | Notes |
 |----------|-------|-------|
-| `VAPT_USE_DOCKER` | `true` | Real Docker exec (not demo mode) |
-| `VAPT_DEMO_MODE` | `false` | Set `true` for simulated results |
+| `VAPT_USE_DOCKER` | `true` | Real Docker exec |
 | `KALI_IMAGE` | `astraix-kali:latest` | Custom image with tools |
 
 ## Running the Stack
@@ -92,7 +86,7 @@ Multi-agent pipeline:
 ```bash
 docker-compose up -d
 curl http://localhost:8000/health
-# Login at http://localhost:3000 (demo@astraix.com / demo123456)
+# Register at http://localhost:3000/register then login
 ```
 
 ## Build Custom Kali Image

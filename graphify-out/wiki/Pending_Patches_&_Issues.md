@@ -300,7 +300,7 @@ Return ScanResult with findings
 ## Environment & Deployment
 
 - Docker stack: frontend (3000), backend (8000), postgres (5432), redis (6379)
-- Working credentials: `demo@astraix.com` / `demo123456`
+- Credentials: Register an account at `/register` (stored in Postgres)
 - Next.js 14.1.0 (downgraded from 15.0.0)
 - bcrypt 4.0.1 (pinned for compatibility)
 
