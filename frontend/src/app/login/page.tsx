@@ -24,9 +24,10 @@ export default function LoginPage() {
     setError("");
     try {
       const res = await authApi.login(email, password);
-      const tokenData = res as unknown as { access_token?: string; token_type?: string; expires_in?: number };
+      const tokenData = res as unknown as { access_token?: string; refresh_token?: string; token_type?: string; expires_in?: number };
       if (tokenData.access_token) {
         localStorage.setItem("access_token", tokenData.access_token);
+        if (tokenData.refresh_token) localStorage.setItem("refresh_token", tokenData.refresh_token);
         const userRes = await authApi.me();
         const userData = userRes as unknown as { id?: string; email?: string; organization_id?: string };
         if (userData.id) {
@@ -71,9 +72,10 @@ export default function LoginPage() {
       });
       if (res) {
         const loginRes = await authApi.login(email, password);
-        const tokenData = loginRes as unknown as { access_token?: string };
+        const tokenData = loginRes as unknown as { access_token?: string; refresh_token?: string };
         if (tokenData.access_token) {
           localStorage.setItem("access_token", tokenData.access_token);
+          if (tokenData.refresh_token) localStorage.setItem("refresh_token", tokenData.refresh_token);
           // Get organizations - backend returns array directly
           const orgsRes = await organizationsApi.list();
           const orgs = (orgsRes as unknown as Array<{ id?: string }>) || [];

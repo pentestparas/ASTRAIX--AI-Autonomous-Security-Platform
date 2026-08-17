@@ -1,7 +1,7 @@
 from datetime import datetime, timedelta
 from typing import Optional
 from uuid import UUID
-from fastapi import APIRouter, Depends, HTTPException, status, Response, Request
+from fastapi import APIRouter, Depends, HTTPException, status, Response, Request, Header
 from fastapi.security import OAuth2PasswordRequestForm
 from sqlalchemy.ext.asyncio import AsyncSession
 from pydantic import BaseModel, EmailStr, Field, ConfigDict
@@ -9,6 +9,7 @@ from pydantic import BaseModel, EmailStr, Field, ConfigDict
 from app.database.session import get_session
 from app.core.auth import (
     create_access_token,
+    create_refresh_token,
     get_current_active_user,
     get_current_user,
     get_password_hash,
@@ -33,6 +34,7 @@ router = APIRouter(prefix="/auth", tags=["Authentication"])
 
 class Token(BaseModel):
     access_token: str
+    refresh_token: Optional[str] = None
     token_type: str = "bearer"
     expires_in: int
 
@@ -221,6 +223,7 @@ async def login(
     )
     return Token(
         access_token=access_token,
+        refresh_token=create_refresh_token({"sub": str(user.id)}),
         expires_in=int(access_token_expires.total_seconds()),
     )
 
@@ -251,6 +254,7 @@ async def login_json(
     )
     return Token(
         access_token=access_token,
+        refresh_token=create_refresh_token({"sub": str(user.id)}),
         expires_in=int(access_token_expires.total_seconds()),
     )
 
@@ -306,16 +310,46 @@ async def register(
 
 @router.post("/refresh", response_model=Token)
 async def refresh_token(
-    current_user: User = Depends(get_current_active_user),
+    payload: Optional[dict] = None,
+    refresh: Optional[str] = None,
+    refresh_header: Optional[str] = Header(default=None, alias="X-Refresh-Token"),
+    db: AsyncSession = Depends(get_session),
 ):
-    """Refresh access token."""
+    """Refresh access token using a refresh token.
+
+    The refresh token is validated directly - this endpoint deliberately has
+    NO valid-access-token dependency, so it works even after the access token
+    has expired. Accepted via the ``refresh_token`` JSON field or the
+    ``X-Refresh-Token`` header.
+    """
+    from app.core.auth import decode_token
+
+    token_str = (payload or {}).get("refresh_token") or refresh or refresh_header
+    if not token_str:
+        raise HTTPException(status_code=401, detail="Refresh token missing")
+
+    try:
+        token_payload = decode_token(token_str)
+    except HTTPException:
+        raise HTTPException(status_code=401, detail="Invalid or expired refresh token")
+    if token_payload.get("type") != "refresh":
+        raise HTTPException(status_code=401, detail="Invalid token type")
+    user_id = token_payload.get("sub")
+    if not user_id:
+        raise HTTPException(status_code=401, detail="Invalid token payload")
+
+    user = await get_user_repo(db).get(UUID(user_id))
+    if not user or not user.is_active:
+        raise HTTPException(status_code=401, detail="User not found or inactive")
+
     access_token_expires = timedelta(minutes=settings.ACCESS_TOKEN_EXPIRE_MINUTES)
     access_token = create_access_token(
-        data={"sub": str(current_user.id)},
+        data={"sub": str(user.id)},
         expires_delta=access_token_expires,
     )
     return Token(
         access_token=access_token,
+        refresh_token=create_refresh_token({"sub": str(user.id)}),
         expires_in=int(access_token_expires.total_seconds()),
     )
 

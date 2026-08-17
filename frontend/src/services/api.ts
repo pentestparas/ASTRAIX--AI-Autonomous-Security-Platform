@@ -26,6 +26,7 @@ const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || "/api/v1";
 
 class ApiClient {
   private client: AxiosInstance;
+  private refreshPromise: Promise<string> | null = null;
 
   constructor() {
     this.client = axios.create({
@@ -51,16 +52,49 @@ class ApiClient {
     this.client.interceptors.response.use(
       (response) => response,
       async (error) => {
-        if (error.response?.status === 401) {
-          if (typeof window !== "undefined") {
-            localStorage.removeItem("access_token");
-            localStorage.removeItem("refresh_token");
+        const original = error.config as (InternalAxiosRequestConfig & { _retried?: boolean }) | undefined;
+        if (error.response?.status === 401 && original && !original._retried && typeof window !== "undefined") {
+          const refreshToken = localStorage.getItem("refresh_token");
+          if (refreshToken) {
+            try {
+              const newToken = await this.refreshAccessToken(refreshToken);
+              localStorage.setItem("access_token", newToken);
+              original._retried = true;
+              original.headers = original.headers || {};
+              original.headers.Authorization = `Bearer ${newToken}`;
+              return this.client(original);
+            } catch {
+              // refresh failed - fall through to logout
+            }
+          }
+          localStorage.removeItem("access_token");
+          localStorage.removeItem("refresh_token");
+          if (!window.location.pathname.startsWith("/login")) {
             window.location.href = "/login";
           }
         }
         return Promise.reject(error);
       }
     );
+  }
+
+  private async refreshAccessToken(refreshToken: string): Promise<string> {
+    if (!this.refreshPromise) {
+      this.refreshPromise = axios
+        .post<TokenResponse>(`${API_BASE_URL}/auth/refresh`, { refresh_token: refreshToken }, { timeout: 30000 })
+        .then((res) => {
+          const data = res.data as any;
+          const token = data.access_token;
+          if (data.refresh_token) {
+            localStorage.setItem("refresh_token", data.refresh_token);
+          }
+          return token;
+        })
+        .finally(() => {
+          this.refreshPromise = null;
+        });
+    }
+    return this.refreshPromise;
   }
 
   async get<T>(url: string, params?: Record<string, unknown>) {
