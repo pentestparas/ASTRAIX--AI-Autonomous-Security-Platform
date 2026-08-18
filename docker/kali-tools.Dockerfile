@@ -108,4 +108,42 @@ RUN pip3 install --no-cache-dir --break-system-packages \
 COPY docker/scripts/garak_scanner.py /opt/vapt/garak_scanner.py
 # API/endpoint surface discovery scanner used by the 'api-surface' tool
 COPY docker/scripts/api_surface_scanner.py /opt/vapt/api_surface_scanner.py
+# Secure code review: clones the app's public repo and runs semgrep/bandit/gitleaks
+COPY docker/scripts/code_review_scanner.py /opt/vapt/code_review_scanner.py
+# CodeQL CLI (GitHub's SAST engine) + Java runtime for it
+# GitHub's release CDN throttles/stalls big downloads (~170KB/s from this
+# network). Resume-loop with per-attempt timeouts; if it never completes,
+# build WITHOUT codeql rather than failing the whole image.
+RUN apt-get update -qq && apt-get install -y -qq default-jre-headless unzip \
+    > /dev/null 2>&1 && \
+    i=0; while [ $i -lt 10 ]; do \
+        curl -sL -C - --max-time 300 -o /tmp/codeql.zip \
+            https://github.com/github/codeql-cli-binaries/releases/latest/download/codeql-linux64.zip \
+        && break; i=$((i+1)); sleep 2; \
+    done; \
+    if [ -s /tmp/codeql.zip ] && unzip -tq /tmp/codeql.zip > /dev/null 2>&1; then \
+        unzip -q /tmp/codeql.zip -d /opt/codeql && rm /tmp/codeql.zip && \
+        ln -s /opt/codeql/*/codeql /usr/local/bin/codeql; \
+    else \
+        echo "CodeQL download failed; building without codeql"; \
+    fi
+# Trivy (offline dependency-vuln / IaC / secret scanning - Snyk equivalent)
+# Same flaky-release-CDN tolerance as codeql: resume-loop, build without it
+# if the download never completes.
+RUN i=0; while [ $i -lt 6 ]; do \
+        curl -sL -C - --max-time 240 -o /tmp/trivy.tar.gz \
+            https://github.com/aquasecurity/trivy/releases/download/v0.57.1/trivy_0.57.1_Linux-ARM64.tar.gz \
+        && break; i=$((i+1)); sleep 2; \
+    done; \
+    if tar tzf /tmp/trivy.tar.gz > /dev/null 2>&1; then \
+        tar xzf /tmp/trivy.tar.gz -C /usr/local/bin trivy && rm /tmp/trivy.tar.gz; \
+    else \
+        echo "Trivy download failed; building without trivy"; \
+    fi
+# API business-logic flows (BOLA, JWT, login SQLi, price tampering)
+COPY docker/scripts/flows_engine.py /opt/vapt/flows_engine.py
+# DOM XSS: headless Chromium rendered-DOM payload tests + client JS sink scan
+RUN apt-get update -qq && apt-get install -y -qq chromium > /dev/null 2>&1 || \
+    apt-get install -y -qq chromium-browser
+COPY docker/scripts/dom_xss_scanner.py /opt/vapt/dom_xss_scanner.py
 CMD ["bash"]

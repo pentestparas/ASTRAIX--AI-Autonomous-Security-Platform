@@ -61,11 +61,15 @@ class Settings(BaseSettings):
     # NVIDIA NIM (OpenAI-compatible)
     NVIDIA_API_KEY: Optional[str] = None
     NVIDIA_BASE_URL: str = "https://integrate.api.nvidia.com/v1"
-    AI_MODEL: str = "deepseek-ai/deepseek-v4-flash-0731"
+    AI_MODEL: str = "minimaxai/minimax-m3"
+    # Retry model when the primary NIM build is busy/retired
+    AI_MODEL_FALLBACK: str = "deepseek-ai/deepseek-v4-flash-0731"
+    # LLM test-matrix / attack-chain model (LLM-assisted analysis phase)
+    AI_MATRIX_MODEL: str = "deepseek-ai/deepseek-v4-flash-0731"
 
-    # LLM provider selection: "auto" (ollama -> nvidia), "nvidia", "ollama"
-    # Ollama is preferred by default to avoid third-party API latency.
-    LLM_PROVIDER: str = "ollama"
+    # LLM provider selection: "auto" (nvidia -> ollama), "nvidia", "ollama"
+    # NVIDIA minimax-m3 is the product LLM; Ollama qwen3 is the local fallback.
+    LLM_PROVIDER: str = "auto"
     LLM_TIMEOUT: int = 300
 
     # Local Ollama fallback

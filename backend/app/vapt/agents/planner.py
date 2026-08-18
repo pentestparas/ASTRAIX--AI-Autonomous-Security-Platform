@@ -40,10 +40,10 @@ PHASE_DEFS: List[Dict[str, Any]] = [
     },
     {
         "id": "vuln_scan",
-        "name": "Vulnerability Detection",
-        "description": "Actively probe for known vulnerabilities with signature engines and injection detectors.",
-        "tools": ["nuclei", "sqlmap", "commix", "dalfox"],
-        "kb_query": "vulnerability scanning nuclei sqlmap commix dalfox OWASP top 10 injection",
+        "name": "Vulnerability Detection & Exploitation",
+        "description": "Actively probe for known vulnerabilities AND exploit them with injection engines, metasploit modules and session abuse: sqlmap --level/--risk, commix, dalfox, metasploit, jwt, dom-xss, flows.",
+        "tools": ["nuclei", "sqlmap", "commix", "dalfox", "metasploit", "flows", "dom-xss", "jwt"],
+        "kb_query": "vulnerability scanning exploitation sqlmap commix dalfox metasploit OWASP top 10 injection session abuse",
     },
     {
         "id": "brute_force",
@@ -88,10 +88,12 @@ TOOL_KB_QUERIES: Dict[str, str] = {
     "hydra": "hydra brute force weak credentials ssh http",
     "testssl": "testssl TLS SSL configuration audit cipher suite",
     "garak": "garak LLM security prompt injection jailbreak data leakage probe",
+    "metasploit": "metasploit exploit modules payloads vulnerability exploitation",
+    "flows": "API business logic flows BOLA JWT session abuse price tampering OWASP API top 10",
+    "dom-xss": "DOM based XSS client side JavaScript sinks headless browser detection",
+    "jwt": "JWT token security algorithm confusion none algorithm secret brute force session integrity",
     "forms": "web form API chatbot scanner prompt injection SQL injection XSS",
 }
-
-
 class PlannerAgent:
     """Knowledge-base-grounded plan generator for VAPT scans."""
 
@@ -123,27 +125,29 @@ class PlannerAgent:
                 max_retries=0,
             )
             last_error: Optional[Exception] = None
-            for attempt in range(2):
-                try:
-                    response = await client.chat.completions.create(
-                        model=settings.AI_MODEL,
-                        messages=messages,
-                        temperature=0.2,
-                        max_tokens=600,
-                    )
-                    return (response.choices[0].message.content or "").strip()
-                except Exception as e:  # 529/429 overloads, 5xx
-                    last_error = e
-                    retryable = getattr(e, "status_code", None) in (429, 500, 502, 503, 529)
-                    logger.warning(
-                        "NVIDIA attempt %d failed (%s): %s",
-                        attempt + 1,
-                        "retryable" if retryable else "non-retryable",
-                        e,
-                    )
-                    if not retryable:
-                        break
-                    await asyncio.sleep(2 * (attempt + 1))
+            for model in (settings.AI_MODEL, settings.AI_MODEL_FALLBACK):
+                for attempt in range(2):
+                    try:
+                        response = await client.chat.completions.create(
+                            model=model,
+                            messages=messages,
+                            temperature=0.2,
+                            max_tokens=600,
+                        )
+                        return (response.choices[0].message.content or "").strip()
+                    except Exception as e:  # 529/429 overloads, 5xx
+                        last_error = e
+                        retryable = getattr(e, "status_code", None) in (429, 500, 502, 503, 529)
+                        logger.warning(
+                            "NVIDIA attempt %d failed on %s (%s): %s",
+                            attempt + 1,
+                            model,
+                            "retryable" if retryable else "non-retryable",
+                            e,
+                        )
+                        if not retryable:
+                            break
+                        await asyncio.sleep(2 * (attempt + 1))
             logger.warning("NVIDIA NIM failed after retries: %s", last_error)
             return None
         except Exception as e:
@@ -186,16 +190,20 @@ class PlannerAgent:
                 "content": (
                     "You are a senior penetration testing planner. "
                     "You decide the exact Kali tools and phases for a VAPT engagement. "
-                    "Respond ONLY with valid JSON."
+                    "Prioritize EXPLOITATION over passive recon: include deep "
+                    "exploitation tools (sqlmap --level/--risk, metasploit, commix, "
+                    "hydra, dalfox, zap, flows, jwt, dom-xss) as soon as web "
+                    "endpoints exist. Respond ONLY with valid JSON."
                 ),
             },
             {"role": "user", "content": prompt},
         ]
 
         providers: List[Tuple[str, Callable[[List[Dict[str, str]]], Awaitable[Optional[str]]]]] = []
-        if settings.LLM_PROVIDER in ("auto", "ollama"):
-            providers.append(("Ollama", self._ollama_refine))
-        if settings.LLM_PROVIDER in ("auto", "nvidia"):
+        if settings.LLM_PROVIDER in ("auto", "ollama", "nvidia"):
+            if settings.LLM_PROVIDER != "nvidia":
+                # Ollama (qwen3) is the PRIMARY planner LLM; NVIDIA is secondary.
+                providers.append(("Ollama", self._ollama_refine))
             providers.append(("NVIDIA", self._nvidia_refine))
 
         for name, call in providers:
@@ -280,9 +288,12 @@ class PlannerAgent:
             f"{target!r} (type {target_info.get('type')}), select the best Kali tools "
             "per VAPT phase from: nmap, masscan, dnsrecon, subfinder, nikto, nuclei, "
             "sqlmap, gobuster, ffuf, httpx, whatweb, wafw00f, arjun, commix, dalfox, "
-            "hydra, sslscan, testssl, garak. "
+            "hydra, sslscan, testssl, garak, api-surface, code-review, flows, dom-xss. "
             "For FULL scans include ALL scan types (network, web, API, SSL/TLS, "
-            "container, AI/LLM security - garak). "
+            "container, AI/LLM security - garak) plus deeper application coverage "
+            "with api-surface, code-review (static source review), flows (API "
+            "business logic: BOLA, JWT, SQLi login, price tampering) and dom-xss "
+            "(client-side DOM XSS). "
             "Return JSON {\"phases\":[{\"id\":\"recon|enumeration|vuln_scan|brute_force|crypto|ai_security\","
             "\"tools\":[\"nmap\",...]}]}. Only include tools above and phases relevant to the target type."
         )

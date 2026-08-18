@@ -1,0 +1,8 @@
+node_modules
+.git
+.venv
+__pycache__
+*.pyc
+.env
+graphify-out
+**/imagetragik1_payload_xml_reverse_shell_nctraditional.xml=>(URL)

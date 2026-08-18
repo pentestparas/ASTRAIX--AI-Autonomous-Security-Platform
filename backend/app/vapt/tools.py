@@ -425,6 +425,54 @@ TOOLS_REGISTRY: Dict[str, VAPTTool] = {
         requires_url=True,
         output_format="jsonl",
     ),
+    "code-review": VAPTTool(
+        id="code-review",
+        name="Secure Code Review",
+        command="code_review_scanner",
+        description=(
+            "Static source review - fingerprints the app, clones its public "
+            "repository, runs semgrep/CodeQL/bandit/gitleaks/trivy on the code "
+            "to find code-review level vulnerabilities (SQLi sinks, JWT alg "
+            "confusion, hardcoded secrets, dependency CVEs, unsafe middleware)"
+        ),
+        category=VAPTScanType.API,
+        args=[],
+        timeout=900,
+        requires_url=True,
+        output_format="jsonl",
+    ),
+    "flows": VAPTTool(
+        id="flows",
+        name="API Flow Security",
+        command="flows_engine",
+        description=(
+            "Business-logic API flows - registers/logs in, then probes for "
+            "broken object-level authorization (BOLA), broken function-level "
+            "authorization, JWT alg:none forgery, login SQL injection and "
+            "price tampering via multi-step flows"
+        ),
+        category=VAPTScanType.API,
+        args=[],
+        timeout=600,
+        requires_url=True,
+        output_format="jsonl",
+    ),
+    "dom-xss": VAPTTool(
+        id="dom-xss",
+        name="DOM XSS Probe",
+        command="dom_xss_scanner",
+        description=(
+            "Client-side security - headless Chromium renders pages with XSS "
+            "payloads in query/hash/params and checks the DOM for execution, "
+            "plus static analysis of client JS bundles for dangerous sinks "
+            "fed by location.hash/search"
+        ),
+        category=VAPTScanType.WEB,
+        args=[],
+        timeout=600,
+        requires_url=True,
+        output_format="jsonl",
+    ),
 }
 
 TOOLS_BY_CATEGORY: Dict[VAPTScanType, List[str]] = {
@@ -434,6 +482,7 @@ TOOLS_BY_CATEGORY: Dict[VAPTScanType, List[str]] = {
     VAPTScanType.SSL: ["sslscan", "testssl"],
     VAPTScanType.CONTAINER: ["trivy"],
     VAPTScanType.LLM: ["garak"],
+    VAPTScanType.CODE_REVIEW: ["code-review", "gitleaks", "trufflehog", "semgrep", "bandit"],
     # FULL = every agent-visible tool (all scan types: network, web, API,
     # SSL/TLS, container, AI/LLM security).
     VAPTScanType.FULL: sorted(
@@ -448,6 +497,7 @@ DEFAULT_TOOLS: Dict[VAPTScanType, List[str]] = {
     VAPTScanType.SSL: ["sslscan"],
     VAPTScanType.CONTAINER: ["trivy"],
     VAPTScanType.LLM: ["garak"],
+    VAPTScanType.CODE_REVIEW: ["code-review"],
     # FULL = every agent-visible tool (all scan types: network, web, API,
     # SSL/TLS, container, AI/LLM security).
     VAPTScanType.FULL: sorted(
@@ -498,6 +548,9 @@ TOOL_GATING: Dict[str, Dict[str, Any]] = {
     "zap": {"phase": "deep", "dangerous": True},
     "garak": {"phase": "deep"},
     "api-surface": {"phase": "web"},
+    "code-review": {"phase": "deep"},
+    "flows": {"phase": "deep"},
+    "dom-xss": {"phase": "deep"},
 }
 
 for _tid, _gate in TOOL_GATING.items():
@@ -521,6 +574,7 @@ AGENT_LOOP_CATEGORIES = {
     VAPTScanType.WEB,
     VAPTScanType.API,
     VAPTScanType.SSL,
+    VAPTScanType.CODE_REVIEW,
     VAPTScanType.FULL,
 }
 
@@ -540,6 +594,10 @@ def get_agent_pool(scan_type: VAPTScanType) -> List[VAPTTool]:
         pool = [t for t in pool if t.phase != "web"]
     elif scan_type == VAPTScanType.API:
         pool = [t for t in pool if t.phase in ("recon", "web")]
+    elif scan_type == VAPTScanType.CODE_REVIEW:
+        pool = [t for t in pool if t.id in (
+            "code-review", "gitleaks", "trufflehog", "semgrep", "bandit", "flows",
+        )]
     return pool
 
 

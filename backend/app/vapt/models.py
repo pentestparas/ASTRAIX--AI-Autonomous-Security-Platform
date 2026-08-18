@@ -19,6 +19,7 @@ class VAPTScanType(str, Enum):
     SSL = "ssl"
     CONTAINER = "container"
     LLM = "llm"
+    CODE_REVIEW = "code_review"
     FULL = "full"
 
 
@@ -144,6 +145,7 @@ class VAPTScanRequest(BaseModel):
     tools: List[str] = Field(default_factory=list, description="Tool IDs to use, empty = auto")
     deep: bool = Field(default=False, description="Enable deep scanning")
     aggressive: bool = Field(default=False, description="Enable aggressive mode")
+    quick: bool = Field(default=False, description="Fast scan mode: bounded port scope, no agent loop")
     organization_id: Optional[UUID] = None
     project_id: Optional[UUID] = None
     assessment_id: Optional[UUID] = None

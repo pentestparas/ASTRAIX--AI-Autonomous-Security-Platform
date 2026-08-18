@@ -107,7 +107,7 @@ class VAPTExecutor:
         if tool.requires_url and not target.startswith(("http://", "https://")):
             target = f"http://{target}"
 
-        cmd = self._build_docker_command(tool, target)
+        cmd = self._build_docker_command(tool, target, quick=getattr(request, "quick", False))
         if not cmd:
             result.errors.append(f"Could not build command for {tool_id}")
             return
@@ -251,14 +251,15 @@ class VAPTExecutor:
             return resolved
         return target
 
-    def _build_docker_command(self, tool: VAPTTool, target: str) -> Optional[str]:
+    def _build_docker_command(self, tool: VAPTTool, target: str, quick: bool = False) -> Optional[str]:
         from app.vapt.wordlists import get_wordlist
 
         target = self._resolve_target(target)
         host_port = self._host_port_target(target)
         host_only = host_port.split(":", 1)[0]
         explicit_port = self._explicit_port(target)
-        port_scope = explicit_port or "1-10000"
+        default_scope = "80,443,3000,8000,8080,8443,9000,9443,3306,5432,22,21,25,445,3389,9200,6379,27017" if quick else "1-10000"
+        port_scope = explicit_port or default_scope
         wl_dirs = get_wordlist("dirs")
         wl_dirs_medium = get_wordlist("dirs_medium")
         wl_sub = get_wordlist("subdomains")
@@ -268,10 +269,16 @@ class VAPTExecutor:
 
         tool_cmd = {
             "nmap": f"nmap -sV -Pn -T4 -p {port_scope} -oX - {host_only}",
-            "sqlmap": f"sqlmap -u {target} --batch --random-agent --crawl=1 --output-dir=/tmp",
+            "sqlmap": (
+                f"sqlmap -u {target} --batch --random-agent --crawl=3 --level=3 --risk=2 "
+                f"--forms --threads=4 --output-dir=/tmp; "
+                f"RC=$(curl -s -o /dev/null -w \"%{{http_code}}\" \"{target}/rest/products/search?q=test\"); "
+                f"[ \"$RC\" = \"200\" ] && sqlmap -u \"{target}/rest/products/search?q=test\" "
+                f"--batch --random-agent --level=3 --risk=2 --output-dir=/tmp"
+            ),
             "nuclei": f"nuclei -u {target} -json-export - -silent -rate-limit 150",
             "nikto": f"nikto -h {target} -Format xml -output -",
-            "gobuster": f"gobuster dir -u {target} -w {wl_dirs} -o - -f -q -t 10",
+            "gobuster": f"gobuster dir -u {target} -w {wl_dirs} -o - -f -q -t 10 --wildcard",
             "ffuf": f"ffuf -u {target}/FUZZ -w {wl_dirs_medium} -json -rate 100",
             "sslscan": f"sslscan --xml=- --no-failed {target}",
             "trivy": f"trivy image --quiet --format json alpine:latest",
@@ -281,9 +288,9 @@ class VAPTExecutor:
             "gobuster-vhost": f"gobuster vhost -u {target} -w {wl_dirs} -q",
             "ffuf-params": f"ffuf -u {target}?FUZZ=1 -w {wl_fuzz} -json",
             "masscan": (
-                f'IP=$(getent ahostsv4 {host_only} | awk \'{{print $1; exit}}\'); '
+                f'IP=$(getent ahostsv4 {host_only} | head -1 | cut -d" " -f1); '
                 f'[ -z "$IP" ] && IP={host_only}; '
-                f"masscan -Pn -p {port_scope} -oX - --wait 0 --rate 1000 \"$IP\""
+                f'masscan -Pn -p {port_scope} -oX - --wait 0 --rate 1000 "$IP"'
             ),
             "subfinder": f"subfinder -d {host_only} -json -silent",
             "httpx": f"httpx-toolkit -u {target} -json -silent -threads 20",
@@ -329,19 +336,28 @@ class VAPTExecutor:
             "api-surface": (
                 f"python3 /opt/vapt/api_surface_scanner.py {target} 2>/dev/null"
             ),
+            "code-review": (
+                f"python3 /opt/vapt/code_review_scanner.py {target} 2>/dev/null"
+            ),
+            "flows": (
+                f"python3 /opt/vapt/flows_engine.py {target} 2>/dev/null"
+            ),
+            "dom-xss": (
+                f"python3 /opt/vapt/dom_xss_scanner.py {target} 2>/dev/null"
+            ),
             "zap": (
                 'Z=http://zap:8080; A=astraixzap; '
                 'curl -s "$Z/JSON/core/action/newSession?name=scan&overwrite=true&apikey=$A" >/dev/null; '
                 'curl -s "$Z/JSON/core/action/accessUrl?url=' + target + '&followRedirects=true&apikey=$A" >/dev/null; '
-                'SID=$(curl -s "$Z/JSON/spider/action/scan?url=' + target + '&maxChildren=10&apikey=$A" | jq -r .scan); '
-                'for i in $(seq 1 75); do '
+                'SID=$(curl -s "$Z/JSON/spider/action/scan?url=' + target + '&maxChildren=100&apikey=$A" | jq -r .scan); '
+                'for i in $(seq 1 300); do '
                 'P=$(curl -s "$Z/JSON/spider/view/status?scanId=$SID&apikey=$A" | jq -r .status); '
                 '[ "$P" = "100" ] && break; sleep 2; done; '
                 'ASID=$(curl -s "$Z/JSON/ascan/action/scan?url=' + target + '&recurse=true&apikey=$A" | jq -r .scan); '
                 'for i in $(seq 1 250); do '
                 'P=$(curl -s "$Z/JSON/ascan/view/status?scanId=$ASID&apikey=$A" | jq -r .status); '
                 '[ "$P" = "100" ] && break; sleep 2; done; '
-                'curl -s "$Z/JSON/core/view/alerts?baseurl=' + target + '&start=0&count=100&apikey=$A" 2>/dev/null'
+                'curl -s "$Z/JSON/core/view/alerts?start=0&count=500&apikey=$A" 2>/dev/null'
             ),
         }.get(tool.id)
 
@@ -403,6 +419,9 @@ class VAPTExecutor:
             "garak": self._parse_garak,
             "api-surface": self._parse_api_surface,
             "zap": self._parse_zap,
+            "code-review": self._parse_api_surface,
+            "flows": self._parse_api_surface,
+            "dom-xss": self._parse_api_surface,
         }
         parser = parser_map.get(tool.id, self._parse_generic)
         return parser(output, target, tool.name)
@@ -1310,6 +1329,7 @@ class VAPTExecutor:
             return ""
         if tool.requires_url and not target.startswith(("http://", "https://")):
             target = f"http://{target}"
+
         cmd = self._build_docker_command(tool, target)
         if not cmd:
             return ""
@@ -1350,6 +1370,31 @@ class VAPTExecutor:
         if not cmd:
             return [], "", f"Could not build command for {tool_id}"
         if extra_args:
+            cmd_flags = {
+                tok.split("=")[0]
+                for tok in cmd.split()
+                if tok.startswith("-") and len(tok) > 1
+            }
+            keep: List[str] = []
+            toks = extra_args.split()
+            i = 0
+            while i < len(toks):
+                cur = toks[i]
+                if cur.startswith("-") and len(cur) > 1:
+                    flag = cur.split("=")[0]
+                    if flag in cmd_flags:
+                        i += 1
+                        if (
+                            "=" not in cur
+                            and i < len(toks)
+                            and not toks[i].startswith("-")
+                        ):
+                            i += 1
+                        continue
+                keep.append(cur)
+                i += 1
+            extra_args = " ".join(keep)
+        if extra_args:
             cmd = f"{cmd} {extra_args}"
 
         cmd = f"timeout --kill-after=5 {tool.timeout}s bash -c '{cmd}'"
@@ -1373,6 +1418,51 @@ class VAPTExecutor:
             return [], "", f"{tool_id}: timed out after {tool.timeout}s"
         except Exception as e:
             return [], "", f"{tool_id}: {str(e)}"
+
+    async def run_arbitrary_command(
+        self,
+        command: str,
+        timeout: int = 60,
+    ) -> "tuple[str, Optional[str]]":
+        """Run a raw command inside the Kali container (e.g. a curl probe).
+
+        Returns ``(output, error)``; never raises for command failures.
+        Used by the test-matrix phase to execute HTTP payload entries with
+        full PoC evidence capture.
+        """
+        if not self._use_docker:
+            return "", "Docker execution disabled (VAPT_USE_DOCKER=false)"
+
+        if not await self._check_docker():
+            return "", "Docker not available - cannot execute probes"
+
+        # The probe command may contain single quotes (payloads); embedding it
+        # directly in `bash -c '...'` breaks quoting. Base64 the command and
+        # pipe it into bash - no eval, so $() payloads are never evaluated.
+        import base64
+
+        encoded = base64.b64encode(command.encode("utf-8")).decode("ascii")
+        inner = f"echo {encoded} | base64 -d | bash"
+        cmd = f"timeout --kill-after=5 {timeout}s bash -c '{inner}'"
+        container_name = f"astraix-probe-{uuid4().hex[:8]}"
+
+        try:
+            output = await asyncio.wait_for(
+                asyncio.to_thread(
+                    self._run_container_sync,
+                    self.KALI_IMAGE,
+                    cmd,
+                    container_name,
+                    timeout,
+                ),
+                timeout=timeout + 30,
+            )
+            return output, None
+        except asyncio.TimeoutError:
+            self._kill_container(container_name)
+            return "", f"probe timed out after {timeout}s"
+        except Exception as e:
+            return "", f"probe failed: {str(e)}"
 
 
 _executor: Optional[VAPTExecutor] = None

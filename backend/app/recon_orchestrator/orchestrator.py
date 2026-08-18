@@ -129,7 +129,7 @@ class ReconOrchestrator:
         if tool.requires_url and not target.startswith(("http://", "https://")):
             target = f"http://{target}"
 
-        cmd = self._executor._build_docker_command(tool, target)
+        cmd = self._executor._build_docker_command(tool, target, quick=getattr(request, "quick", False))
         if not cmd:
             await self._emit(scan_id, "tool_failed", {"tool": tool_id, "reason": "no command"})
             return []

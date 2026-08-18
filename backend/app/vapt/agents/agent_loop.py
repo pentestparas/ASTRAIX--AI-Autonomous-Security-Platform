@@ -42,13 +42,29 @@ from app.vapt.tools import (
 
 logger = get_logger(__name__)
 
-MAX_STEPS = int(os.environ.get("VAPT_AGENT_MAX_STEPS", "20"))
-MIN_STEPS = int(os.environ.get("VAPT_AGENT_MIN_STEPS", "8"))
+# Tool IDs that count as real exploitation effort - the loop refuses to
+# conclude until at least two of these have been executed (maximum exploitation).
+_EXPLOIT_TOOLS = {
+    "sqlmap",
+    "metasploit",
+    "commix",
+    "hydra",
+    "zap",
+    "dalfox",
+    "flows",
+    "dom-xss",
+    "nikto",
+    "nuclei",
+}
+
+MAX_STEPS = int(os.environ.get("VAPT_AGENT_MAX_STEPS", "40"))
+MIN_STEPS = int(os.environ.get("VAPT_AGENT_MIN_STEPS", "12"))
 APPROVAL_TIMEOUT = int(os.environ.get("VAPT_APPROVAL_TIMEOUT", "300"))
-OBSERVATION_LIMIT = int(os.environ.get("VAPT_AGENT_OBSERVATION_LIMIT", "12000"))
+OBSERVATION_LIMIT = int(os.environ.get("VAPT_AGENT_OBSERVATION_LIMIT", "16000"))
 
 SYSTEM_PROMPT = """You are the autonomous VAPT (Vulnerability Assessment & Penetration Testing) agent for AstraIX.
-You are conducting an authorized security engagement against the provided target.
+You are conducting an authorized security engagement against the provided target. Your mission is MAXIMUM EXPLOITATION:
+discover every exploitable vulnerability and prove impact. Verify everything you find.
 
 Rules:
 1. Pick ONE security tool per turn using the provided functions. The tools are
@@ -56,20 +72,29 @@ Rules:
    now. After a recon step completes, web tools unlock (httpx, nikto, gobuster,
    ffuf, nuclei...). After a web step, deep tools unlock (sqlmap, hydra, sslscan...).
 2. Use the target as-is; do not invent targets. extra_args must be plain
-   command-line flags, never shell metacharacters.
+   command-line flags, never shell metacharacters. Pass deep flags that increase
+   thoroughness: sqlmap --level/--risk, gobuster larger wordlists, nuclei default
+   templates, hydra with the default wordlists.
 3. Ground every decision in the Knowledge Base guidance and KB observations in
-   the context: cite them when choosing a tool or payload strategy.
+   the context: cite them when choosing a tool or payload strategy. When the KB
+   supplies payloads (SQLi, XSS, auth bypass, RCE), feed them through the tools'
+   extra_args or the verifier's payload field to actively exploit targets.
 3. Tools marked [REQUIRES OPERATOR APPROVAL] will pause for a human decision.
    That is expected - proceed normally and describe why each is needed.
-4. If no more testing is meaningful or you have sufficient evidence, reply with
-   a FINAL REPORT as plain text starting with the line FINAL REPORT: followed by
-   a concise summary (key findings by severity, confidence, and recommended
-   next steps for the client). You may ONLY conclude once you have run at least
-   MIN_STEPS distinct tools, attempted the deep phase (zap, sqlmap, metasploit,
-   hydra...), and covered every unlocked phase. Early final reports will be
-   rejected.
-5. Never call a tool twice in a row with identical arguments.
-6. Do not test unrelated targets or expand scope beyond the given target."""
+4. EXPLOIT, DO NOT JUST RECON. Once you have web endpoints, go straight for the
+   deep exploitation tools: metasploit, sqlmap, commix, hydra, zap, dalfox,
+   flows (OAuth/flow abuse), jwt, dom-xss, nikto, nuclei. Prefer exploiting
+   findings over re-running recon. If a tool finds nothing, move to the next
+   exploitation tool - do not repeat tools with identical arguments.
+5. Conclude with a FINAL REPORT as plain text starting with the line
+   FINAL REPORT: followed by a concise summary (key findings by severity,
+   confidence, exploit evidence, and recommended next steps for the client).
+   You may ONLY conclude once you have run at least MIN_STEPS distinct tools,
+   attempted the deep phase (zap, sqlmap, metasploit, hydra...), covered every
+   unlocked phase, AND run every exploitation tool that could apply. Early
+   final reports will be rejected.
+6. Never call a tool twice in a row with identical arguments.
+7. Do not test unrelated targets or expand scope beyond the given target."""
 
 
 @dataclass
@@ -221,17 +246,18 @@ class AgentLoop:
         pool: List[Any],
     ) -> Tuple[bool, str]:
         """Return (rejected, reason) when the model may NOT write a final
-        report yet - enforces minimum tool diversity and deep-phase coverage."""
+        report yet - enforces minimum tool diversity, deep-phase coverage and
+        exploitation coverage (maximum exploitation)."""
         distinct = len({s.tool_id for s in steps if s.decision == "ran"})
         if step_index < MIN_STEPS:
             return True, (
                 f"You have only completed {step_index} steps. Run at least "
                 f"{MIN_STEPS} steps before concluding."
             )
-        if distinct < 3:
+        if distinct < 5:
             return True, (
                 f"You have only used {distinct} distinct tools. Use at least "
-                f"3 different tools before concluding."
+                f"5 different tools before concluding."
             )
         if "deep" not in completed_phases and any(
             t.phase == "deep" for t in pool
@@ -240,6 +266,17 @@ class AgentLoop:
                 "You have not attempted the deep phase yet (sqlmap, hydra, "
                 "metasploit, zap, dalfox...). Run at least one deep-phase "
                 "tool before concluding."
+            )
+        deep_ran = {
+            s.tool_id for s in steps if s.decision == "ran" and s.tool_id in _EXPLOIT_TOOLS
+        }
+        if len(deep_ran) < 2:
+            missing = sorted(_EXPLOIT_TOOLS - deep_ran)
+            return True, (
+                "Maximum exploitation is required: run at least 2 exploitation "
+                "tools (sqlmap, metasploit, commix, hydra, zap, dalfox, flows, "
+                f"jwt, dom-xss, nikto, nuclei). You have used {len(deep_ran)}. "
+                f"Unused: {', '.join(missing)}."
             )
         return False, ""
 
@@ -252,45 +289,15 @@ class AgentLoop:
     ) -> Tuple[Optional[str], List[Dict[str, Any]]]:
         """Call the LLM with function tools; return (text, tool_calls).
 
-        Prefers NVIDIA NIM (OpenAI-compatible), falls back to Ollama.
-        Returns (None, []) when no provider is reachable.
+        OLLAMA (qwen3 tool calling) is the PRIMARY provider, NVIDIA NIM
+        (minimax-m3 -> deepseek fallback) is the SECONDARY provider used only
+        when Ollama is down or returns nothing. Returns (None, []) when no
+        provider is reachable.
         """
         from app.core.config import settings
 
         text: Optional[str] = None
         calls: List[Dict[str, Any]] = []
-
-        if settings.LLM_PROVIDER in ("auto", "nvidia") and settings.NVIDIA_API_KEY:
-            try:
-                from openai import AsyncOpenAI
-
-                client = AsyncOpenAI(
-                    base_url=settings.NVIDIA_BASE_URL,
-                    api_key=settings.NVIDIA_API_KEY,
-                    timeout=settings.LLM_TIMEOUT,
-                    max_retries=1,
-                )
-                response = await client.chat.completions.create(
-                    model=settings.AI_MODEL,
-                    messages=messages,
-                    temperature=0.2,
-                    max_tokens=900,
-                    tools=tools or None,
-                )
-                msg = response.choices[0].message
-                text = (msg.content or "").strip() or None
-                for call in msg.tool_calls or []:
-                    try:
-                        arguments = json.loads(call.function.arguments or "{}")
-                    except json.JSONDecodeError:
-                        arguments = {}
-                    calls.append({
-                        "name": call.function.name,
-                        "arguments": arguments,
-                    })
-                return text, calls
-            except Exception as exc:
-                logger.warning("Agent loop NVIDIA turn failed: %s", exc)
 
         if settings.LLM_PROVIDER in ("auto", "ollama"):
             try:
@@ -324,9 +331,56 @@ class AgentLoop:
                             if isinstance(fn.get("arguments"), str)
                             else (fn.get("arguments") or {}),
                         })
-                    return text, calls
+                    if text or calls:
+                        return text, calls
+                    logger.warning(
+                        "Agent loop Ollama returned empty - falling back to NVIDIA"
+                    )
             except Exception as exc:
                 logger.warning("Agent loop Ollama turn failed: %s", exc)
+
+        if settings.LLM_PROVIDER in ("auto", "nvidia", "ollama") and settings.NVIDIA_API_KEY:
+            try:
+                from openai import AsyncOpenAI
+
+                client = AsyncOpenAI(
+                    base_url=settings.NVIDIA_BASE_URL,
+                    api_key=settings.NVIDIA_API_KEY,
+                    timeout=settings.LLM_TIMEOUT,
+                    max_retries=1,
+                )
+                last_err: Optional[Exception] = None
+                for model in (settings.AI_MODEL, settings.AI_MODEL_FALLBACK):
+                    try:
+                        response = await client.chat.completions.create(
+                            model=model,
+                            messages=messages,
+                            temperature=0.2,
+                            max_tokens=900,
+                            tools=tools or None,
+                        )
+                        break
+                    except Exception as exc:
+                        last_err = exc
+                        logger.warning(
+                            "Agent loop NVIDIA turn failed on %s: %s", model, exc
+                        )
+                else:
+                    raise last_err  # type: ignore[misc]
+                msg = response.choices[0].message
+                text = (msg.content or "").strip() or None
+                for call in msg.tool_calls or []:
+                    try:
+                        arguments = json.loads(call.function.arguments or "{}")
+                    except json.JSONDecodeError:
+                        arguments = {}
+                    calls.append({
+                        "name": call.function.name,
+                        "arguments": arguments,
+                    })
+                return text, calls
+            except Exception as exc:
+                logger.warning("Agent loop NVIDIA turn failed: %s", exc)
 
         return None, []
 
@@ -431,6 +485,13 @@ class AgentLoop:
         """Run the autonomous loop. Returns ``(steps, findings)``, or None on
         LLM failure (the orchestrator then falls back to the classic pipeline)."""
         pool = get_agent_pool(scan_type)
+        # Git-repo secret scanners are useless against live web apps (they
+        # clone the target URL); keep them only for repo-style targets.
+        if target.startswith(("http://", "https://")):
+            pool = [
+                t for t in pool
+                if t.id not in {"gitleaks", "trufflehog", "semgrep", "bandit"}
+            ]
         pool_tools: Dict[str, Any] = {}
         for tool in pool:
             pool_tools[tool.id] = tool
@@ -442,6 +503,10 @@ class AgentLoop:
         findings: List[VAPTFinding] = []
         steps: List[StepRecord] = []
         allowed_phases = ["recon"]
+        # Scan types with no recon tools (e.g. code review) must not wait for
+        # a recon step to unlock their phases.
+        if not any(t.phase == "recon" for t in pool):
+            allowed_phases = sorted({t.phase for t in pool})
         completed_phases: set[str] = set()
 
         def _current_schemas() -> List[Dict[str, Any]]:

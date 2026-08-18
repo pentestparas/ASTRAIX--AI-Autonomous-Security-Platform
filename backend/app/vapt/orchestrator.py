@@ -7,11 +7,12 @@ Analyzes target and selects appropriate tools.
 
 import asyncio
 import hashlib
+import json
 import os
 import re
 import time
 from datetime import datetime
-from typing import Any, Dict, List, Optional
+from typing import Any, Awaitable, Callable, Dict, List, Optional, Tuple
 from uuid import UUID, uuid4
 
 from app.vapt.models import VAPTFinding, VAPTSeverity, VAPTScanRequest, VAPTScanResult, VAPTScanType, VAPTTarget
@@ -20,6 +21,8 @@ from app.vapt.adapters.registry import get_enabled_adapters
 from app.vapt.agents import ResearcherAgent, VerifierAgent
 from app.vapt.agents.kb import kb_snippets, kb_context_for_finding, kb_ready
 from app.vapt.agents.planner import get_planner
+from app.vapt.agents.recon import mine_web_surface
+from app.vapt.agents.matrix import MatrixAgent, get_matrix_agent, build_curl_command, parse_probe_output
 from app.vapt.control import ScanStoppedError, get_scan_controller
 from app.vapt.progress import publish_scan_event, get_progress_bus
 from app.recon_orchestrator.orchestrator import ReconOrchestrator
@@ -97,8 +100,13 @@ class AIOrchestrator:
         target: str,
         scan_type: str = "auto",
         scan_id: Optional[str] = None,
+        quick: bool = False,
     ) -> VAPTScanResult:
-        """Analyze target and run the AI-planned scan with live progress events."""
+        """Analyze target and run the AI-planned scan with live progress events.
+
+        ``quick=True`` skips the LLM planner and the autonomous agent loop,
+        falling back to the deterministic tool set with a bounded port scope
+        (see executor quick mode)."""
         scan_id = scan_id or str(uuid4())
 
         controller = get_scan_controller()
@@ -137,33 +145,30 @@ class AIOrchestrator:
 
         watchdog = asyncio.create_task(self._stall_watchdog(scan_id))
         try:
-            try:
-                plan = await asyncio.wait_for(
-                    self.planner.plan_scan(target, scan_type_enum, target_info),
-                    timeout=int(os.environ.get("VAPT_PLAN_TIMEOUT", "300")),
-                )
-            except asyncio.TimeoutError:
-                logger.warning("Planner timed out for %s - using KB fallback plan", target)
-                plan = {
-                    "target": target,
-                    "scan_type": scan_type_enum.value,
-                    "target_type": target_info["type"],
-                    "phases": [],
-                    "tool_count": 0,
-                    "strategy": "Planner timed out - knowledge-base fallback",
-                }
+            if quick:
+                plan = self._quick_plan(scan_type_enum, target_info)
+                await publish_scan_event(scan_id, "plan_ready", plan)
+            else:
+                try:
+                    plan = await asyncio.wait_for(
+                        self.planner.plan_scan(target, scan_type_enum, target_info),
+                        timeout=int(os.environ.get("VAPT_PLAN_TIMEOUT", "300")),
+                    )
+                except asyncio.TimeoutError:
+                    logger.warning("Planner timed out for %s - using KB fallback plan", target)
+                    plan = {
+                        "target": target,
+                        "scan_type": scan_type_enum.value,
+                        "target_type": target_info["type"],
+                        "phases": [],
+                        "tool_count": 0,
+                        "strategy": "Planner timed out - knowledge-base fallback",
+                    }
 
-            if not plan["phases"]:
-                fallback = self._select_tools(scan_type_enum, target_info)
-                plan["phases"] = [{
-                    "id": "recon",
-                    "name": "Reconnaissance",
-                    "description": "Fallback tool set",
-                    "tools": [{"id": t, "name": t, "description": "", "reason": "fallback"} for t in fallback],
-                }]
-                plan["tool_count"] = len(fallback)
+                if not plan["phases"]:
+                    plan = self._quick_plan(scan_type_enum, target_info)
 
-            await publish_scan_event(scan_id, "plan_ready", plan)
+                await publish_scan_event(scan_id, "plan_ready", plan)
 
             if scan_type_enum == VAPTScanType.LLM:
                 llm_reason = "Dedicated LLM vulnerability scanner"
@@ -201,6 +206,7 @@ class AIOrchestrator:
                 target=VAPTTarget(value=target, type=target_info["type"]),
                 scan_type=scan_type_enum,
                 tools=tools,
+                quick=quick,
             )
 
             async def publish(scan_id_: str, event_type: str, data: dict) -> None:
@@ -216,11 +222,13 @@ class AIOrchestrator:
 
             # Phase 1: the autonomous agent loop runs FIRST (when enabled and an
             # LLM is reachable); the classic phased recon pipeline is the
-            # automatic fallback. External platform adapters fan out alongside.
-            # Adapters are best-effort: a failing adapter never aborts the scan.
-            result, adapter_results = await asyncio.gather(
+            # automatic fallback. External platform adapters fan out alongside,
+            # as does the LLM test-matrix phase. All are best-effort: a failing
+            # member never aborts the scan.
+            result, adapter_results, matrix_out = await asyncio.gather(
                 self._run_agent_or_recon(request, scan_id, target_info, publish),
                 self._run_adapters(target, scan_type_enum, scan_id, target_info),
+                self._run_matrix_phase(request, scan_id, target_info, publish),
                 return_exceptions=True,
             )
             if isinstance(result, BaseException):
@@ -228,6 +236,10 @@ class AIOrchestrator:
             if isinstance(adapter_results, BaseException):
                 logger.warning("Adapters failed for %s: %s", target, adapter_results)
                 adapter_results = []
+            if isinstance(matrix_out, BaseException):
+                logger.warning("Matrix phase failed for %s: %s", target, matrix_out)
+                matrix_out = {"findings": [], "entries": [], "suspicious": 0,
+                              "provider": None, "surface": None}
 
             for ar in adapter_results:
                 for finding in ar.findings:
@@ -240,6 +252,16 @@ class AIOrchestrator:
                     "errors": ar.errors,
                     "status": "ok" if not ar.errors else "error",
                 })
+
+            for finding in matrix_out.get("findings") or []:
+                result.add_finding(finding)
+            result.tool_results["matrix"] = {
+                "entries": len(matrix_out.get("entries") or []),
+                "suspicious": matrix_out.get("suspicious", 0),
+                "findings": len(matrix_out.get("findings") or []),
+                "provider": matrix_out.get("provider"),
+                "surface": matrix_out.get("surface") or {},
+            }
 
             await controller.checkpoint(scan_id)
 
@@ -300,6 +322,33 @@ class AIOrchestrator:
                 asyncio.to_thread(self.generate_insights, result),
                 timeout=int(os.environ.get("VAPT_REPORT_TIMEOUT", "60")),
             )
+            matrix_entries = matrix_out.get("entries") or []
+            insights["test_matrix"] = {
+                "provider": matrix_out.get("provider"),
+                "suspicious": matrix_out.get("suspicious", 0),
+                "entries": [
+                    {
+                        "id": e["id"], "endpoint": e["endpoint"], "method": e["method"],
+                        "attack_type": e["attack_type"], "priority": e["priority"],
+                        "expected_result": e.get("expected_result") or "",
+                        "suspicious": bool(e.get("probe", {}).get("suspicious")),
+                        "status": e.get("probe", {}).get("status"),
+                    }
+                    for e in matrix_entries
+                ],
+            }
+            try:
+                chain = await asyncio.wait_for(
+                    get_matrix_agent().build_attack_chain(result.findings),
+                    timeout=int(os.environ.get("VAPT_CHAIN_TIMEOUT", "120")),
+                )
+                insights["attack_chain"] = chain
+                logger.info("Attack chain synthesized: %d steps",
+                            len(chain.get("steps") or []))
+            except (asyncio.TimeoutError, Exception) as e:
+                logger.warning("Attack chain synthesis failed: %s", e)
+                insights["attack_chain"] = {"summary": "", "steps": []}
+            result.tool_results["ai_insights"] = insights
             await publish_scan_event(scan_id, "report_ready", insights)
             await publish_scan_event(scan_id, "scan_completed", {
                 "status": result.status,
@@ -339,7 +388,7 @@ class AIOrchestrator:
         """Run the autonomous agent loop, falling back to the classic phased
         recon pipeline when the loop is disabled or no LLM is reachable."""
         agent_mode = os.environ.get("VAPT_AGENT_MODE", "true").lower() == "true"
-        if agent_mode:
+        if agent_mode and not request.quick:
             from app.vapt.agents.agent_loop import agent_loop_supported, get_agent_loop
             from app.vapt.control import get_scan_controller
             from app.recon_orchestrator.graph_db import get_knowledge_graph
@@ -492,6 +541,198 @@ class AIOrchestrator:
         })
         return result
 
+    async def _run_matrix_phase(
+        self,
+        request: VAPTScanRequest,
+        scan_id: str,
+        target_info: Dict[str, Any],
+        publish: Callable[..., Awaitable[None]],
+    ) -> Dict[str, Any]:
+        """LLM test-matrix phase: mine surface -> generate matrix -> probe.
+
+        Mirrors the validated engagement workflow: bundle/route mining,
+        LLM-generated {endpoint, method, attack_type, payload, expected_result}
+        entries executed as HTTP probes (Kali curl) or tool runs, with PoC
+        evidence captured into findings. Runs in parallel with the agent loop
+        and adapters; failures never abort the scan.
+        """
+        target = request.target.value
+        scan_type = request.scan_type.value if request.scan_type else "auto"
+        base = target if target.startswith(("http://", "https://")) else f"http://{target}"
+
+        outcome: Dict[str, Any] = {
+            "findings": [], "entries": [], "suspicious": 0,
+            "provider": None, "surface": None,
+        }
+
+        await publish(scan_id, "matrix_generating", {
+            "message": "Mining web surface (JS bundles) for test-matrix endpoints",
+        })
+        try:
+            surface = await asyncio.wait_for(
+                mine_web_surface(base, timeout=float(os.environ.get("VAPT_MATRIX_RECON_TIMEOUT", "25"))),
+                timeout=40,
+            )
+            outcome["surface"] = {
+                "endpoints": surface.get("endpoint_count", 0),
+                "scripts": surface.get("scripts") or [],
+                "hints": surface.get("hints") or [],
+            }
+        except Exception as e:
+            logger.warning("Matrix surface mining failed for %s: %s", target, e)
+            surface = {"endpoints": [], "hints": []}
+
+        kb_query = (
+            TARGET_KB_QUERIES.get(target_info.get("type"))
+            or SCAN_TYPE_KB_QUERIES.get(scan_type)
+            or "web application penetration testing methodology"
+        )
+        kb_ctx: List[str] = []
+        try:
+            kb_ctx = await asyncio.wait_for(
+                asyncio.to_thread(kb_snippets, kb_query, 3),
+                timeout=int(os.environ.get("VAPT_MATRIX_KB_TIMEOUT", "45")),
+            )
+        except (asyncio.TimeoutError, Exception) as e:
+            logger.warning("Matrix KB grounding failed/timeout: %s", e)
+            kb_ctx = []
+
+        try:
+            entries, provider = await asyncio.wait_for(
+                get_matrix_agent().generate_matrix(
+                    base, scan_type, target_info, surface, kb_ctx
+                ),
+                timeout=int(os.environ.get("VAPT_MATRIX_LLM_TIMEOUT", "240")),
+            )
+        except (asyncio.TimeoutError, Exception) as e:
+            logger.warning("Matrix generation failed/timeout: %s", e)
+            entries, provider = [], None
+        outcome["provider"] = provider
+        await publish(scan_id, "matrix_generated", {
+            "entries": len(entries),
+            "provider": provider,
+            "endpoints": surface.get("endpoint_count", 0),
+            "message": f"Test matrix ready: {len(entries)} exploitation probes ({provider or 'heuristic'})",
+            "matrix": [
+                {
+                    "id": e["id"],
+                    "endpoint": e["endpoint"],
+                    "method": e["method"],
+                    "attack_type": e["attack_type"],
+                    "priority": e["priority"],
+                    "expected_result": (e.get("expected_result") or "")[:200],
+                    "params": {
+                        k: str(v)[:120] for k, v in (e.get("params") or {}).items()
+                    } or None,
+                }
+                for e in entries
+            ],
+        })
+        if not entries:
+            return outcome
+
+        executor = get_vapt_executor()
+        for entry in entries:
+            await publish(scan_id, "matrix_entry_started", {
+                "id": entry["id"],
+                "endpoint": entry["endpoint"],
+                "method": entry["method"],
+                "attack_type": entry["attack_type"],
+                "priority": entry["priority"],
+            })
+            probe: Dict[str, Any] = {}
+            try:
+                if entry.get("tool"):
+                    tool_findings, output, err = await executor.run_agent_tool(
+                        entry["tool"], base + entry["endpoint"], ""
+                    )
+                    outcome["findings"].extend(tool_findings)
+                    probe = {"tool": entry["tool"], "error": err, "raw": (output or "")[-1500:]}
+                else:
+                    cmd = build_curl_command(entry, base)
+                    output, err = await executor.run_arbitrary_command(
+                        cmd, timeout=int(os.environ.get("VAPT_MATRIX_PROBE_TIMEOUT", "30"))
+                    )
+                    status, body = parse_probe_output(output)
+                    payload_values = list((entry.get("params") or {}).values())
+                    suspicious, reason = MatrixAgent.classify_entry(
+                        entry, status, body, payload_values, output
+                    )
+                    probe = {"status": status, "body_len": len(body), "error": err,
+                             "suspicious": suspicious, "reason": reason}
+                    if suspicious:
+                        outcome["findings"].append(self._matrix_probe_finding(
+                            entry, base, status, body, output, reason
+                        ))
+            except Exception as e:
+                logger.warning("Matrix entry %s (%s%s) failed: %s",
+                               entry["id"], entry["method"], entry["endpoint"], e)
+                probe["error"] = str(e)
+            finally:
+                entry["probe"] = probe
+                outcome["entries"].append(entry)
+                await publish(scan_id, "matrix_entry_done", {
+                    "id": entry["id"],
+                    "endpoint": entry["endpoint"],
+                    "attack_type": entry["attack_type"],
+                    "suspicious": bool(probe.get("suspicious")),
+                    "status": probe.get("status"),
+                })
+
+        outcome["suspicious"] = sum(
+            1 for e in outcome["entries"] if e.get("probe", {}).get("suspicious")
+        )
+        return outcome
+
+    def _matrix_probe_finding(
+        self,
+        entry: Dict[str, Any],
+        base: str,
+        status: int,
+        body: str,
+        output: str,
+        reason: str,
+    ) -> VAPTFinding:
+        """Build a VAPTFinding carrying the full PoC trio for a matrix entry."""
+        from urllib.parse import urlparse
+
+        parsed = urlparse(base)
+        return VAPTFinding(
+            title=f"[Matrix] {entry['attack_type']} — {entry['method']} {entry['endpoint']}",
+            description=(
+                f"LLM test-matrix probe flagged: {reason}.\n"
+                f"Expected result: {entry.get('expected_result') or 'n/a'}."
+            ),
+            severity=MatrixAgent.severity_for(entry["priority"]),
+            tool_name="matrix-probe",
+            target=base,
+            host=parsed.hostname or base,
+            path=entry["endpoint"],
+            vulnerability_type=entry["attack_type"],
+            payload=json.dumps({
+                "params": entry.get("params") or {},
+                "json_body": entry.get("json_body"),
+            }, ensure_ascii=False)[:2000],
+            details={
+                "matrix_entry_id": entry["id"],
+                "attack_type": entry["attack_type"],
+                "priority": entry["priority"],
+                "poc_request": {
+                    "method": entry["method"],
+                    "url": base.rstrip("/") + entry["endpoint"],
+                    "params": entry.get("params") or {},
+                    "json_body": entry.get("json_body"),
+                },
+                "poc_response": {
+                    "status": status,
+                    "body_preview": body[:2000],
+                    "body_length": len(body),
+                },
+                "poc_evidence": (output or "")[-3000:],
+                "expected_result": entry.get("expected_result") or "",
+            },
+        )
+
     async def _stall_watchdog(self, scan_id: str) -> None:
         """Detect when a running scan stops producing activity (stuck).
 
@@ -582,6 +823,24 @@ class AIOrchestrator:
             return VAPTScanType.WEB
         return VAPTScanType.NETWORK
 
+    def _quick_plan(self, scan_type: VAPTScanType, target_info: Dict) -> Dict[str, Any]:
+        """Deterministic fallback plan used for quick scans and planner
+        timeouts - no LLM round-trip, bounded tool set."""
+        tools = self._select_tools(scan_type, target_info)
+        return {
+            "target": target_info.get("value", ""),
+            "scan_type": scan_type.value,
+            "target_type": target_info["type"],
+            "phases": [{
+                "id": "recon",
+                "name": "Reconnaissance",
+                "description": "Fallback tool set",
+                "tools": [{"id": t, "name": t, "description": "", "reason": "fallback"} for t in tools],
+            }],
+            "tool_count": len(tools),
+            "strategy": "Quick scan - deterministic fallback tool set",
+        }
+
     def _select_tools(self, scan_type: VAPTScanType, target_info: Dict) -> List[str]:
         """Select tools based on scan type and target."""
         tool_selection = {
@@ -591,7 +850,8 @@ class AIOrchestrator:
             VAPTScanType.SSL: ["sslscan", "nmap"],
             VAPTScanType.CONTAINER: ["trivy"],
             VAPTScanType.LLM: ["garak"],
-            VAPTScanType.FULL: ["nmap", "masscan", "dnsrecon", "subfinder", "nikto", "nuclei", "gobuster", "ffuf", "whatweb", "httpx", "api-surface", "sslscan", "testssl", "trivy", "garak", "forms"],
+            VAPTScanType.CODE_REVIEW: ["code-review", "gitleaks", "trufflehog", "semgrep", "bandit"],
+            VAPTScanType.FULL: ["nmap", "masscan", "dnsrecon", "subfinder", "nikto", "nuclei", "gobuster", "ffuf", "whatweb", "httpx", "api-surface", "sslscan", "testssl", "trivy", "garak", "forms", "code-review", "flows", "dom-xss"],
         }
         return tool_selection.get(scan_type, ["nmap"])
 

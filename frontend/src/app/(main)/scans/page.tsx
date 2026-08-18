@@ -75,6 +75,8 @@ import {
   RotateCcw,
   Braces,
   Box,
+  ChevronDown,
+  ChevronUp,
 } from "lucide-react";
 import { formatDistanceToNow } from "date-fns";
 import type { Project, ScanProgressEvent } from "@/types";
@@ -201,6 +203,7 @@ const vaptScanTypes = [
   { id: "api", label: "API Security", icon: Braces, desc: "REST/GraphQL API endpoints, auth flaws" },
   { id: "container", label: "Container Security", icon: Box, desc: "Docker images, misconfigurations" },
   { id: "llm", label: "AI Security", icon: Brain, desc: "OWASP LLM Top 10 - jailbreaks, prompt injection" },
+  { id: "code_review", label: "Code Review", icon: Code2, desc: "Secure code review - semgrep, bandit, gitleaks on source" },
   { id: "ssl", label: "SSL/TLS Audit", icon: Lock, desc: "Certificate and protocol analysis" },
   { id: "full", label: "Full Scan", icon: Shield, desc: "All checks - comprehensive" },
 ];
@@ -334,6 +337,7 @@ function LiveScanConsole({
   const pipelineSteps = [
     { id: "ai_analyzing", label: "AI Analyzing target", icon: Brain },
     { id: "plan_ready", label: "AI plan ready — tools selected", icon: ListChecks },
+    { id: "matrix_generated", label: "AI test matrix — LLM exploitation probes", icon: Sparkles },
     { id: "tool_started", label: "Executing security tools", icon: Terminal },
     { id: "ai_research", label: "Researcher Agent — knowledge base enrichment", icon: BookOpen },
     { id: "ai_verification", label: "Verifier Agent — eliminating false positives", icon: ShieldCheck },
@@ -434,6 +438,34 @@ function LiveScanConsole({
   const reportReady = lastEventOf("report_ready");
   const decision = lastEventOf("ai_decision");
 
+  // --- AI test matrix (LLM-assisted analysis) live view ---------------------
+  const matrixGen = lastEventOf("matrix_generated");
+  const matrixEntries: Array<{
+    id: string;
+    endpoint: string;
+    method: string;
+    attack_type: string;
+    priority: string;
+    expected_result?: string;
+    params?: Record<string, string> | null;
+  }> = (matrixGen?.data as any)?.matrix || [];
+  const matrixProvider = String((matrixGen?.data as any)?.provider || "");
+  const matrixSurfaceCount = Number((matrixGen?.data as any)?.endpoints || 0);
+  const matrixStartedIds = new Set(
+    events
+      .filter((e) => e.type === "matrix_entry_started")
+      .map((e) => String(e.data?.id))
+  );
+  const matrixDone = new Map<string, { status?: number; suspicious?: boolean; reason?: string }>();
+  events
+    .filter((e) => e.type === "matrix_entry_done")
+    .forEach((e) => matrixDone.set(String(e.data?.id), e.data as any));
+  const [expandedMatrixEntry, setExpandedMatrixEntry] = useState<string | null>(null);
+
+  const attackChain = reportReady?.data as
+    | { attack_chain?: { summary?: string; steps?: Array<{ order: number; from: string; to: string; via: string; technique: string; finding_ref?: string }> } }
+    | undefined;
+
   const stageDetail = (stepId: string): ReactNode => {
     switch (stepId) {
       case "ai_analyzing":
@@ -451,11 +483,55 @@ function LiveScanConsole({
             ))}
           </div>
         );
+      case "matrix_generated": {
+        if (!matrixEntries.length) return null;
+        const doneCount = matrixEntries.filter((e) => matrixDone.has(e.id)).length;
+        return (
+          <div className="p-3 rounded-lg border border-primary/15 bg-card/60 text-xs space-y-1.5">
+            <p className="font-semibold text-primary flex items-center gap-1.5">
+              <Sparkles className="w-3 h-3" /> LLM exploitation probes
+            </p>
+            <p className="text-muted-foreground">
+              {doneCount}/{matrixEntries.length} probes executed
+              {matrixProvider ? ` · ${matrixProvider}` : ""}
+            </p>
+            <div className="flex flex-wrap gap-1">
+              {matrixEntries.map((e) => {
+                const done = matrixDone.get(e.id);
+                const running = !done && matrixStartedIds.has(e.id);
+                return (
+                  <span
+                    key={e.id}
+                    className={`inline-flex items-center gap-1 px-1.5 py-0.5 rounded border font-mono text-[10px] ${
+                      done?.suspicious
+                        ? "border-red-500/30 bg-red-500/10 text-red-400"
+                        : running
+                          ? "border-primary/30 bg-primary/10 text-primary"
+                          : done
+                            ? "border-green-500/20 bg-green-500/5 text-muted-foreground"
+                            : "border-border bg-card text-muted-foreground"
+                    }`}
+                  >
+                    {done?.suspicious ? (
+                      <ShieldAlert className="w-2.5 h-2.5" />
+                    ) : running ? (
+                      <Loader2 className="w-2.5 h-2.5 animate-spin" />
+                    ) : done ? (
+                      <Check className="w-2.5 h-2.5" />
+                    ) : null}
+                    {e.id}
+                  </span>
+                );
+              })}
+            </div>
+          </div>
+        );
+      }
       case "tool_started": {
         if (totalTools === 0) return null;
-        const runningTools = phases
-          .flatMap((p) => p.tools.map((t) => ({ ...t, phase: p.name })))
-          .filter((t) => toolState(t.id) === "running");
+        const allTools = phases.flatMap((p) =>
+          p.tools.map((t) => ({ ...t, phase: p.name }))
+        );
         return (
           <div className="p-3 rounded-lg border border-primary/15 bg-card/60 text-xs space-y-1.5">
             <p className="font-semibold text-primary flex items-center gap-1.5">
@@ -464,24 +540,43 @@ function LiveScanConsole({
             <p className="text-muted-foreground">
               {doneTools}/{totalTools} tools completed
             </p>
-            {runningTools.map((t) => (
-              <div key={t.id} className="space-y-0.5">
-                <p className="font-mono flex items-center gap-1.5">
-                  <Loader2 className="w-3 h-3 animate-spin text-primary" />
-                  <span className="text-foreground">{t.name}</span>
-                  <span className="text-muted-foreground opacity-70">· {t.phase}</span>
-                </p>
-                {toolCommands.get(t.id) && (
-                  <p className="font-mono text-muted-foreground truncate pl-5">
-                    $ {toolCommands.get(t.id)}
-                  </p>
-                )}
-              </div>
-            ))}
+            <div className="grid gap-x-4 gap-y-1 sm:grid-cols-2">
+              {allTools.map((t) => {
+                const state = toolState(t.id);
+                return (
+                  <div key={t.id} className="flex items-center gap-1.5 min-w-0">
+                    {state === "running" ? (
+                      <Loader2 className="w-3 h-3 animate-spin text-primary shrink-0" />
+                    ) : state === "done" ? (
+                      <Check className="w-3 h-3 text-green-500 shrink-0" />
+                    ) : state === "failed" ? (
+                      <X className="w-3 h-3 text-red-500 shrink-0" />
+                    ) : (
+                      <Clock className="w-3 h-3 text-muted-foreground shrink-0" />
+                    )}
+                    <span
+                      className={`font-mono truncate ${
+                        state === "running"
+                          ? "text-foreground font-medium"
+                          : state === "done"
+                            ? "text-green-400"
+                            : state === "failed"
+                              ? "text-red-400"
+                              : "text-muted-foreground"
+                      }`}
+                    >
+                      {t.name}
+                    </span>
+                    <span className="text-muted-foreground opacity-70 truncate">
+                      · {t.phase}
+                    </span>
+                  </div>
+                );
+              })}
+            </div>
             {phases.map((p) => {
               const counts = { done: 0, running: 0, failed: 0, queued: 0 };
               p.tools.forEach((t) => counts[toolState(t.id)]++);
-              if (counts.done + counts.running + counts.failed === 0) return null;
               return (
                 <p key={p.id} className="font-mono text-muted-foreground">
                   {p.name}: {counts.done} done, {counts.running} running
@@ -759,6 +854,175 @@ function LiveScanConsole({
           </div>
         </div>
       )}
+
+      {matrixGen && (
+        <div className="rounded-lg border border-primary/20 bg-primary/5 overflow-hidden">
+          <div className="flex items-center justify-between px-3 py-2 border-b border-primary/10">
+            <p className="text-xs font-semibold text-primary flex items-center gap-1.5">
+              <Sparkles className="w-3.5 h-3.5" /> AI Test Matrix — LLM-assisted analysis
+            </p>
+            <div className="flex items-center gap-2 text-[11px] text-muted-foreground">
+              {matrixProvider && (
+                <span className="font-mono text-primary/90">{matrixProvider}</span>
+              )}
+              {matrixSurfaceCount > 0 && (
+                <span>{matrixSurfaceCount} endpoints mined</span>
+              )}
+            </div>
+          </div>
+          <div className="overflow-x-auto">
+            <table className="w-full text-xs">
+              <thead>
+                <tr className="text-muted-foreground text-[11px] uppercase tracking-wide border-b border-primary/10">
+                  <th className="text-left px-3 py-1.5 font-medium">ID</th>
+                  <th className="text-left px-3 py-1.5 font-medium">Endpoint</th>
+                  <th className="text-left px-3 py-1.5 font-medium">Attack</th>
+                  <th className="text-left px-3 py-1.5 font-medium">Priority</th>
+                  <th className="text-left px-3 py-1.5 font-medium">Status</th>
+                  <th className="text-left px-3 py-1.5 font-medium" />
+                </tr>
+              </thead>
+              <tbody>
+                {matrixEntries.map((entry) => {
+                  const done = matrixDone.get(entry.id);
+                  const running = !done && matrixStartedIds.has(entry.id);
+                  const suspicious = !!done?.suspicious;
+                  return (
+                    <Fragment key={entry.id}>
+                      <tr className="border-b border-primary/5 hover:bg-primary/5">
+                        <td className="px-3 py-1.5 font-mono text-muted-foreground">{entry.id}</td>
+                        <td className="px-3 py-1.5">
+                          <span className="font-mono">{entry.method}</span>{" "}
+                          <span className="text-foreground font-mono">{entry.endpoint}</span>
+                        </td>
+                        <td className="px-3 py-1.5">
+                          <Badge variant="secondary" className="font-mono text-[10px]">
+                            {entry.attack_type}
+                          </Badge>
+                        </td>
+                        <td className="px-3 py-1.5">
+                          <Badge
+                            className={
+                              entry.priority === "high"
+                                ? "bg-red-500/15 text-red-400 border-red-500/30"
+                                : entry.priority === "medium"
+                                  ? "bg-yellow-500/15 text-yellow-400 border-yellow-500/30"
+                                  : "bg-blue-500/15 text-blue-400 border-blue-500/30"
+                            }
+                          >
+                            {entry.priority}
+                          </Badge>
+                        </td>
+                        <td className="px-3 py-1.5">
+                          {running ? (
+                            <span className="flex items-center gap-1.5 text-primary">
+                              <Loader2 className="w-3 h-3 animate-spin" /> probing
+                            </span>
+                          ) : done ? (
+                            suspicious ? (
+                              <span className="flex items-center gap-1 text-red-400">
+                                <ShieldAlert className="w-3 h-3" /> suspicious{typeof done.status === "number" && done.status > 0 ? ` (HTTP ${done.status})` : ""}
+                              </span>
+                            ) : (
+                              <span className="text-muted-foreground">
+                                {typeof done.status === "number" && done.status > 0
+                                  ? `HTTP ${done.status}`
+                                  : "no signal"}
+                              </span>
+                            )
+                          ) : (
+                            <span className="text-muted-foreground">queued</span>
+                          )}
+                        </td>
+                        <td className="px-3 py-1.5 text-right">
+                          <Button
+                            size="sm"
+                            variant="ghost"
+                            className="h-6 px-1.5"
+                            onClick={() =>
+                              setExpandedMatrixEntry(
+                                expandedMatrixEntry === entry.id ? null : entry.id
+                              )
+                            }
+                          >
+                            {expandedMatrixEntry === entry.id ? (
+                              <ChevronUp className="w-3.5 h-3.5" />
+                            ) : (
+                              <ChevronDown className="w-3.5 h-3.5" />
+                            )}
+                          </Button>
+                        </td>
+                      </tr>
+                      {expandedMatrixEntry === entry.id && (
+                        <tr className="border-b border-primary/5 bg-card/40">
+                          <td colSpan={6} className="px-3 py-2 space-y-1.5">
+                            {entry.params && Object.keys(entry.params).length > 0 && (
+                              <div className="space-y-0.5">
+                                <p className="text-[11px] uppercase tracking-wide text-muted-foreground font-medium">
+                                  Payload
+                                </p>
+                                {Object.entries(entry.params).map(([k, v]) => (
+                                  <p key={k} className="font-mono text-[11px] break-words">
+                                    <span className="text-primary">{k}</span>
+                                    <span className="text-muted-foreground"> = </span>
+                                    <span className="text-foreground">{v}</span>
+                                  </p>
+                                ))}
+                              </div>
+                            )}
+                            {entry.expected_result && (
+                              <div>
+                                <p className="text-[11px] uppercase tracking-wide text-muted-foreground font-medium">
+                                  Expected result (why this probe)
+                                </p>
+                                <p className="text-[11px] text-muted-foreground">
+                                  {entry.expected_result}
+                                </p>
+                              </div>
+                            )}
+                            {done?.reason && (
+                              <div>
+                                <p className="text-[11px] uppercase tracking-wide text-muted-foreground font-medium">
+                                  LLM classification
+                                </p>
+                                <p className="text-[11px] text-red-400">{done.reason}</p>
+                              </div>
+                            )}
+                          </td>
+                        </tr>
+                      )}
+                    </Fragment>
+                  );
+                })}
+              </tbody>
+            </table>
+          </div>
+        </div>
+      )}
+
+      {attackChain?.attack_chain?.steps?.length ? (
+        <div className="p-3 rounded-lg border border-primary/20 bg-primary/5">
+          <p className="text-xs font-semibold text-primary mb-1.5 flex items-center gap-1">
+            <Network className="w-3.5 h-3.5" /> AI-synthesized attack chain
+          </p>
+          {attackChain.attack_chain.summary && (
+            <p className="text-xs text-muted-foreground mb-2">{attackChain.attack_chain.summary}</p>
+          )}
+          <div className="flex flex-wrap items-center gap-1.5">
+            {attackChain.attack_chain.steps.map((s, i) => (
+              <Fragment key={i}>
+                {i > 0 && <span className="text-primary font-mono">→</span>}
+                <span className="inline-flex items-center gap-1 px-2 py-1 rounded-md border border-primary/20 bg-card text-[11px] font-mono">
+                  <Shield className="w-3 h-3 text-primary" />
+                  {s.from}
+                  <span className="text-muted-foreground">→ {s.to}</span>
+                  <span className="text-muted-foreground opacity-70">({s.via})</span>
+                </span>
+              </Fragment>
+            ))}
+          </div>
+        </div>
+      ) : null}
 
       <div className="h-1.5 rounded-full bg-muted overflow-hidden">
         <div

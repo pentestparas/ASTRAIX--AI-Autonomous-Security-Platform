@@ -112,6 +112,8 @@ async def _persist_scan_result(
     for f in result.findings:
         details = dict(f.details or {})
         kb = details.get("kb_sources") or []
+        poc_request = details.get("poc_request")
+        poc_response = details.get("poc_response")
         finding_snapshot.append({
             "title": f.title,
             "severity": f.severity.value,
@@ -127,9 +129,13 @@ async def _persist_scan_result(
             "cve": details.get("cve") or details.get("cves") or [],
             "cwe": details.get("cwe") or details.get("cwes") or [],
             "confidence": f.confidence,
-            "evidence": details.get("evidence") or f.payload,
+            "evidence": details.get("poc_evidence") or details.get("evidence") or f.payload,
             "kb_sources": kb if isinstance(kb, list) else [],
         })
+        if poc_request:
+            finding_snapshot[-1]["poc_request"] = poc_request
+        if poc_response:
+            finding_snapshot[-1]["poc_response"] = poc_response
 
     assessment = await session.get(Assessment, assessment_id)
     if assessment:
@@ -227,6 +233,69 @@ class ToolStatusResponse(BaseModel):
     total_installed: int
 
 
+async def _run_scan_background(
+    orchestrator,
+    target: str,
+    scan_type: str,
+    scan_id: Optional[str],
+    assessment_id: Optional[str],
+    org_id: Optional[str],
+    proj_id: Optional[str],
+    asset_uuid: str,
+    quick: bool = False,
+) -> None:
+    """Run the scan pipeline in the background with its own DB session so
+    the HTTP caller returns immediately. The assessment row was persisted as
+    "running"; this task updates it (completed/failed/stopped) when done."""
+    from app.database.session import async_session_maker
+
+    async with async_session_maker() as session:
+        try:
+            result = await orchestrator.analyze_and_scan(
+                target=target,
+                scan_type=scan_type,
+                scan_id=scan_id,
+                quick=quick,
+            )
+        except ScanStoppedError:
+            if assessment_id:
+                await _mark_assessment_stopped(session, assessment_id)
+            return
+        except Exception as e:
+            logger.error(f"VAPT scan failed: {e}")
+            if assessment_id:
+                try:
+                    assessment = await session.get(Assessment, assessment_id)
+                    if assessment:
+                        assessment.status = "failed"
+                        assessment.error = str(e)[:500]
+                        assessment.completed_at = datetime.utcnow()
+                        await session.commit()
+                except Exception:
+                    await session.rollback()
+            return
+
+        insights = result.tool_results.get("ai_insights")
+        if not insights:
+            insights = await asyncio.to_thread(orchestrator.generate_insights, result)
+
+        if assessment_id:
+            try:
+                await _persist_scan_result(
+                    session,
+                    str(assessment_id),
+                    result,
+                    insights,
+                    org_id,
+                    proj_id,
+                    asset_uuid,
+                    target,
+                )
+            except Exception as e:
+                logger.error(f"Failed to persist VAPT scan completion: {e}")
+                await session.rollback()
+
+
 @router.post("/scan", response_model=ScanResponse)
 async def run_scan(
     request: ScanRequest,
@@ -236,8 +305,13 @@ async def run_scan(
     """
     Run a VAPT scan on target with database persistence.
 
+    The pipeline runs in the background; this endpoint persists the
+    assessment as "running" and returns immediately. Progress events and
+    the final status are available via /scan/{id}/progress and the
+    assessments API.
+
     - **target**: IP, URL, domain, or hostname
-    - **scan_type**: auto, network, web, api, ssl, full
+    - **scan_type**: auto, quick, network, web, api, ssl, full
     - **tools**: specific tool IDs (empty = auto-select)
     - **deep**: enable deep scanning mode
     - **organization_id**: UUID of the organization (required for persistence)
@@ -323,66 +397,35 @@ async def run_scan(
             assessment_id = None
             persisted = False
 
-    try:
-        result = await orchestrator.analyze_and_scan(
+    # --- Run the scan in the BACKGROUND: the pipeline (agent loop, tool
+    # execution, AI summaries) can take minutes to hours, and the frontend
+    # proxy times out long requests. The assessment row is already persisted
+    # as "running"; progress events in Redis carry the live status and the
+    # persisted row is updated when the scan finishes. /scan/{id}/stop
+    # cancels it. ---------------------------------------------------------
+    asyncio.create_task(
+        _run_scan_background(
+            orchestrator=orchestrator,
             target=request.target,
-            scan_type=request.scan_type,
+            scan_type=request.scan_type or "auto",
             scan_id=scan_id or assessment_id,
-        )
-    except ScanStoppedError:
-        if persisted and assessment_id:
-            await _mark_assessment_stopped(session, assessment_id)
-        return ScanResponse(
-            scan_id=scan_id or "",
             assessment_id=assessment_id,
-            status="stopped",
-            target=request.target,
-            findings_count=0,
-            findings=[],
-            severity_breakdown={},
-            insights={},
+            org_id=str(org_id) if org_id else None,
+            proj_id=str(proj_id) if proj_id else None,
+            asset_uuid=str(asset_uuid) if asset_uuid else "",
+            quick=request.scan_type == "quick",
         )
-    except Exception as e:
-        logger.error(f"VAPT scan failed: {e}")
-        if persisted and assessment_id:
-            try:
-                assessment = await session.get(Assessment, assessment_id)
-                if assessment:
-                    assessment.status = "failed"
-                    assessment.error = str(e)[:500]
-                    assessment.completed_at = datetime.utcnow()
-                    await session.commit()
-            except Exception:
-                await session.rollback()
-        raise
-
-    insights = await asyncio.to_thread(orchestrator.generate_insights, result)
-
-    if persisted and assessment_id:
-        try:
-            await _persist_scan_result(
-                session,
-                str(assessment_id),
-                result,
-                insights,
-                str(org_id),
-                str(proj_id),
-                str(asset_uuid),
-                request.target,
-            )
-        except Exception as e:
-            logger.error(f"Failed to persist VAPT scan completion: {e}")
-            await session.rollback()
+    )
 
     return ScanResponse(
-        scan_id=str(result.id),
+        scan_id=scan_id or assessment_id or "",
         assessment_id=assessment_id,
-        status=result.status,
+        status="running",
         target=request.target,
-        findings_count=len(result.findings),
-        findings=[f.to_dict() for f in result.findings],
-        severity_breakdown=insights["severity_breakdown"],
-        insights=insights,
+        findings_count=0,
+        findings=[],
+        severity_breakdown={},
+        insights={},
     )
 
 
@@ -611,60 +654,33 @@ async def restart_scan(
     await session.commit()
     await get_progress_bus().clear(scan_id)
 
+    # Run in the background like the initial scan - the pipeline can take
+    # minutes to hours; the reset assessment above reports "running" and
+    # progress events / persisted state carry the completion.
     orchestrator = get_vapt_orchestrator()
-    try:
-        result = await orchestrator.analyze_and_scan(
+    asyncio.create_task(
+        _run_scan_background(
+            orchestrator=orchestrator,
             target=asset.identifier,
             scan_type=scan_type,
             scan_id=scan_id,
-        )
-    except ScanStoppedError:
-        await _mark_assessment_stopped(session, scan_id)
-        return ScanResponse(
-            scan_id=scan_id,
             assessment_id=scan_id,
-            status="stopped",
-            target=asset.identifier,
-            findings_count=0,
-            findings=[],
-            severity_breakdown={},
-            insights={},
+            org_id=org_id,
+            proj_id=proj_id,
+            asset_uuid=asset_id,
+            quick=scan_type == "quick",
         )
-    except Exception as e:
-        logger.error("VAPT restart scan failed: %s", e)
-        assessment = await session.get(Assessment, scan_id)
-        if assessment:
-            assessment.status = "failed"
-            assessment.error = str(e)[:500]
-            assessment.completed_at = datetime.utcnow()
-            await session.commit()
-        raise
-
-    insights = await asyncio.to_thread(orchestrator.generate_insights, result)
-    try:
-        await _persist_scan_result(
-            session,
-            scan_id,
-            result,
-            insights,
-            org_id,
-            proj_id,
-            asset_id,
-            asset.identifier,
-        )
-    except Exception as e:
-        logger.error("Failed to persist restart scan completion: %s", e)
-        await session.rollback()
+    )
 
     return ScanResponse(
-        scan_id=str(result.id),
+        scan_id=str(scan_id),
         assessment_id=scan_id,
-        status=result.status,
+        status="running",
         target=asset.identifier,
-        findings_count=len(result.findings),
-        findings=[f.to_dict() for f in result.findings],
-        severity_breakdown=insights["severity_breakdown"],
-        insights=insights,
+        findings_count=0,
+        findings=[],
+        severity_breakdown={},
+        insights={},
     )
 
 

@@ -51,12 +51,17 @@ services:
       CORS_ORIGINS: '["http://localhost:3000","http://localhost:3001","http://127.0.0.1:3000"]'
       VAPT_DEMO_MODE: "false"
       VAPT_USE_DOCKER: "true"
-      # Agent loop budget: 20 steps max, 40min hard timeout (a down LLM now
-      # switches to a fast deterministic rotation instead of burning retries).
-      VAPT_AGENT_MAX_STEPS: ${VAPT_AGENT_MAX_STEPS:-20}
-      VAPT_AGENT_MIN_STEPS: ${VAPT_AGENT_MIN_STEPS:-8}
+      # Agent loop budget: 40 steps max (maximum exploitation), 40min hard
+      # timeout (a down LLM switches to a fast deterministic rotation instead
+      # of burning retries). The loop refuses to conclude until >=2
+      # exploitation tools have run.
+      VAPT_AGENT_MAX_STEPS: ${VAPT_AGENT_MAX_STEPS:-40}
+      VAPT_AGENT_MIN_STEPS: ${VAPT_AGENT_MIN_STEPS:-12}
       VAPT_AGENT_TIMEOUT: ${VAPT_AGENT_TIMEOUT:-2400}
       VAPT_PLAN_TIMEOUT: ${VAPT_PLAN_TIMEOUT:-300}
+      # Embedding model load grace: Docker Desktop VM needs >25s for onnxruntime
+      # init; without semantic embeddings the KB degrades to TF-IDF only.
+      KB_EMBEDDER_TIMEOUT: ${KB_EMBEDDER_TIMEOUT:-120}
       # External VAPT platform adapters (backend/app/vapt/adapters)
       VAPT_ADAPTER_RACCOON: ${VAPT_ADAPTER_RACCOON:-true}
       VAPT_ADAPTER_LYRIE: ${VAPT_ADAPTER_LYRIE:-false}
@@ -83,8 +88,9 @@ services:
       NEO4J_PASSWORD: ${NEO4J_PASSWORD:-}
       NVIDIA_API_KEY: ${NVIDIA_API_KEY:-}
       NVIDIA_BASE_URL: ${NVIDIA_BASE_URL:-https://integrate.api.nvidia.com/v1}
-      AI_MODEL: ${AI_MODEL:-deepseek-ai/deepseek-v4-flash-0731}
-      LLM_PROVIDER: ${LLM_PROVIDER:-ollama}
+      AI_MODEL: ${AI_MODEL:-minimaxai/minimax-m3}
+      AI_MODEL_FALLBACK: ${AI_MODEL_FALLBACK:-deepseek-ai/deepseek-v4-flash-0731}
+      LLM_PROVIDER: ${LLM_PROVIDER:-auto}
       OLLAMA_BASE_URL: ${OLLAMA_BASE_URL:-http://host.docker.internal:11434}
       OLLAMA_MODEL: ${OLLAMA_MODEL:-huihui_ai/qwen3-abliterated:14b-v2}
     volumes:

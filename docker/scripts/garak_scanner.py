@@ -415,8 +415,15 @@ PROBE_GROUPS = [
     ("glitch", "probes.glitch"),
     ("visual", "probes.visual_jailbreak"),
 ]
-INVOCATION_TIMEOUT = 600
+INVOCATION_TIMEOUT = 120
 GROUP_RETRIES = 1
+
+
+def endpoint_reachable(endpoint, payload):
+    """Quick connectivity pre-flight so garak never burns 20+ minutes
+    against an endpoint it cannot reach (it silently defaults to localhost)."""
+    st, body = http(endpoint, data=json.dumps(payload).encode(), timeout=10)
+    return st != 0
 
 
 def run_garak(endpoint, payload, response_field):
@@ -427,6 +434,8 @@ def run_garak(endpoint, payload, response_field):
     intermittently resolves host.docker.internal to unroutable addresses).
     """
     endpoint = pin_ipv4(endpoint)
+    if not endpoint_reachable(endpoint, payload):
+        return None
     gen_options = {
         "rest": {
             "RestGenerator": {
