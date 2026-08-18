@@ -4,6 +4,8 @@
 
 AstraIX is an enterprise-grade vulnerability assessment and penetration testing (VAPT) platform that combines real security tooling, agentic AI reasoning, and a curated security knowledge base to deliver consistent, verifiable, and explainable security assessment at scale.
 
+**Paras Patil — Founder & AI Platform Architect (Product Security Engineer)**
+
 ---
 
 ## Overview
@@ -208,6 +210,8 @@ uvicorn app.main:app --reload --host 0.0.0.0 --port 8000
 
 ## Support
 
+Founder & AI Platform Architect: **Paras Patil** (Product Security Engineer).
+
 For issues, feature requests, or security concerns, please open a GitHub issue:  
 [https://github.com/pentestparas/ASTRAIX--AI-Autonomous-Security-Platform/issues](https://github.com/pentestparas/ASTRAIX--AI-Autonomous-Security-Platform/issues)
 
@@ -217,4 +221,4 @@ For issues, feature requests, or security concerns, please open a GitHub issue:
 
 Proprietary — All rights reserved. Unauthorized use, reproduction, or distribution is prohibited.
 
-© AstraIX Security Engineering Team
+© Paras Patil — Founder & AI Platform Architect (Product Security Engineer)
