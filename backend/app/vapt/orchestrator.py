@@ -849,7 +849,7 @@ class AIOrchestrator:
             VAPTScanType.API: ["nuclei", "nmap"],
             VAPTScanType.SSL: ["sslscan", "nmap"],
             VAPTScanType.CONTAINER: ["trivy"],
-            VAPTScanType.LLM: ["garak"],
+            VAPTScanType.LLM: ["garak", "promptfoo"],
             VAPTScanType.CODE_REVIEW: ["code-review", "gitleaks", "trufflehog", "semgrep", "bandit"],
             VAPTScanType.FULL: ["nmap", "masscan", "dnsrecon", "subfinder", "nikto", "nuclei", "gobuster", "ffuf", "whatweb", "httpx", "api-surface", "sslscan", "testssl", "trivy", "garak", "forms", "code-review", "flows", "dom-xss"],
         }

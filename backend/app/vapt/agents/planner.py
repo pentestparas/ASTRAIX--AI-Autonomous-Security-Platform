@@ -63,7 +63,7 @@ PHASE_DEFS: List[Dict[str, Any]] = [
         "id": "ai_security",
         "name": "AI / LLM Security",
         "description": "Probe AI/LLM endpoints for OWASP LLM Top 10: prompt injection, jailbreaks, data leakage.",
-        "tools": ["garak", "forms"],
+        "tools": ["garak", "promptfoo", "forms"],
         "kb_query": "AI LLM security prompt injection jailbreak OWASP LLM top 10 garak",
     },
 ]
@@ -88,6 +88,7 @@ TOOL_KB_QUERIES: Dict[str, str] = {
     "hydra": "hydra brute force weak credentials ssh http",
     "testssl": "testssl TLS SSL configuration audit cipher suite",
     "garak": "garak LLM security prompt injection jailbreak data leakage probe",
+    "promptfoo": "promptfoo LLM red-team scan OWASP LLM top 10 jailbreak strategies chat endpoint",
     "metasploit": "metasploit exploit modules payloads vulnerability exploitation",
     "flows": "API business logic flows BOLA JWT session abuse price tampering OWASP API top 10",
     "dom-xss": "DOM based XSS client side JavaScript sinks headless browser detection",

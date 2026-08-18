@@ -106,6 +106,14 @@ RUN pip3 install --no-cache-dir --break-system-packages \
     > /dev/null 2>&1 && \
     python3 -m garak --version 2>&1 | head -1
 COPY docker/scripts/garak_scanner.py /opt/vapt/garak_scanner.py
+# promptfoo: LLM red-teaming suite (OWASP LLM Top 10 plugins + jailbreak
+# strategies). Node CLI (npm global); driver script discovers the target's
+# OpenAI-compatible chat endpoint, writes a promptfooconfig.yaml pointing at
+# it, and grades findings with the engagement LLM (env-injected API key).
+RUN apt-get update -qq && apt-get install -y -qq nodejs npm > /dev/null 2>&1 && \
+    npm install -g --silent promptfoo && \
+    promptfoo --version 2>&1 | head -1
+COPY docker/scripts/promptfoo_scanner.py /opt/vapt/promptfoo_scanner.py
 # API/endpoint surface discovery scanner used by the 'api-surface' tool
 COPY docker/scripts/api_surface_scanner.py /opt/vapt/api_surface_scanner.py
 # Secure code review: clones the app's public repo and runs semgrep/bandit/gitleaks

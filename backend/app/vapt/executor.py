@@ -159,6 +159,14 @@ class VAPTExecutor:
         client = docker.from_env()
         container = None
         try:
+            # Forward only the LLM grader key+model (promptfoo scanner reads
+            # NVIDIA_API_KEY / AI_MATRIX_MODEL inside the container). Never
+            # pass the whole environment - only these two allowlisted keys.
+            passthrough = {}
+            for key in ("NVIDIA_API_KEY", "AI_MATRIX_MODEL"):
+                if os.environ.get(key):
+                    passthrough[key] = os.environ[key]
+
             container = client.containers.run(
                 image=image,
                 command=["sh", "-c", cmd_string],
@@ -166,6 +174,7 @@ class VAPTExecutor:
                 network_mode="bridge",
                 mem_limit="512m",
                 nano_cpus=int(1 * 1e9),
+                environment=passthrough or None,
                 detach=True,
                 auto_remove=False,
             )
@@ -332,6 +341,9 @@ class VAPTExecutor:
             ),
             "garak": (
                 f"python3 /opt/vapt/garak_scanner.py {target} 2>/dev/null"
+            ),
+            "promptfoo": (
+                f"python3 /opt/vapt/promptfoo_scanner.py {target} 2>/dev/null"
             ),
             "api-surface": (
                 f"python3 /opt/vapt/api_surface_scanner.py {target} 2>/dev/null"

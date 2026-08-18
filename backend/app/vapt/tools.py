@@ -410,6 +410,21 @@ TOOLS_REGISTRY: Dict[str, VAPTTool] = {
         requires_url=True,
         output_format="jsonl",
     ),
+    "promptfoo": VAPTTool(
+        id="promptfoo",
+        name="PromptFoo",
+        command="promptfoo",
+        description=(
+            "LLM red-teaming suite - OWASP LLM Top 10 plugins (owasp:llm) with "
+            "jailbreak strategies against the discovered chat endpoint, graded "
+            "by the engagement LLM (falls back to direct probes without a key)"
+        ),
+        category=VAPTScanType.LLM,
+        args=[],
+        timeout=1500,
+        requires_url=True,
+        output_format="jsonl",
+    ),
     "api-surface": VAPTTool(
         id="api-surface",
         name="API Surface Discovery",
@@ -481,7 +496,7 @@ TOOLS_BY_CATEGORY: Dict[VAPTScanType, List[str]] = {
     VAPTScanType.API: ["nuclei", "ffuf", "arjun", "api-surface"],
     VAPTScanType.SSL: ["sslscan", "testssl"],
     VAPTScanType.CONTAINER: ["trivy"],
-    VAPTScanType.LLM: ["garak"],
+    VAPTScanType.LLM: ["garak", "promptfoo"],
     VAPTScanType.CODE_REVIEW: ["code-review", "gitleaks", "trufflehog", "semgrep", "bandit"],
     # FULL = every agent-visible tool (all scan types: network, web, API,
     # SSL/TLS, container, AI/LLM security).
@@ -496,7 +511,7 @@ DEFAULT_TOOLS: Dict[VAPTScanType, List[str]] = {
     VAPTScanType.API: ["nuclei", "ffuf"],
     VAPTScanType.SSL: ["sslscan"],
     VAPTScanType.CONTAINER: ["trivy"],
-    VAPTScanType.LLM: ["garak"],
+    VAPTScanType.LLM: ["garak", "promptfoo"],
     VAPTScanType.CODE_REVIEW: ["code-review"],
     # FULL = every agent-visible tool (all scan types: network, web, API,
     # SSL/TLS, container, AI/LLM security).
@@ -547,6 +562,7 @@ TOOL_GATING: Dict[str, Dict[str, Any]] = {
     "searchsploit": {"phase": "deep"},
     "zap": {"phase": "deep", "dangerous": True},
     "garak": {"phase": "deep"},
+    "promptfoo": {"phase": "deep"},
     "api-surface": {"phase": "web"},
     "code-review": {"phase": "deep"},
     "flows": {"phase": "deep"},
@@ -683,6 +699,7 @@ def check_tool_availability() -> Dict[str, bool]:
             "forms": "web_form_scanner.py",
             "api-surface": "api_surface_scanner.py",
             "garak": "garak_scanner.py",
+            "promptfoo": "promptfoo_scanner.py",
         }.get(tool_id)
         if script_file:
             return f"test -f /opt/vapt/{script_file} && echo 'OK {tool_id}' || echo 'MISS {tool_id}'"
