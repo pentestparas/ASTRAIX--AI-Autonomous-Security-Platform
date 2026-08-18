@@ -203,6 +203,8 @@ uvicorn app.main:app --reload --host 0.0.0.0 --port 8000
 | [System Architecture](engineering/ARCHITECTURE.md) | Technical architecture deep-dive |
 | [Product Vision](engineering/VISION.md) | Vision and principles |
 | [Product Overview](docs/PRODUCT_OVERVIEW.md) | Product positioning |
+| [Product Monograph](docs/astraix-product-ebook.html) | Thesis-grade product monograph (also available as [PDF](docs/astraix-product-ebook.pdf)) |
+| [Architecture Report](docs/ARCHITECTURE_REPORT.md) | Graph-derived architecture analysis (4,038 files, 10 layers) |
 | [Architecture Overview](docs/ARCHITECTURE_OVERVIEW.md) | Technical architecture summary |
 | [AI-SecOS Platform Guide](docs/SECOS_PLATFORM_OVERVIEW.md) | Platform capabilities walkthrough |
 
