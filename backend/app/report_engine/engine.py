@@ -71,6 +71,26 @@ class Jinja2ReportEngine:
                     sections=tuple(sections),
                     correlation_id=request.correlation_id,
                 )
+                if fmt is ReportFormat.JSON:
+                    # Merge engagement-workflow extras (attack chain + test
+                    # matrix) into the JSON payload without touching core types.
+                    try:
+                        payload = json.loads(artifact.serialize())
+                        if isinstance(payload, dict):
+                            extras = request.extras or {}
+                            if extras.get("attack_chain"):
+                                payload["attack_chain"] = extras["attack_chain"]
+                            if extras.get("test_matrix"):
+                                payload["test_matrix"] = extras["test_matrix"]
+                            artifact = RenderedArtifact(
+                                format=fmt,
+                                title=artifact.title,
+                                sections=artifact.sections,
+                                correlation_id=artifact.correlation_id,
+                                serialized_content=json.dumps(payload, indent=2, default=str),
+                            )
+                    except Exception:
+                        pass
             out.append(artifact)
         return out
 
@@ -123,6 +143,8 @@ class Jinja2ReportEngine:
             "environment": extras.get("environment", "Production"),
             "soc2_controls": extras.get("soc2_controls", []),
             "iso27001_controls": extras.get("iso27001_controls", []),
+            "attack_chain": extras.get("attack_chain", {}),
+            "test_matrix": extras.get("test_matrix", {}),
             "findings": [
                 {
                     "id": str(f.id),
@@ -172,6 +194,15 @@ class Jinja2ReportEngine:
         )
 
 
+def _evidence_raw(evidence: Any) -> Any:
+    """Normalize FindingEvidence payloads to raw content for rendering."""
+    if isinstance(evidence, dict):
+        return evidence.get("raw")
+    if hasattr(evidence, "raw"):
+        return evidence.raw
+    return evidence
+
+
 def _build_section(kind: str, request: ReportRequest) -> ReportSection | None:
     if kind == "summary":
         return _summary_section(request)
@@ -215,6 +246,11 @@ def _findings_section(request: ReportRequest) -> ReportSection:
             "risk_score": f.risk_score,
             "cwe": f.cwe,
             "cve": f.cve,
+            "evidence": _evidence_raw(f.evidence),
+            "details": {
+                "poc_request": (f.metadata or {}).get("poc_request"),
+                "poc_response": (f.metadata or {}).get("poc_response"),
+            },
         }
         for f in request.findings
     ]

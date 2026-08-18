@@ -43,7 +43,7 @@
   {% if f.cve %}<p><strong>CVE:</strong> {{ f.cve | join(", ") }}</p>{% endif %}
   {% if f.evidence %}
   <div class="evidence"><strong>Evidence:</strong>
-    {% if f.evidence is string %}{{ f.evidence }}{% else %}{{ f.evidence }}{% endif %}
+    {% if f.evidence is string %}{{ f.evidence }}{% elif f.evidence.raw is defined %}{{ f.evidence.raw }}{% else %}{{ f.evidence }}{% endif %}
   </div>
   {% endif %}
   {% if f.references %}
@@ -57,7 +57,46 @@
 </div>
 {% endfor %}
 
-<h2>3. Recommendations</h2>
+<h2>3. Attack Chain</h2>
+{% if attack_chain and attack_chain.steps %}
+<p>{{ attack_chain.summary }}</p>
+<table border="1" cellpadding="6" cellspacing="0">
+  <tr><th>#</th><th>From</th><th>To</th><th>Via</th><th>Technique</th><th>Finding</th></tr>
+  {% for s in attack_chain.steps %}
+  <tr>
+    <td>{{ s.order }}</td>
+    <td>{{ s.from }}</td>
+    <td>{{ s.to }}</td>
+    <td>{{ s.via }}</td>
+    <td>{{ s.technique }}</td>
+    <td>{{ s.finding_ref }}</td>
+  </tr>
+  {% endfor %}
+</table>
+{% else %}
+<p>No attack chain synthesized for this assessment.</p>
+{% endif %}
+
+{% if test_matrix and test_matrix.entries %}
+<h2>4. Exploitation Test Matrix</h2>
+<p>{{ test_matrix.entries | length }} LLM-generated probes executed; {{ test_matrix.suspicious | default(0) }} flagged suspicious.</p>
+<table border="1" cellpadding="6" cellspacing="0">
+  <tr><th>ID</th><th>Method</th><th>Endpoint</th><th>Attack Type</th><th>Priority</th><th>Status</th><th>Suspicious</th></tr>
+  {% for e in test_matrix.entries %}
+  <tr>
+    <td>{{ e.id }}</td>
+    <td>{{ e.method }}</td>
+    <td>{{ e.endpoint }}</td>
+    <td>{{ e.attack_type }}</td>
+    <td>{{ e.priority }}</td>
+    <td>{{ e.status | default("-") }}</td>
+    <td>{{ "YES" if e.suspicious else "no" }}</td>
+  </tr>
+  {% endfor %}
+</table>
+{% endif %}
+
+<h2>4. Recommendations</h2>
 {% if recommendations %}
 <ul>
   {% for rec in recommendations %}
@@ -68,7 +107,7 @@
 <p>No prioritized recommendations available.</p>
 {% endif %}
 
-<h2>4. Methodology</h2>
+<h2>5. Methodology</h2>
 <p>Assessment was executed with the AstraIX autonomous VAPT pipeline inside isolated Kali containers.
 {% if tools_used %}Tools used: {{ tools_used | join(", ") }}.{% endif %}
 Findings were normalized, scored by the CVSS/risk engine, enriched via the cybersecurity knowledge base,

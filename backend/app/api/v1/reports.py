@@ -17,7 +17,7 @@ from ai_secos_core.report_engine.types import (
     ReportTemplate,
     ReportFormat,
 )
-from ai_secos_core.shared.value_objects import SecurityFinding, Severity
+from ai_secos_core.shared.value_objects import SecurityFinding, FindingEvidence, Severity
 
 logger = get_logger(__name__)
 router = APIRouter()
@@ -106,6 +106,14 @@ _DEFAULT_SOC2 = "CC7.1"
 _DEFAULT_ISO = "A.8.28"
 
 
+def _finding_evidence(raw) -> Optional["FindingEvidence"]:
+    """Wrap raw evidence (PoC capture, tool output) into the finding's
+    opaque evidence payload the report engine expects."""
+    if raw is None or isinstance(raw, FindingEvidence):
+        return raw
+    return FindingEvidence(schema_name="security-finding-evidence", raw=raw)
+
+
 def _finding_to_security_finding(f: FindingModel) -> SecurityFinding:
     import re
     asset = f.asset.name.lower() if hasattr(f, 'asset') and f.asset else "unknown"
@@ -121,7 +129,7 @@ def _finding_to_security_finding(f: FindingModel) -> SecurityFinding:
 
     risk_score = details.get("risk_score") or details.get("cvss")
 
-    evidence = details.get("evidence") or details.get("payload")
+    evidence = details.get("poc_evidence") or details.get("evidence") or details.get("payload")
     kb_sources = [r for r in (details.get("kb_sources") or []) if isinstance(r, str)]
     references = [r for r in kb_sources if r.startswith(("http://", "https://"))]
     kb_non_urls = [r for r in kb_sources if not r.startswith(("http://", "https://"))]
@@ -136,7 +144,12 @@ def _finding_to_security_finding(f: FindingModel) -> SecurityFinding:
         "confidence": details.get("confidence"),
         "kb_sources": kb_non_urls or None,
     }
+    if details.get("poc_request"):
+        metadata["poc_request"] = details.get("poc_request")
+    if details.get("poc_response"):
+        metadata["poc_response"] = details.get("poc_response")
     metadata = {k: v for k, v in metadata.items() if v is not None}
+    evidence_obj = _finding_evidence(evidence)
 
     try:
         confidence = float(details.get("confidence") or 1.0)
@@ -158,7 +171,7 @@ def _finding_to_security_finding(f: FindingModel) -> SecurityFinding:
         risk_score=risk_score,
         cwe=cwes or [],
         cve=cves or [],
-        evidence=evidence if isinstance(evidence, str) else None,
+        evidence=evidence_obj,
         references=references,
         metadata=metadata,
         fingerprint=str(f.id),
@@ -193,6 +206,10 @@ def _dict_to_security_finding(item: dict, assessment_id: str) -> SecurityFinding
         "confidence": item.get("confidence"),
         "kb_sources": kb_non_urls or None,
     }
+    if item.get("poc_request"):
+        metadata["poc_request"] = item.get("poc_request")
+    if item.get("poc_response"):
+        metadata["poc_response"] = item.get("poc_response")
     metadata = {k: v for k, v in metadata.items() if v is not None}
     try:
         confidence = float(item.get("confidence") or 1.0)
@@ -218,7 +235,7 @@ def _dict_to_security_finding(item: dict, assessment_id: str) -> SecurityFinding
         risk_score=None,
         cwe=cwes or [],
         cve=cves or [],
-        evidence=evidence if isinstance(evidence, str) else None,
+        evidence=_finding_evidence(evidence),
         references=references,
         metadata=metadata,
         fingerprint=str(uuid_lib.uuid4()),
@@ -298,6 +315,8 @@ async def generate_report(
         "recommendations": insights.get("recommendations") or [],
         "tools_used": insights.get("tools_used") or [],
         "scan_duration": insights.get("scan_duration") or "",
+        "attack_chain": insights.get("attack_chain") or {},
+        "test_matrix": insights.get("test_matrix") or {},
     }
 
     request = ReportRequest(
