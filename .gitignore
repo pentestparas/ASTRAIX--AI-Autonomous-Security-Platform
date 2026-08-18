@@ -102,3 +102,12 @@ knowledge-base/sources/Web-Security-Academy-Series/file-upload-vulnerabilities/
 coverage/
 .parcel-cache/
 .eslintcache
+# Dojo-101 AV-flagged payload files (reverse shells/webshells); restored via
+# Docker clone of Aif4thah/Dojo-101 at build time.
+knowledge-base/sources/Dojo-101/Dojo-101-Pentest/Python-Windows-Reverseshell.md
+knowledge-base/sources/Dojo-101/Dojo-101-Pentest/ReverseShell.md
+knowledge-base/sources/Dojo-101/Dojo-101-Pentest/Web-RFI.md
+knowledge-base/sources/Dojo-101/Dojo-101-DevSec/DAST-Fichiers.md=>(BASE64 0)
+knowledge-base/sources/Dojo-101/Dojo-101-Pentest/Webshell-ASPX.md
+knowledge-base/sources/Dojo-101/Dojo-101-Pentest/php-linux_reverse_shell.md
+knowledge-base/sources/Dojo-101/Dojo-101-DevSec/DAST-Fichiers.md

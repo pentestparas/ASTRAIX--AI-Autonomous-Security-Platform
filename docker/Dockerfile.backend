@@ -72,7 +72,11 @@ RUN git clone --depth 1 https://github.com/OWASP/CheatSheetSeries /tmp/owasp-css
     && (cd /tmp/wsa && git sparse-checkout set file-upload-vulnerabilities) \
     && mkdir -p /opt/astraix-kb/sources/Web-Security-Academy-Series \
     && cp -a /tmp/wsa/file-upload-vulnerabilities /opt/astraix-kb/sources/Web-Security-Academy-Series/ \
-    && rm -rf /tmp/wsa
+    && rm -rf /tmp/wsa \
+    && git clone --depth 1 https://github.com/Aif4thah/Dojo-101 /tmp/dojo \
+    && rm -rf /tmp/dojo/.git \
+    && cp -a /tmp/dojo/. /opt/astraix-kb/sources/Dojo-101/ \
+    && rm -rf /tmp/dojo
 
 # Entrypoint (seeds the persistent knowledge-base volume, then starts uvicorn)
 COPY docker/entrypoint.sh /usr/local/bin/astraix-entrypoint.sh
