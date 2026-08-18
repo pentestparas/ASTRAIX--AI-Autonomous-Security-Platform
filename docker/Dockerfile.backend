@@ -54,6 +54,26 @@ COPY plugins /app/plugins
 # checkout resets. The entrypoint seeds it into the kb-data volume on first boot.
 COPY knowledge-base /opt/astraix-kb
 
+# OWASP CheatSheetSeries is cloned INSIDE the build (Docker VM filesystem),
+# never the host: host-side AV quarantines its XSS payload files (EPERM on
+# read). Landed directly under /opt/astraix-kb so the entrypoint seeds it
+# into the kb-data volume on first boot like the rest of the KB.
+RUN git clone --depth 1 https://github.com/OWASP/CheatSheetSeries /tmp/owasp-css \
+    && mkdir -p /opt/astraix-kb/sources/OWASP_CheatSheetSeries \
+    && cp -a /tmp/owasp-css/cheatsheets/. /opt/astraix-kb/sources/OWASP_CheatSheetSeries/ \
+    && rm -rf /tmp/owasp-css \
+    && git clone --depth 1 https://github.com/swisskyrepo/PayloadsAllTheThings /tmp/patt \
+    && cp -a /tmp/patt/. /opt/astraix-kb/sources/PayloadsAllTheThings/ \
+    && rm -rf /tmp/patt \
+    && git clone --depth 1 https://github.com/payload-box/csv-injection-payload-list /tmp/csv \
+    && cp -a /tmp/csv/. /opt/astraix-kb/sources/csv-injection-payload-list/ \
+    && rm -rf /tmp/csv \
+    && git clone --depth 1 --filter=blob:none --sparse https://github.com/rkhal101/Web-Security-Academy-Series /tmp/wsa \
+    && (cd /tmp/wsa && git sparse-checkout set file-upload-vulnerabilities) \
+    && mkdir -p /opt/astraix-kb/sources/Web-Security-Academy-Series \
+    && cp -a /tmp/wsa/file-upload-vulnerabilities /opt/astraix-kb/sources/Web-Security-Academy-Series/ \
+    && rm -rf /tmp/wsa
+
 # Entrypoint (seeds the persistent knowledge-base volume, then starts uvicorn)
 COPY docker/entrypoint.sh /usr/local/bin/astraix-entrypoint.sh
 RUN chmod +x /usr/local/bin/astraix-entrypoint.sh

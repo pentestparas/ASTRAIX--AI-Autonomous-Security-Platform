@@ -85,6 +85,17 @@ build/
 graphify-out/
 graphify-*/
 
+# OWASP CheatSheetSeries: fetched inside the Docker build only — host AV
+# quarantines the XSS payload files (EPERM), so it never lives on host FS.
+knowledge-base/sources/OWASP_CheatSheetSeries/
+# Same treatment: PayloadsAllTheThings + CSV injection payloads are flagged
+# by host AV (CSV formula payloads = macro malware signatures).
+knowledge-base/sources/PayloadsAllTheThings/
+knowledge-base/sources/csv-injection-payload-list/
+# Web-Security-Academy file-upload lab shells (trojan .php) AV-flagged; the
+# file-upload-vulnerabilities dir is restored via Docker sparse clone.
+knowledge-base/sources/Web-Security-Academy-Series/file-upload-vulnerabilities/
+
 # Misc
 *.pem
 .nyc_output/
