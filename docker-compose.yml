@@ -62,6 +62,9 @@ services:
       # Embedding model load grace: Docker Desktop VM needs >25s for onnxruntime
       # init; without semantic embeddings the KB degrades to TF-IDF only.
       KB_EMBEDDER_TIMEOUT: ${KB_EMBEDDER_TIMEOUT:-120}
+      # Re-pull all KB source repos from upstream into the container at boot
+      # (git clone inside the container - content never touches the host FS).
+      KB_SYNC_REPOS: ${KB_SYNC_REPOS:-false}
       # External VAPT platform adapters (backend/app/vapt/adapters)
       VAPT_ADAPTER_RACCOON: ${VAPT_ADAPTER_RACCOON:-true}
       VAPT_ADAPTER_LYRIE: ${VAPT_ADAPTER_LYRIE:-false}

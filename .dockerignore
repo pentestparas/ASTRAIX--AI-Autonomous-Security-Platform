@@ -6,3 +6,39 @@ __pycache__
 .env
 graphify-out
 **/imagetragik1_payload_xml_reverse_shell_nctraditional.xml=>(URL)
+
+# ---------------- Knowledge base: fetched from upstream INSIDE the build ----
+# These KB source dirs are cloned by fetch-kb (docker/kb-repos.txt) into the
+# image layer; excluding them from the build context keeps the payload
+# content off the host AV's radar AND prevents COPY from failing on
+# AV-quarantined host files (EPERM).
+knowledge-base/sources/AI-agents-for-cybersecurity/
+knowledge-base/sources/awesome-ai-cybersecurity/
+knowledge-base/sources/awesome-cyber-security/
+knowledge-base/sources/awesome-soc-cyb3rxp/
+knowledge-base/sources/Berkanktk-CyberSecurity/
+knowledge-base/sources/business-logic-exploitation-playbook/
+knowledge-base/sources/CAI-aliasrobotics/
+knowledge-base/sources/command-injection-payload-list/
+knowledge-base/sources/crlf-injection-payload-list/
+knowledge-base/sources/csv-injection-payload-list/
+knowledge-base/sources/Cyber_and_Information_Security_Knowledge_Base/
+knowledge-base/sources/Cyber_Security_Reference/
+knowledge-base/sources/cybersecurity-knowledge-base-kayShahbaaz/
+knowledge-base/sources/Cybersecurity-Resources-Striving-to-learn/
+knowledge-base/sources/directory-payload-list/
+knowledge-base/sources/Dojo-101/
+knowledge-base/sources/http-request-smuggling-payloads/
+knowledge-base/sources/open-redirect-payload-list/
+knowledge-base/sources/OWASP_CheatSheetSeries/
+knowledge-base/sources/PayloadsAllTheThings/
+knowledge-base/sources/paulveillard-cybersecurity/
+knowledge-base/sources/protocol-injection-payload-list/
+knowledge-base/sources/server-side-template-injection-payloads/
+knowledge-base/sources/sql-injection-payload-list/
+knowledge-base/sources/ssti-advanced-payload-list/
+knowledge-base/sources/waf-bypass-payload-list/
+knowledge-base/sources/web-cache-poisoning-payloads/
+knowledge-base/sources/Web-Security-Academy-Series/
+knowledge-base/sources/xss-payload-list/
+knowledge-base/sources/xxe-injection-payload-list/

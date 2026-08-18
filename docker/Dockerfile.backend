@@ -48,35 +48,26 @@ COPY backend/alembic ./alembic
 # Bake plugins into the image as well (no host bind mount) for AV immunity
 COPY plugins /app/plugins
 
-# Bake the complete cybersecurity knowledge base (sources + FAISS/TF-IDF index)
+# Bake the locally-authored KB (index, embeddings, curated non-repo sources)
 # into the image. The image copy lives inside the Docker VM filesystem, so it
 # cannot be deleted or quarantined by host-side antivirus, and it survives
 # checkout resets. The entrypoint seeds it into the kb-data volume on first boot.
+# NOTE: upstream-repo sources are NOT copied from the host — they are excluded
+# via .dockerignore (knowledge-base/sources/*) and fetched by fetch-kb below,
+# because host AV quarantines payload files (EPERM on read).
 COPY knowledge-base /opt/astraix-kb
 
-# OWASP CheatSheetSeries is cloned INSIDE the build (Docker VM filesystem),
-# never the host: host-side AV quarantines its XSS payload files (EPERM on
-# read). Landed directly under /opt/astraix-kb so the entrypoint seeds it
-# into the kb-data volume on first boot like the rest of the KB.
-RUN git clone --depth 1 https://github.com/OWASP/CheatSheetSeries /tmp/owasp-css \
-    && mkdir -p /opt/astraix-kb/sources/OWASP_CheatSheetSeries \
-    && cp -a /tmp/owasp-css/cheatsheets/. /opt/astraix-kb/sources/OWASP_CheatSheetSeries/ \
-    && rm -rf /tmp/owasp-css \
-    && git clone --depth 1 https://github.com/swisskyrepo/PayloadsAllTheThings /tmp/patt \
-    && cp -a /tmp/patt/. /opt/astraix-kb/sources/PayloadsAllTheThings/ \
-    && rm -rf /tmp/patt \
-    && git clone --depth 1 https://github.com/payload-box/csv-injection-payload-list /tmp/csv \
-    && cp -a /tmp/csv/. /opt/astraix-kb/sources/csv-injection-payload-list/ \
-    && rm -rf /tmp/csv \
-    && git clone --depth 1 --filter=blob:none --sparse https://github.com/rkhal101/Web-Security-Academy-Series /tmp/wsa \
-    && (cd /tmp/wsa && git sparse-checkout set file-upload-vulnerabilities) \
-    && mkdir -p /opt/astraix-kb/sources/Web-Security-Academy-Series \
-    && cp -a /tmp/wsa/file-upload-vulnerabilities /opt/astraix-kb/sources/Web-Security-Academy-Series/ \
-    && rm -rf /tmp/wsa \
-    && git clone --depth 1 https://github.com/Aif4thah/Dojo-101 /tmp/dojo \
-    && rm -rf /tmp/dojo/.git \
-    && cp -a /tmp/dojo/. /opt/astraix-kb/sources/Dojo-101/ \
-    && rm -rf /tmp/dojo
+# Fetch every upstream KB source repo INSIDE the build (Docker layer FS only —
+# never on the host). Manifest: docker/kb-repos.txt. Sources land under
+# /opt/astraix-kb/sources/<name> so the entrypoint seeds them like the rest.
+COPY docker/kb-repos.txt /kb-repos.txt
+COPY docker/fetch-kb.sh /usr/local/bin/fetch-kb
+RUN chmod +x /usr/local/bin/fetch-kb && /usr/local/bin/fetch-kb /kb-repos.txt /opt/astraix-kb/sources
+
+# Runtime KB helper: `docker exec astraix-backend kb-pull <url> [name]` clones
+# new sources straight into the container volume — no host storage ever.
+COPY docker/kb-pull.sh /usr/local/bin/kb-pull
+RUN chmod +x /usr/local/bin/kb-pull
 
 # Entrypoint (seeds the persistent knowledge-base volume, then starts uvicorn)
 COPY docker/entrypoint.sh /usr/local/bin/astraix-entrypoint.sh

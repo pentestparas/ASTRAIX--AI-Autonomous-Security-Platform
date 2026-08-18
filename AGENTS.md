@@ -27,6 +27,9 @@
 | `docker/kali-tools.Dockerfile` | Custom Kali image with nmap, nikto, sqlmap, nuclei, gobuster, sslscan |
 | `docker-compose.yml` | Full stack: postgres, redis, neo4j, backend, frontend |
 | `knowledge-base/` | Cybersecurity knowledge base (360+ sources, TF-IDF search) |
+| `docker/kb-repos.txt` | Manifest of upstream KB repos fetched inside the Docker build (AV immunity) |
+| `docker/fetch-kb.sh` | Build-time fetcher: clones manifest repos into `/opt/astraix-kb/sources` |
+| `docker/kb-pull.sh` | Runtime helper: `docker exec astraix-backend kb-pull <url> [name]` — clones new KB sources straight into the container volume, never the host |
 | `backend/app/vapt/agents/researcher.py` | Researcher Agent — enriches findings via knowledge base |
 | `backend/app/vapt/agents/verifier.py` | Verifier Agent — re-exploits findings to eliminate FPs |
 
@@ -38,6 +41,28 @@
 - Kali image: `astraix-kali:latest` (NOT `kalilinux/kali-rolling:latest` which has zero tools)
 - **Knowledge base lives INSIDE Docker**: baked into the image at `/opt/astraix-kb` (via `COPY knowledge-base` in `docker/Dockerfile.backend`) and seeded on first boot by `docker/entrypoint.sh` into the named volume `kb-data` mounted at `/app/knowledge-base`. The host folder is NOT bind-mounted — host AV (Bitdefender) cannot delete/quarantine it. Seed condition: `/app/knowledge-base/embeddings/chunks.json` missing → reseed (edit sources inside the volume with `docker cp` or remove `kb-data` volume + restart to reseed from image).
 - Knowledge base is accessible over HTTP (no direct FS access needed): `GET /api/v1/knowledge/search?q=...`, `/knowledge/stats`, `/knowledge/sources`, `/knowledge/source?path=sources/...` (path-traversal safe). AI agents consume it: planner (`KB_PATH=/app/knowledge-base`, TF-IDF/FAISS grounding), researcher (enrichment), verifier (best-effort `kb_exploit_context` on confirmed findings).
+
+## Knowledge Base — NO HOST STORAGE RULE (AV immunity)
+
+Host AV (Bitdefender) quarantines offensive-content KB files (reverse shells,
+XSS payloads, CSV formulas → EPERM on read, breaks `git add`/`docker build`).
+Therefore:
+
+- **Upstream repo sources never live on the host**: they are excluded from the
+  Docker build context via `.dockerignore` (`knowledge-base/sources/*`) and
+  cloned INSIDE the build by `fetch-kb` from `docker/kb-repos.txt` into
+  `/opt/astraix-kb/sources/<name>`; the entrypoint seeds them into the
+  `kb-data` volume on first boot like the rest of the KB.
+- **Adding NEW KB data → go straight into Docker**, never stage it on the host:
+  ```bash
+  docker exec astraix-backend kb-pull https://github.com/owner/repo [dir-name]
+  ```
+  Clones directly into `/app/knowledge-base/sources/<dir-name>` in the container
+  volume. For many repos at once, add a `name=https://github.com/owner/repo`
+  line to `docker/kb-repos.txt` and set `KB_SYNC_REPOS=true` in compose (rebuild
+  image to bake it in permanently).
+- Rebuild recipe: `docker-compose build backend && docker-compose up -d`
+  (reset the `kb-data` volume to force a full reseed).
 
 ## Known Issues (Fixed)
 

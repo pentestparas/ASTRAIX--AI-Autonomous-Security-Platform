@@ -1,0 +1,34 @@
+# KB source upstream manifest — every repo is cloned INSIDE the Docker build
+# (and optionally re-pulled at boot / via `kb-pull`), so payload content never
+# touches the host filesystem where AV quarantines it. Format: name=repo-url
+# name is the directory under knowledge-base/sources/ in the container.
+AI-agents-for-cybersecurity=https://github.com/santosomar/AI-agents-for-cybersecurity
+awesome-ai-cybersecurity=https://github.com/ElNiak/awesome-ai-cybersecurity
+awesome-cyber-security=https://github.com/okhosting/awesome-cyber-security
+awesome-soc-cyb3rxp=https://github.com/cyb3rxp/awesome-soc
+Berkanktk-CyberSecurity=https://github.com/Berkanktk/CyberSecurity
+business-logic-exploitation-playbook=https://github.com/payload-box/business-logic-exploitation-playbook
+CAI-aliasrobotics=https://github.com/aliasrobotics/cai
+command-injection-payload-list=https://github.com/payload-box/command-injection-payload-list
+crlf-injection-payload-list=https://github.com/payload-box/crlf-injection-payload-list
+csv-injection-payload-list=https://github.com/payload-box/csv-injection-payload-list
+Cyber_and_Information_Security_Knowledge_Base=https://github.com/tomwechsler/Cyber_and_Information_Security_Knowledge_Base
+Cyber_Security_Reference=https://github.com/naveen-98/Cyber_Security_Reference
+cybersecurity-knowledge-base-kayShahbaaz=https://github.com/kayShahbaaz/cybersecurity-knowledge-base
+Cybersecurity-Resources-Striving-to-learn=https://github.com/Striving-to-learn/Cybersecurity-Resources
+directory-payload-list=https://github.com/payload-box/directory-payload-list
+Dojo-101=https://github.com/Aif4thah/Dojo-101
+http-request-smuggling-payloads=https://github.com/payload-box/http-request-smuggling-payloads
+open-redirect-payload-list=https://github.com/payload-box/open-redirect-payload-list
+OWASP_CheatSheetSeries=https://github.com/OWASP/CheatSheetSeries
+PayloadsAllTheThings=https://github.com/swisskyrepo/PayloadsAllTheThings
+paulveillard-cybersecurity=https://github.com/paulveillard/cybersecurity
+protocol-injection-payload-list=https://github.com/payload-box/protocol-injection-payload-list
+server-side-template-injection-payloads=https://github.com/payload-box/server-side-template-injection-payloads
+sql-injection-payload-list=https://github.com/payload-box/sql-injection-payload-list
+ssti-advanced-payload-list=https://github.com/payload-box/ssti-advanced-payload-list
+waf-bypass-payload-list=https://github.com/payload-box/waf-bypass-payload-list
+web-cache-poisoning-payloads=https://github.com/payload-box/web-cache-poisoning-payloads
+Web-Security-Academy-Series=https://github.com/rkhal101/Web-Security-Academy-Series
+xss-payload-list=https://github.com/payload-box/xss-payload-list
+xxe-injection-payload-list=https://github.com/payload-box/xxe-injection-payload-list
