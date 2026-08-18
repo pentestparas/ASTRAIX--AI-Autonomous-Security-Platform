@@ -1,3 +1,4 @@
+import logging
 import sys
 import structlog
 from structlog.stdlib import LoggerFactory
@@ -5,6 +6,11 @@ from app.config import settings
 
 
 def setup_logging() -> None:
+    logging.basicConfig(
+        level=logging.INFO,
+        format="%(message)s",
+        stream=sys.stdout,
+    )
     structlog.configure(
         processors=[
             structlog.stdlib.filter_by_level,
