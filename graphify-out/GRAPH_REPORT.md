@@ -1,7 +1,7 @@
 # Graph Report - astraix-security-analyst  (2026-08-19)
 
 ## Corpus Check
-- 269 files · ~209,429 words
+- 269 files · ~209,459 words
 - Verdict: corpus is large enough that graph structure adds value.
 
 ## Summary
@@ -10,7 +10,7 @@
 - Token cost: 0 input · 0 output
 
 ## Graph Freshness
-- Built from commit: `9df277fa`
+- Built from commit: `2603a764`
 - Run `git rev-parse HEAD` and compare to check if the graph is stale.
 - Run `graphify update .` after code changes (no API cost).
 
@@ -22,7 +22,7 @@
 - plugin_system/executor.py
 - Severity
 - AIOrchestrator
-- container.py
+- SecurityFinding
 - organizations.py
 - capabilities/loader.py
 - VAPTScanType
@@ -32,7 +32,7 @@
 - VAPTAdapter
 - InProcessEventDispatcher
 - service.py
-- KnowledgeGraph
+- container.py
 - projects/page.tsx
 - UserRepository
 - shared/__init__.py
@@ -53,14 +53,14 @@
 - dependencies
 - flows_engine.py
 - Knowledge Base Corpus
-- value_objects.py
+- FindingEvidence
 - VAPTExecutor
 - VAPTFinding
 - assessments.py
 - PluginRegistry
 - dropdown-menu.tsx
 - ScanController
-- findings.py
+- repositories/__init__.py
 - AstraIX Full-Spectrum Platform Vision
 - assets.py
 - BasePlugin
@@ -74,7 +74,7 @@
 - .run
 - v1/__init__.py
 - [id]/page.tsx
-- PromptManager
+- PromptTemplate
 - CapabilityRegistry
 - vapt/orchestrator.py
 - kb.py
@@ -90,14 +90,14 @@
 - AI Gateway
 - Cybersecurity Knowledge Base
 - ScanProgressBus
-- semgrep.py
+- Assessment
 - graph/page.tsx
 - BaseRepository
 - web_form_scanner.py
 - AI-SecOS Core
 - httpx/main.py
 - OrganizationRepository
-- SecurityFinding
+- DefaultFindingDeduplicator
 - PROJECT.md
 - nmap/main.py
 - DefaultWorkflowEngine
@@ -139,7 +139,7 @@
 - AstraIX Platform Constitution
 - app/layout.tsx
 - graphify.js
-- Trivy Security Scanner Plugin
+- FindingContextPayload
 - eslint.config.mjs
 - Project Roadmap
 - AstraIX App Icon
@@ -240,16 +240,16 @@ Cohesion: 0.06
 Nodes (50): NoopTaskExecutor, PluginExecutionRequest, PluginExecutionResult, PluginExecutionStatus, Enum, str, Plugin Executor: drives the subprocess lifecycle. Owns the *mechanics*: -…, Drive asyncio's subprocess for one plugin invocation. (+42 more)
 
 ### Community 5 - "Severity"
-Cohesion: 0.09
-Nodes (32): DefaultRiskEngine, _noop_severity_to_score(), NoopRiskEngine, Severity, Risk Engine — pipeline orchestrator and entry points. Two implementations are…, Identity: score derived directly from canonical severity. Used in tests and as…, A scored finding (or a typed wrapper around a SecurityFinding)., Engine port: score one or more canonical findings. (+24 more)
+Cohesion: 0.07
+Nodes (37): Context Builder — assembles what's fed into a prompt. Pre-AI responsibilities:…, DefaultRiskEngine, _noop_severity_to_score(), NoopRiskEngine, Severity, Risk Engine — pipeline orchestrator and entry points. Two implementations are…, Identity: score derived directly from canonical severity. Used in tests and as…, A scored finding (or a typed wrapper around a SecurityFinding). (+29 more)
 
 ### Community 6 - "AIOrchestrator"
 Cohesion: 0.09
 Nodes (20): llm_usage_snapshot(), Result from a VAPT scan., VAPTScanResult, AIOrchestrator, Any, Elevate risk one notch when KB flags known-exploited activity., Analyze target and run the AI-planned scan with live progress events.…, Populate the Neo4j attack-surface graph with targets, ports, services, tools… (+12 more)
 
-### Community 8 - "container.py"
+### Community 8 - "SecurityFinding"
 Cohesion: 0.06
-Nodes (57): NullProvider, Identity provider for tests and the empty Milestone 1 default. Returns…, build_app(), lifespan(), FastAPI, FastAPI app factory. Binds the DI container to the web transport. -…, Start/stop lifetime management., Create the FastAPI application. Mostly configures routing + middleware; DI… (+49 more)
+Nodes (47): AssessmentId, FindingCorrelator, NoopFindingCorrelator, Finding Correlator — the contract + the no-op default. Correlators detect…, Adds correlation metadata to findings., Return the same set of findings, possibly tagged with correlation., Identity correlator. The default at Milestone 1., FindingDeduplicator (+39 more)
 
 ### Community 9 - "organizations.py"
 Cohesion: 0.09
@@ -287,9 +287,9 @@ Nodes (22): CorrelationId, Convert non-JSON values to strings, swallowing except
 Cohesion: 0.10
 Nodes (25): Asset, AssessmentStatus, get_orchestrator(), Orchestrator, Assessment, AsyncSession, Enum, str (+17 more)
 
-### Community 18 - "KnowledgeGraph"
-Cohesion: 0.16
-Nodes (5): KnowledgeGraph, _node_id(), _node_tooltip(), Any, Record one agent-loop step as a ChainStep node linked to the target (target…
+### Community 18 - "container.py"
+Cohesion: 0.07
+Nodes (55): ContextBuilder, NullContextBuilder, Build a `FindingContextPayload` from typed inputs., Default at Milestone 1. Performs no compression or redaction. A future…, AIGateway, DefaultAIGateway, Single entry point for AI reasoning tasks. Implementations are responsible for…, Default wired pipeline. (+47 more)
 
 ### Community 19 - "projects/page.tsx"
 Cohesion: 0.13
@@ -356,8 +356,8 @@ Cohesion: 0.12
 Nodes (36): _ai_comment_placeholder(), _build_section(), _findings_section(), NullReportEngine, ReportRequest, Report Engine — implementation. At Milestone 1, only the JSON/Markdown default…, Render reports from findings + risk scores., JSON/Markdown default at Milestone 1. Produces deterministic artefacts using… (+28 more)
 
 ### Community 35 - "vapt/routes.py"
-Cohesion: 0.06
-Nodes (59): get_session(), AsyncSession, Assessment, TimestampMixin, UUIDMixin, Asset, TimestampMixin, UUIDMixin (+51 more)
+Cohesion: 0.07
+Nodes (53): get_scan_controller(), Scan Control Channel In-process control plane for active scans: pause, resume,…, Cooperative pause/stop gate. No-op for scans that are not registered. While…, get_vapt_orchestrator(), get_progress_bus(), adapters_health(), _finding_fingerprint(), get_assessment() (+45 more)
 
 ### Community 36 - "dependencies"
 Cohesion: 0.07
@@ -371,9 +371,9 @@ Nodes (15): PlannerAgent, Any, Ask the LLM (NVIDIA NIM, falling back to Ollama) 
 Cohesion: 0.12
 Nodes (19): OWASP Projects (ADR Tier 3), paulveillard/cybersecurity (ADR Tier 1), Anthropic Cybersecurity Skills Repo, awesome-soc Repo, Berkanktk/CyberSecurity Repo, CAI (Cybersecurity AI) Repo, cybersecurity-knowledge-base Repo, Cybersecurity-Resources Repo (+11 more)
 
-### Community 39 - "value_objects.py"
-Cohesion: 0.05
-Nodes (51): _confidence(), _extract_items(), HttpxPluginId, make_httpx_input(), _normalize_one(), _normalize_tech(), Any, HTTP Probe (httpx) Plugin — normalizer. Converts raw `httpx` output into… (+43 more)
+### Community 39 - "FindingEvidence"
+Cohesion: 0.06
+Nodes (45): _confidence(), _extract_items(), HttpxPluginId, make_httpx_input(), _normalize_one(), _normalize_tech(), Any, HTTP Probe (httpx) Plugin — normalizer. Converts raw `httpx` output into… (+37 more)
 
 ### Community 40 - "VAPTExecutor"
 Cohesion: 0.14
@@ -388,8 +388,8 @@ Cohesion: 0.16
 Nodes (22): cancel_assessment(), create_assessment(), get_assessment(), list_assessments(), AsyncSession, delete, get, post (+14 more)
 
 ### Community 43 - "PluginRegistry"
-Cohesion: 0.07
-Nodes (36): get_session(), AsyncSession, Database session dependency., FindingOut, PluginError, PluginOutput, PluginStatus, PluginType (+28 more)
+Cohesion: 0.08
+Nodes (33): FindingOut, PluginError, PluginOutput, PluginStatus, PluginType, Enum, str, AssessmentStatus (+25 more)
 
 ### Community 44 - "dropdown-menu.tsx"
 Cohesion: 0.20
@@ -399,17 +399,17 @@ Nodes (8): DropdownMenuCheckboxItem, DropdownMenuContent, DropdownMenuItem, Drop
 Cohesion: 0.10
 Nodes (11): Any, Store the agent loop's partial results so an aborted/timed-out loop can still…, Register a pending operator decision for a dangerous tool call., Settle a pending approval. Returns False when unknown or already settled., Wait for the operator's decision. None = timed out / not resolved., A pending operator decision for a dangerous agent tool call., Registry + control flags for scans currently executing in-process., Track a running scan so control endpoints can reach its task. (+3 more)
 
-### Community 46 - "findings.py"
-Cohesion: 0.14
-Nodes (22): bulk_update_findings(), BulkUpdateRequest, delete_finding(), get_finding(), list_findings(), AsyncSession, delete, get (+14 more)
+### Community 46 - "repositories/__init__.py"
+Cohesion: 0.11
+Nodes (25): bulk_update_findings(), BulkUpdateRequest, delete_finding(), get_finding(), list_findings(), AsyncSession, delete, get (+17 more)
 
 ### Community 47 - "AstraIX Full-Spectrum Platform Vision"
 Cohesion: 0.09
 Nodes (29): AstraIX Security Analyst Platform, Data Architecture (Hot/Warm/Cold), Deployment Options, Integration Ecosystem (100+ Native), AstraIX Full-Spectrum Platform Vision, Platform Roadmap (5 Phases to 2027), VAPT Capability, ASTRAIX AI Modules (+21 more)
 
 ### Community 48 - "assets.py"
-Cohesion: 0.22
-Nodes (17): create_asset(), delete_asset(), get_asset(), list_assets(), AsyncSession, delete, get, patch (+9 more)
+Cohesion: 0.17
+Nodes (20): create_asset(), delete_asset(), get_asset(), list_assets(), AsyncSession, delete, get, patch (+12 more)
 
 ### Community 49 - "BasePlugin"
 Cohesion: 0.10
@@ -432,8 +432,8 @@ Cohesion: 0.13
 Nodes (10): QuickActions(), RecentAssessments(), RecentFindings(), StatCardProps, StatsCards(), ComponentRowProps, SystemStatus(), dashboardApi (+2 more)
 
 ### Community 54 - "Finding Engine"
-Cohesion: 0.23
-Nodes (13): Finding Engine, web/discovery capability, HTTP Probe (httpx) Plugin, Semgrep SAST Scanner Plugin, Subfinder Subdomain Enumeration Plugin, Report Engine, code/audit capability, sast/security capability (+5 more)
+Cohesion: 0.16
+Nodes (17): Finding Engine, web/discovery capability, HTTP Probe (httpx) Plugin, Semgrep SAST Scanner Plugin, Subfinder Subdomain Enumeration Plugin, Trivy Security Scanner Plugin, Report Engine, code/audit capability (+9 more)
 
 ### Community 55 - "VAPT Executor (executor.py)"
 Cohesion: 0.18
@@ -448,16 +448,16 @@ Cohesion: 0.17
 Nodes (13): AgentLoop, get_agent_loop(), Any, One agent-loop step (one tool execution attempt)., The autonomous tool-calling loop with phase + approval gating., Ground the agent with methodology guidance from the knowledge base, specific to…, Ground newly observed vuln classes in KB so the next tool decision exploits…, Return (rejected, reason) when the model may NOT write a final report yet -… (+5 more)
 
 ### Community 58 - "v1/__init__.py"
-Cohesion: 0.08
-Nodes (36): get_graph(), get, get_dashboard_activity(), get_dashboard_stats(), list_capabilities(), ping(), AsyncSession, get (+28 more)
+Cohesion: 0.06
+Nodes (34): get_graph(), get, get_dashboard_activity(), get_dashboard_stats(), list_capabilities(), ping(), get, UUID (+26 more)
 
 ### Community 59 - "[id]/page.tsx"
 Cohesion: 0.15
 Nodes (27): cvssColor(), FindingsPage(), severityConfig, statusOptions, cvssColor(), fmtLabel(), ProjectDetailPage(), registrableDomain() (+19 more)
 
-### Community 60 - "PromptManager"
-Cohesion: 0.14
-Nodes (11): _InMemoryPromptManager, PromptManager, PromptTemplate, PromptVersionError, Any, Exception, Prompt Manager — versioned prompt templates. A `PromptTemplate` is a…, Raised when a requested `prompt_id` / version combination is unknown. (+3 more)
+### Community 60 - "PromptTemplate"
+Cohesion: 0.17
+Nodes (8): _InMemoryPromptManager, PromptTemplate, PromptVersionError, Any, Exception, Raised when a requested `prompt_id` / version combination is unknown., One version of one prompt. The text uses stdlib `Template` semantics ($-style…, Process-local default; replace with persistence later if needed.
 
 ### Community 61 - "CapabilityRegistry"
 Cohesion: 0.31
@@ -489,7 +489,7 @@ Nodes (17): PostgreSQL, Quick Scan API Endpoint, VAPT Routes (routes.py), VAPT S
 
 ### Community 69 - "ai_gateway/__init__.py"
 Cohesion: 0.06
-Nodes (55): ABC, ContextBuilder, NullContextBuilder, Context Builder — assembles what's fed into a prompt. Pre-AI responsibilities:…, Build a `FindingContextPayload` from typed inputs., Default at Milestone 1. Performs no compression or redaction. A future…, AIGateway, DefaultAIGateway (+47 more)
+Nodes (41): ABC, Any, AI Gateway — composed pipeline. Pipeline order (matches Architecture): 1.…, AI Gateway — typed contract + stub implementations. Six sub-modules per…, ProviderAlreadyRegisteredError, ProviderManager, ProviderNotFoundError, Provider Manager. The Manager owns the lifecycle of providers. Applications… (+33 more)
 
 ### Community 70 - "garak_scanner.py"
 Cohesion: 0.17
@@ -500,8 +500,8 @@ Cohesion: 0.19
 Nodes (11): platform_error_to_http_response(), PlatformErrorResponse, Map platform errors → HTTP responses. FastAPI exception handler in `platform/`…, Convert a PlatformError to a status/body pair. `correlation_id` is included so…, Cross-cutting infrastructure components. This package provides: - Structured…, get_correlation_id(), CorrelationId, Correlation id context. Every critical action (workflow, plugin exec, AI call)… (+3 more)
 
 ### Community 72 - "infrastructure/logging.py"
-Cohesion: 0.09
-Nodes (33): Platform-wide constants. Pure values that have no dependency on environment…, AI-SecOS Core configuration package. Single point of access to typed settings.…, AIGatewaySettings, FindingEngineSettings, load_settings(), ObservabilitySettings, PlatformSettings, BaseSettings (+25 more)
+Cohesion: 0.11
+Nodes (24): Platform-wide constants. Pure values that have no dependency on environment…, AI-SecOS Core configuration package. Single point of access to typed settings.…, AIGatewaySettings, FindingEngineSettings, ObservabilitySettings, PlatformSettings, BaseSettings, Typed platform settings (Pydantic v2, 12-factor). Loading model: - All values… (+16 more)
 
 ### Community 73 - "AI Gateway"
 Cohesion: 0.12
@@ -515,9 +515,9 @@ Nodes (17): Cybersecurity Knowledge Base, Planner Agent, ReconOrchestrator, Rese
 Cohesion: 0.26
 Nodes (5): Any, Drop all stored events/status for a scan (used on restart)., List scans that are still running (non-terminal status)., Publishes and reads scan progress events (Redis-backed, in-memory fallback)., ScanProgressBus
 
-### Community 76 - "semgrep.py"
-Cohesion: 0.27
-Nodes (8): _categorize_semgrep(), _extract_tags(), _normalize_one(), Any, Semgrep Plugin — normalizer. Converts raw `semgrep` output into canonical…, Categorize semgrep finding based on check_id and metadata., Extract tags from semgrep metadata., Normalize a single semgrep finding.
+### Community 76 - "Assessment"
+Cohesion: 0.20
+Nodes (10): AsyncSession, post, Run a security assessment scan., run_assessment(), Assessment, TimestampMixin, UUIDMixin, Asset (+2 more)
 
 ### Community 77 - "graph/page.tsx"
 Cohesion: 0.07
@@ -539,9 +539,9 @@ Nodes (14): AI Gateway Module, AI-SecOS Core, Infrastructure Module, Domain Mode
 Cohesion: 0.20
 Nodes (14): _add(), _detect_cdn(), _detect_technologies(), _extract_title(), main(), probe_target(), Any, Extract version from header like 'nginx/1.21.6'. (+6 more)
 
-### Community 83 - "SecurityFinding"
-Cohesion: 0.06
-Nodes (28): AssessmentId, FindingContextPayload, Any, What the AI sees. Pre-serialization. The AI Gateway *never* receives the raw…, Convenience: flatten to a dict for string substitution., Return the same set of findings, possibly tagged with correlation., DefaultFindingDeduplicator, FindingDeduplicator (+20 more)
+### Community 83 - "DefaultFindingDeduplicator"
+Cohesion: 0.12
+Nodes (14): DefaultFindingDeduplicator, _max_or_none(), _merge(), _promote_severity(), Severity, Deduplication: collapsing equivalent findings. Two findings with the same…, Merge a re-observed finding with its prior canonical record. Strategy: -…, In-memory implementation. Suitable for single-process Milestone 1 / Milestone 2… (+6 more)
 
 ### Community 84 - "PROJECT.md"
 Cohesion: 0.14
@@ -703,9 +703,9 @@ Nodes (7): Capability Abstraction, Workflow Abstraction, AstraIX Platform Consti
 Cohesion: 0.40
 Nodes (3): inter, jetbrainsMono, metadata
 
-### Community 127 - "Trivy Security Scanner Plugin"
-Cohesion: 0.50
-Nodes (4): Trivy Security Scanner Plugin, cloud/posture capability, container/security capability, iac/security capability
+### Community 127 - "FindingContextPayload"
+Cohesion: 0.38
+Nodes (4): FindingContextPayload, Any, What the AI sees. Pre-serialization. The AI Gateway *never* receives the raw…, Convenience: flatten to a dict for string substitution.
 
 ### Community 130 - "Project Roadmap"
 Cohesion: 0.33
@@ -751,9 +751,9 @@ Nodes (6): expand(), http(), is_content(), main(), Replace :param tokens with sa
 ## Suggested Questions
 _Questions this graph is uniquely positioned to answer:_
 
-- **Why does `BaseModel` connect `BaseModel` to `api.py`, `vapt_platforms.py`, `plugin_system/executor.py`, `AIOrchestrator`, `VAPTScanType`, `shared/__init__.py`, `RoleName`, `ReportFormat`, `value_objects.py`, `VAPTFinding`, `assessments.py`, `PluginRegistry`, `findings.py`, `assets.py`, `BasePlugin`, `VAPTScanRequest`, `Workflow`, `SecurityFinding`, `DefaultWorkflowEngine`, `BaseSchema`, `ToolResult`?**
+- **Why does `BaseModel` connect `BaseModel` to `api.py`, `vapt_platforms.py`, `plugin_system/executor.py`, `AIOrchestrator`, `SecurityFinding`, `VAPTScanType`, `shared/__init__.py`, `RoleName`, `ReportFormat`, `FindingEvidence`, `VAPTFinding`, `assessments.py`, `PluginRegistry`, `repositories/__init__.py`, `assets.py`, `BasePlugin`, `VAPTScanRequest`, `Workflow`, `DefaultWorkflowEngine`, `BaseSchema`, `ToolResult`?**
   _High betweenness centrality (0.125) - this node is a cross-community bridge._
-- **Why does `SecurityFinding` connect `SecurityFinding` to `api.py`, `ReportFormat`, `Workflow`, `ai_gateway/__init__.py`, `Severity`, `value_objects.py`, `container.py`, `semgrep.py`, `shared/__init__.py`, `reports.py`, `BaseModel`?**
+- **Why does `SecurityFinding` connect `SecurityFinding` to `api.py`, `ReportFormat`, `Workflow`, `Severity`, `FindingEvidence`, `container.py`, `DefaultFindingDeduplicator`, `shared/__init__.py`, `reports.py`, `BaseModel`, `FindingContextPayload`?**
   _High betweenness centrality (0.068) - this node is a cross-community bridge._
 - **Why does `VAPTFinding` connect `VAPTFinding` to `VerifierAgent`, `AIOrchestrator`, `VAPTScanType`, `VAPTAdapter`, `BaseModel`, `VAPTScanRequest`, `.run`, `vapt/orchestrator.py`, `kb.py`?**
   _High betweenness centrality (0.029) - this node is a cross-community bridge._

@@ -276,8 +276,8 @@
       "source_location": "L1",
       "_origin": "ast",
       "id": "backend_ai_secos_core_ai_gateway_context",
-      "community": 69,
-      "community_name": "ai_gateway/__init__.py",
+      "community": 5,
+      "community_name": "Severity",
       "norm_label": "context.py"
     },
     {
@@ -287,8 +287,8 @@
       "source_location": "L28",
       "_origin": "ast",
       "id": "backend_ai_secos_core_ai_gateway_context_findingcontextpayload",
-      "community": 83,
-      "community_name": "SecurityFinding",
+      "community": 127,
+      "community_name": "FindingContextPayload",
       "norm_label": "findingcontextpayload"
     },
     {
@@ -298,8 +298,8 @@
       "source_location": "L42",
       "_origin": "ast",
       "id": "backend_ai_secos_core_ai_gateway_context_findingcontextpayload_to_template_params",
-      "community": 83,
-      "community_name": "SecurityFinding",
+      "community": 127,
+      "community_name": "FindingContextPayload",
       "norm_label": ".to_template_params()"
     },
     {
@@ -309,8 +309,8 @@
       "source_location": "",
       "_origin": "ast",
       "id": "backend_ai_secos_core_ai_gateway_context_py_any",
-      "community": 83,
-      "community_name": "SecurityFinding",
+      "community": 127,
+      "community_name": "FindingContextPayload",
       "norm_label": "any"
     },
     {
@@ -320,8 +320,8 @@
       "source_location": "L56",
       "_origin": "ast",
       "id": "backend_ai_secos_core_ai_gateway_context_contextbuilder",
-      "community": 69,
-      "community_name": "ai_gateway/__init__.py",
+      "community": 18,
+      "community_name": "container.py",
       "norm_label": "contextbuilder"
     },
     {
@@ -331,8 +331,8 @@
       "source_location": "L60",
       "_origin": "ast",
       "id": "backend_ai_secos_core_ai_gateway_context_contextbuilder_build",
-      "community": 83,
-      "community_name": "SecurityFinding",
+      "community": 127,
+      "community_name": "FindingContextPayload",
       "norm_label": ".build()"
     },
     {
@@ -342,8 +342,8 @@
       "source_location": "L72",
       "_origin": "ast",
       "id": "backend_ai_secos_core_ai_gateway_context_nullcontextbuilder",
-      "community": 69,
-      "community_name": "ai_gateway/__init__.py",
+      "community": 18,
+      "community_name": "container.py",
       "norm_label": "nullcontextbuilder"
     },
     {
@@ -353,8 +353,8 @@
       "source_location": "L79",
       "_origin": "ast",
       "id": "backend_ai_secos_core_ai_gateway_context_nullcontextbuilder_build",
-      "community": 83,
-      "community_name": "SecurityFinding",
+      "community": 127,
+      "community_name": "FindingContextPayload",
       "norm_label": ".build()"
     },
     {
@@ -364,8 +364,8 @@
       "source_location": "L1",
       "_origin": "ast",
       "id": "backend_ai_secos_core_ai_gateway_context_rationale_1",
-      "community": 69,
-      "community_name": "ai_gateway/__init__.py",
+      "community": 5,
+      "community_name": "Severity",
       "norm_label": "context builder \u2014 assembles what's fed into a prompt. pre-ai responsibilities:..."
     },
     {
@@ -375,8 +375,8 @@
       "source_location": "L29",
       "_origin": "ast",
       "id": "backend_ai_secos_core_ai_gateway_context_rationale_29",
-      "community": 83,
-      "community_name": "SecurityFinding",
+      "community": 127,
+      "community_name": "FindingContextPayload",
       "norm_label": "what the ai sees. pre-serialization. the ai gateway *never* receives the raw..."
     },
     {
@@ -386,8 +386,8 @@
       "source_location": "L43",
       "_origin": "ast",
       "id": "backend_ai_secos_core_ai_gateway_context_rationale_43",
-      "community": 83,
-      "community_name": "SecurityFinding",
+      "community": 127,
+      "community_name": "FindingContextPayload",
       "norm_label": "convenience: flatten to a dict for string substitution."
     },
     {
@@ -397,8 +397,8 @@
       "source_location": "L57",
       "_origin": "ast",
       "id": "backend_ai_secos_core_ai_gateway_context_rationale_57",
-      "community": 69,
-      "community_name": "ai_gateway/__init__.py",
+      "community": 18,
+      "community_name": "container.py",
       "norm_label": "build a `findingcontextpayload` from typed inputs."
     },
     {
@@ -408,8 +408,8 @@
       "source_location": "L73",
       "_origin": "ast",
       "id": "backend_ai_secos_core_ai_gateway_context_rationale_73",
-      "community": 69,
-      "community_name": "ai_gateway/__init__.py",
+      "community": 18,
+      "community_name": "container.py",
       "norm_label": "default at milestone 1. performs no compression or redaction. a future..."
     },
     {
@@ -430,8 +430,8 @@
       "source_location": "L39",
       "_origin": "ast",
       "id": "backend_ai_secos_core_ai_gateway_gateway_aigateway",
-      "community": 69,
-      "community_name": "ai_gateway/__init__.py",
+      "community": 18,
+      "community_name": "container.py",
       "norm_label": "aigateway"
     },
     {
@@ -463,8 +463,8 @@
       "source_location": "L63",
       "_origin": "ast",
       "id": "backend_ai_secos_core_ai_gateway_gateway_defaultaigateway",
-      "community": 69,
-      "community_name": "ai_gateway/__init__.py",
+      "community": 18,
+      "community_name": "container.py",
       "norm_label": "defaultaigateway"
     },
     {
@@ -474,8 +474,8 @@
       "source_location": "L66",
       "_origin": "ast",
       "id": "backend_ai_secos_core_ai_gateway_gateway_defaultaigateway_init",
-      "community": 69,
-      "community_name": "ai_gateway/__init__.py",
+      "community": 18,
+      "community_name": "container.py",
       "norm_label": ".__init__()"
     },
     {
@@ -507,8 +507,8 @@
       "source_location": "L40",
       "_origin": "ast",
       "id": "backend_ai_secos_core_ai_gateway_gateway_rationale_40",
-      "community": 69,
-      "community_name": "ai_gateway/__init__.py",
+      "community": 18,
+      "community_name": "container.py",
       "norm_label": "single entry point for ai reasoning tasks. implementations are responsible for..."
     },
     {
@@ -518,8 +518,8 @@
       "source_location": "L64",
       "_origin": "ast",
       "id": "backend_ai_secos_core_ai_gateway_gateway_rationale_64",
-      "community": 69,
-      "community_name": "ai_gateway/__init__.py",
+      "community": 18,
+      "community_name": "container.py",
       "norm_label": "default wired pipeline."
     },
     {
@@ -672,8 +672,8 @@
       "source_location": "L1",
       "_origin": "ast",
       "id": "backend_ai_secos_core_ai_gateway_prompts",
-      "community": 60,
-      "community_name": "PromptManager",
+      "community": 69,
+      "community_name": "ai_gateway/__init__.py",
       "norm_label": "prompts.py"
     },
     {
@@ -684,7 +684,7 @@
       "_origin": "ast",
       "id": "backend_ai_secos_core_ai_gateway_prompts_promptversionerror",
       "community": 60,
-      "community_name": "PromptManager",
+      "community_name": "PromptTemplate",
       "norm_label": "promptversionerror"
     },
     {
@@ -695,7 +695,7 @@
       "_origin": "ast",
       "id": "backend_ai_secos_core_ai_gateway_prompts_py_exception",
       "community": 60,
-      "community_name": "PromptManager",
+      "community_name": "PromptTemplate",
       "norm_label": "exception"
     },
     {
@@ -706,7 +706,7 @@
       "_origin": "ast",
       "id": "backend_ai_secos_core_ai_gateway_prompts_prompttemplate",
       "community": 60,
-      "community_name": "PromptManager",
+      "community_name": "PromptTemplate",
       "norm_label": "prompttemplate"
     },
     {
@@ -717,7 +717,7 @@
       "_origin": "ast",
       "id": "backend_ai_secos_core_ai_gateway_prompts_prompttemplate_render",
       "community": 60,
-      "community_name": "PromptManager",
+      "community_name": "PromptTemplate",
       "norm_label": ".render()"
     },
     {
@@ -728,7 +728,7 @@
       "_origin": "ast",
       "id": "backend_ai_secos_core_ai_gateway_prompts_py_any",
       "community": 60,
-      "community_name": "PromptManager",
+      "community_name": "PromptTemplate",
       "norm_label": "any"
     },
     {
@@ -738,8 +738,8 @@
       "source_location": "L42",
       "_origin": "ast",
       "id": "backend_ai_secos_core_ai_gateway_prompts_promptmanager",
-      "community": 60,
-      "community_name": "PromptManager",
+      "community": 18,
+      "community_name": "container.py",
       "norm_label": "promptmanager"
     },
     {
@@ -750,7 +750,7 @@
       "_origin": "ast",
       "id": "backend_ai_secos_core_ai_gateway_prompts_promptmanager_register",
       "community": 60,
-      "community_name": "PromptManager",
+      "community_name": "PromptTemplate",
       "norm_label": ".register()"
     },
     {
@@ -761,7 +761,7 @@
       "_origin": "ast",
       "id": "backend_ai_secos_core_ai_gateway_prompts_promptmanager_get",
       "community": 60,
-      "community_name": "PromptManager",
+      "community_name": "PromptTemplate",
       "norm_label": ".get()"
     },
     {
@@ -771,8 +771,8 @@
       "source_location": "L52",
       "_origin": "ast",
       "id": "backend_ai_secos_core_ai_gateway_prompts_promptmanager_has",
-      "community": 60,
-      "community_name": "PromptManager",
+      "community": 18,
+      "community_name": "container.py",
       "norm_label": ".has()"
     },
     {
@@ -783,7 +783,7 @@
       "_origin": "ast",
       "id": "backend_ai_secos_core_ai_gateway_prompts_inmemorypromptmanager",
       "community": 60,
-      "community_name": "PromptManager",
+      "community_name": "PromptTemplate",
       "norm_label": "_inmemorypromptmanager"
     },
     {
@@ -794,7 +794,7 @@
       "_origin": "ast",
       "id": "backend_ai_secos_core_ai_gateway_prompts_inmemorypromptmanager_init",
       "community": 60,
-      "community_name": "PromptManager",
+      "community_name": "PromptTemplate",
       "norm_label": ".__init__()"
     },
     {
@@ -805,7 +805,7 @@
       "_origin": "ast",
       "id": "backend_ai_secos_core_ai_gateway_prompts_inmemorypromptmanager_register",
       "community": 60,
-      "community_name": "PromptManager",
+      "community_name": "PromptTemplate",
       "norm_label": ".register()"
     },
     {
@@ -816,7 +816,7 @@
       "_origin": "ast",
       "id": "backend_ai_secos_core_ai_gateway_prompts_inmemorypromptmanager_get",
       "community": 60,
-      "community_name": "PromptManager",
+      "community_name": "PromptTemplate",
       "norm_label": ".get()"
     },
     {
@@ -827,7 +827,7 @@
       "_origin": "ast",
       "id": "backend_ai_secos_core_ai_gateway_prompts_inmemorypromptmanager_has",
       "community": 60,
-      "community_name": "PromptManager",
+      "community_name": "PromptTemplate",
       "norm_label": ".has()"
     },
     {
@@ -837,8 +837,8 @@
       "source_location": "L1",
       "_origin": "ast",
       "id": "backend_ai_secos_core_ai_gateway_prompts_rationale_1",
-      "community": 60,
-      "community_name": "PromptManager",
+      "community": 69,
+      "community_name": "ai_gateway/__init__.py",
       "norm_label": "prompt manager \u2014 versioned prompt templates. a `prompttemplate` is a..."
     },
     {
@@ -849,7 +849,7 @@
       "_origin": "ast",
       "id": "backend_ai_secos_core_ai_gateway_prompts_rationale_19",
       "community": 60,
-      "community_name": "PromptManager",
+      "community_name": "PromptTemplate",
       "norm_label": "raised when a requested `prompt_id` / version combination is unknown."
     },
     {
@@ -860,7 +860,7 @@
       "_origin": "ast",
       "id": "backend_ai_secos_core_ai_gateway_prompts_rationale_24",
       "community": 60,
-      "community_name": "PromptManager",
+      "community_name": "PromptTemplate",
       "norm_label": "one version of one prompt. the text uses stdlib `template` semantics ($-style..."
     },
     {
@@ -870,8 +870,8 @@
       "source_location": "L43",
       "_origin": "ast",
       "id": "backend_ai_secos_core_ai_gateway_prompts_rationale_43",
-      "community": 60,
-      "community_name": "PromptManager",
+      "community": 18,
+      "community_name": "container.py",
       "norm_label": "resolved-source-of-truth for prompt templates."
     },
     {
@@ -882,7 +882,7 @@
       "_origin": "ast",
       "id": "backend_ai_secos_core_ai_gateway_prompts_rationale_56",
       "community": 60,
-      "community_name": "PromptManager",
+      "community_name": "PromptTemplate",
       "norm_label": "process-local default; replace with persistence later if needed."
     },
     {
@@ -969,7 +969,7 @@
       "source_location": "L74",
       "_origin": "ast",
       "id": "backend_ai_secos_core_ai_gateway_provider_nullprovider",
-      "community": 8,
+      "community": 18,
       "community_name": "container.py",
       "norm_label": "nullprovider"
     },
@@ -1046,7 +1046,7 @@
       "source_location": "L75",
       "_origin": "ast",
       "id": "backend_ai_secos_core_ai_gateway_provider_rationale_75",
-      "community": 8,
+      "community": 18,
       "community_name": "container.py",
       "norm_label": "identity provider for tests and the empty milestone 1 default. returns..."
     },
@@ -1112,8 +1112,8 @@
       "source_location": "L46",
       "_origin": "ast",
       "id": "backend_ai_secos_core_ai_gateway_response_noopresponseparser",
-      "community": 69,
-      "community_name": "ai_gateway/__init__.py",
+      "community": 18,
+      "community_name": "container.py",
       "norm_label": "noopresponseparser"
     },
     {
@@ -1167,8 +1167,8 @@
       "source_location": "L47",
       "_origin": "ast",
       "id": "backend_ai_secos_core_ai_gateway_response_rationale_47",
-      "community": 69,
-      "community_name": "ai_gateway/__init__.py",
+      "community": 18,
+      "community_name": "container.py",
       "norm_label": "default at milestone 1. just delegates to `parsedairesponse.from_text`."
     },
     {
@@ -1222,8 +1222,8 @@
       "source_location": "L37",
       "_origin": "ast",
       "id": "backend_ai_secos_core_ai_gateway_router_nullmodelrouter",
-      "community": 69,
-      "community_name": "ai_gateway/__init__.py",
+      "community": 18,
+      "community_name": "container.py",
       "norm_label": "nullmodelrouter"
     },
     {
@@ -1288,8 +1288,8 @@
       "source_location": "L38",
       "_origin": "ast",
       "id": "backend_ai_secos_core_ai_gateway_router_rationale_38",
-      "community": 69,
-      "community_name": "ai_gateway/__init__.py",
+      "community": 18,
+      "community_name": "container.py",
       "norm_label": "pass-through router registered by default at milestone 1."
     },
     {
@@ -1398,8 +1398,8 @@
       "source_location": "L56",
       "_origin": "ast",
       "id": "backend_ai_secos_core_ai_gateway_tokens_nooptokenmanager",
-      "community": 69,
-      "community_name": "ai_gateway/__init__.py",
+      "community": 18,
+      "community_name": "container.py",
       "norm_label": "nooptokenmanager"
     },
     {
@@ -1497,8 +1497,8 @@
       "source_location": "L57",
       "_origin": "ast",
       "id": "backend_ai_secos_core_ai_gateway_tokens_rationale_57",
-      "community": 69,
-      "community_name": "ai_gateway/__init__.py",
+      "community": 18,
+      "community_name": "container.py",
       "norm_label": "default at milestone 1. plan = approximate character length / 4. record =..."
     },
     {
@@ -1684,7 +1684,7 @@
       "source_location": "L1",
       "_origin": "ast",
       "id": "backend_ai_secos_core_api_platform_init",
-      "community": 8,
+      "community": 18,
       "community_name": "container.py",
       "norm_label": "api_platform/__init__.py"
     },
@@ -1695,7 +1695,7 @@
       "source_location": "L1",
       "_origin": "ast",
       "id": "backend_ai_secos_core_api_platform_init_rationale_1",
-      "community": 8,
+      "community": 18,
       "community_name": "container.py",
       "norm_label": "platform \u2014 bootstrap, di container, lifespan, error mapping. this is the *only*..."
     },
@@ -1706,7 +1706,7 @@
       "source_location": "L1",
       "_origin": "ast",
       "id": "backend_ai_secos_core_api_platform_app_factory",
-      "community": 8,
+      "community": 18,
       "community_name": "container.py",
       "norm_label": "app_factory.py"
     },
@@ -1717,7 +1717,7 @@
       "source_location": "L21",
       "_origin": "ast",
       "id": "backend_ai_secos_core_api_platform_app_factory_lifespan",
-      "community": 8,
+      "community": 18,
       "community_name": "container.py",
       "norm_label": "lifespan()"
     },
@@ -1728,7 +1728,7 @@
       "source_location": "",
       "_origin": "ast",
       "id": "backend_ai_secos_core_api_platform_app_factory_py_fastapi",
-      "community": 8,
+      "community": 18,
       "community_name": "container.py",
       "norm_label": "fastapi"
     },
@@ -1739,7 +1739,7 @@
       "source_location": "L31",
       "_origin": "ast",
       "id": "backend_ai_secos_core_api_platform_app_factory_build_app",
-      "community": 8,
+      "community": 18,
       "community_name": "container.py",
       "norm_label": "build_app()"
     },
@@ -1750,7 +1750,7 @@
       "source_location": "L1",
       "_origin": "ast",
       "id": "backend_ai_secos_core_api_platform_app_factory_rationale_1",
-      "community": 8,
+      "community": 18,
       "community_name": "container.py",
       "norm_label": "fastapi app factory. binds the di container to the web transport. -..."
     },
@@ -1761,7 +1761,7 @@
       "source_location": "L22",
       "_origin": "ast",
       "id": "backend_ai_secos_core_api_platform_app_factory_rationale_22",
-      "community": 8,
+      "community": 18,
       "community_name": "container.py",
       "norm_label": "start/stop lifetime management."
     },
@@ -1772,7 +1772,7 @@
       "source_location": "L32",
       "_origin": "ast",
       "id": "backend_ai_secos_core_api_platform_app_factory_rationale_32",
-      "community": 8,
+      "community": 18,
       "community_name": "container.py",
       "norm_label": "create the fastapi application. mostly configures routing + middleware; di..."
     },
@@ -1783,7 +1783,7 @@
       "source_location": "L1",
       "_origin": "ast",
       "id": "backend_ai_secos_core_api_platform_container",
-      "community": 8,
+      "community": 18,
       "community_name": "container.py",
       "norm_label": "container.py"
     },
@@ -1794,7 +1794,7 @@
       "source_location": "L61",
       "_origin": "ast",
       "id": "backend_ai_secos_core_api_platform_container_container",
-      "community": 8,
+      "community": 18,
       "community_name": "container.py",
       "norm_label": "container"
     },
@@ -1805,7 +1805,7 @@
       "source_location": "L104",
       "_origin": "ast",
       "id": "backend_ai_secos_core_api_platform_container_container_load_plugins",
-      "community": 8,
+      "community": 18,
       "community_name": "container.py",
       "norm_label": ".load_plugins()"
     },
@@ -1816,7 +1816,7 @@
       "source_location": "L119",
       "_origin": "ast",
       "id": "backend_ai_secos_core_api_platform_container_mutablecontainer",
-      "community": 8,
+      "community": 18,
       "community_name": "container.py",
       "norm_label": "_mutablecontainer"
     },
@@ -1827,7 +1827,7 @@
       "source_location": "L158",
       "_origin": "ast",
       "id": "backend_ai_secos_core_api_platform_container_mutablecontainer_mutate",
-      "community": 8,
+      "community": 18,
       "community_name": "container.py",
       "norm_label": ".mutate()"
     },
@@ -1838,7 +1838,7 @@
       "source_location": "L163",
       "_origin": "ast",
       "id": "backend_ai_secos_core_api_platform_container_mutablecontainer_freeze",
-      "community": 8,
+      "community": 18,
       "community_name": "container.py",
       "norm_label": ".freeze()"
     },
@@ -1849,7 +1849,7 @@
       "source_location": "L176",
       "_origin": "ast",
       "id": "backend_ai_secos_core_api_platform_container_build_default_container",
-      "community": 8,
+      "community": 18,
       "community_name": "container.py",
       "norm_label": "build_default_container()"
     },
@@ -1860,7 +1860,7 @@
       "source_location": "L1",
       "_origin": "ast",
       "id": "backend_ai_secos_core_api_platform_container_rationale_1",
-      "community": 8,
+      "community": 18,
       "community_name": "container.py",
       "norm_label": "dependency injection container. uses di\u2019y to wire the entire platform without..."
     },
@@ -1871,7 +1871,7 @@
       "source_location": "L62",
       "_origin": "ast",
       "id": "backend_ai_secos_core_api_platform_container_rationale_62",
-      "community": 8,
+      "community": 18,
       "community_name": "container.py",
       "norm_label": "the exposed container interface."
     },
@@ -1882,7 +1882,7 @@
       "source_location": "L105",
       "_origin": "ast",
       "id": "backend_ai_secos_core_api_platform_container_rationale_105",
-      "community": 8,
+      "community": 18,
       "community_name": "container.py",
       "norm_label": "at boot, walk the plugins root and populate: - plugin registry - normalizer..."
     },
@@ -1893,7 +1893,7 @@
       "source_location": "L120",
       "_origin": "ast",
       "id": "backend_ai_secos_core_api_platform_container_rationale_120",
-      "community": 8,
+      "community": 18,
       "community_name": "container.py",
       "norm_label": "mutable (thread-safe) wiring harness."
     },
@@ -1904,7 +1904,7 @@
       "source_location": "L159",
       "_origin": "ast",
       "id": "backend_ai_secos_core_api_platform_container_rationale_159",
-      "community": 8,
+      "community": 18,
       "community_name": "container.py",
       "norm_label": "safely edit mutable values."
     },
@@ -1915,7 +1915,7 @@
       "source_location": "L164",
       "_origin": "ast",
       "id": "backend_ai_secos_core_api_platform_container_rationale_164",
-      "community": 8,
+      "community": 18,
       "community_name": "container.py",
       "norm_label": "return a frozen copy ready for consumption."
     },
@@ -1926,7 +1926,7 @@
       "source_location": "L177",
       "_origin": "ast",
       "id": "backend_ai_secos_core_api_platform_container_rationale_177",
-      "community": 8,
+      "community": 18,
       "community_name": "container.py",
       "norm_label": "wire default implementations for production runtime."
     },
@@ -1937,7 +1937,7 @@
       "source_location": "L115",
       "_origin": "ast",
       "id": "backend_ai_secos_core_api_platform_container_rationale_115",
-      "community": 8,
+      "community": 18,
       "community_name": "container.py",
       "norm_label": "# todo: lookup normalizer + register"
     },
@@ -1948,7 +1948,7 @@
       "source_location": "L1",
       "_origin": "ast",
       "id": "backend_ai_secos_core_api_platform_dependencies",
-      "community": 8,
+      "community": 18,
       "community_name": "container.py",
       "norm_label": "dependencies.py"
     },
@@ -1981,7 +1981,7 @@
       "source_location": "L16",
       "_origin": "ast",
       "id": "backend_ai_secos_core_api_platform_dependencies_get_settings",
-      "community": 8,
+      "community": 18,
       "community_name": "container.py",
       "norm_label": "get_settings()"
     },
@@ -1992,7 +1992,7 @@
       "source_location": "L1",
       "_origin": "ast",
       "id": "backend_ai_secos_core_api_platform_dependencies_rationale_1",
-      "community": 8,
+      "community": 18,
       "community_name": "container.py",
       "norm_label": "dependency providers for fastapi routes."
     },
@@ -2014,7 +2014,7 @@
       "source_location": "L17",
       "_origin": "ast",
       "id": "backend_ai_secos_core_api_platform_dependencies_rationale_17",
-      "community": 8,
+      "community": 18,
       "community_name": "container.py",
       "norm_label": "shortcut: typed settings."
     },
@@ -2124,7 +2124,7 @@
       "source_location": "L1",
       "_origin": "ast",
       "id": "backend_ai_secos_core_api_platform_routes",
-      "community": 8,
+      "community": 18,
       "community_name": "container.py",
       "norm_label": "api_platform/routes.py"
     },
@@ -2190,7 +2190,7 @@
       "source_location": "L1",
       "_origin": "ast",
       "id": "backend_ai_secos_core_api_platform_routes_rationale_1",
-      "community": 8,
+      "community": 18,
       "community_name": "container.py",
       "norm_label": "fastapi transport: health, ready, version. all other api routes beyond these..."
     },
@@ -3312,8 +3312,8 @@
       "source_location": "L154",
       "_origin": "ast",
       "id": "backend_ai_secos_core_config_settings_settings",
-      "community": 72,
-      "community_name": "infrastructure/logging.py",
+      "community": 18,
+      "community_name": "container.py",
       "norm_label": "settings"
     },
     {
@@ -3323,8 +3323,8 @@
       "source_location": "L173",
       "_origin": "ast",
       "id": "backend_ai_secos_core_config_settings_load_settings",
-      "community": 72,
-      "community_name": "infrastructure/logging.py",
+      "community": 18,
+      "community_name": "container.py",
       "norm_label": "load_settings()"
     },
     {
@@ -3411,8 +3411,8 @@
       "source_location": "L155",
       "_origin": "ast",
       "id": "backend_ai_secos_core_config_settings_rationale_155",
-      "community": 72,
-      "community_name": "infrastructure/logging.py",
+      "community": 18,
+      "community_name": "container.py",
       "norm_label": "aggregate settings; the single value passed to the di container."
     },
     {
@@ -3422,8 +3422,8 @@
       "source_location": "L174",
       "_origin": "ast",
       "id": "backend_ai_secos_core_config_settings_rationale_174",
-      "community": 72,
-      "community_name": "infrastructure/logging.py",
+      "community": 18,
+      "community_name": "container.py",
       "norm_label": "single-entry factory. cached for the process lifetime."
     },
     {
@@ -3434,7 +3434,7 @@
       "_origin": "ast",
       "id": "backend_ai_secos_core_finding_engine_init",
       "community": 8,
-      "community_name": "container.py",
+      "community_name": "SecurityFinding",
       "norm_label": "finding_engine/__init__.py"
     },
     {
@@ -3445,7 +3445,7 @@
       "_origin": "ast",
       "id": "backend_ai_secos_core_finding_engine_init_rationale_1",
       "community": 8,
-      "community_name": "container.py",
+      "community_name": "SecurityFinding",
       "norm_label": "finding engine \u2014 the truth about what's been discovered. responsibilities (per..."
     },
     {
@@ -3456,7 +3456,7 @@
       "_origin": "ast",
       "id": "backend_ai_secos_core_finding_engine_correlator",
       "community": 8,
-      "community_name": "container.py",
+      "community_name": "SecurityFinding",
       "norm_label": "correlator.py"
     },
     {
@@ -3467,7 +3467,7 @@
       "_origin": "ast",
       "id": "backend_ai_secos_core_finding_engine_correlator_findingcorrelator",
       "community": 8,
-      "community_name": "container.py",
+      "community_name": "SecurityFinding",
       "norm_label": "findingcorrelator"
     },
     {
@@ -3477,7 +3477,7 @@
       "source_location": "L20",
       "_origin": "ast",
       "id": "backend_ai_secos_core_finding_engine_correlator_findingcorrelator_correlate",
-      "community": 83,
+      "community": 8,
       "community_name": "SecurityFinding",
       "norm_label": ".correlate()"
     },
@@ -3489,7 +3489,7 @@
       "_origin": "ast",
       "id": "backend_ai_secos_core_finding_engine_correlator_noopfindingcorrelator",
       "community": 8,
-      "community_name": "container.py",
+      "community_name": "SecurityFinding",
       "norm_label": "noopfindingcorrelator"
     },
     {
@@ -3499,7 +3499,7 @@
       "source_location": "L30",
       "_origin": "ast",
       "id": "backend_ai_secos_core_finding_engine_correlator_noopfindingcorrelator_correlate",
-      "community": 83,
+      "community": 8,
       "community_name": "SecurityFinding",
       "norm_label": ".correlate()"
     },
@@ -3511,7 +3511,7 @@
       "_origin": "ast",
       "id": "backend_ai_secos_core_finding_engine_correlator_rationale_1",
       "community": 8,
-      "community_name": "container.py",
+      "community_name": "SecurityFinding",
       "norm_label": "finding correlator \u2014 the contract + the no-op default. correlators detect..."
     },
     {
@@ -3522,7 +3522,7 @@
       "_origin": "ast",
       "id": "backend_ai_secos_core_finding_engine_correlator_rationale_17",
       "community": 8,
-      "community_name": "container.py",
+      "community_name": "SecurityFinding",
       "norm_label": "adds correlation metadata to findings."
     },
     {
@@ -3532,7 +3532,7 @@
       "source_location": "L23",
       "_origin": "ast",
       "id": "backend_ai_secos_core_finding_engine_correlator_rationale_23",
-      "community": 83,
+      "community": 8,
       "community_name": "SecurityFinding",
       "norm_label": "return the same set of findings, possibly tagged with correlation."
     },
@@ -3544,7 +3544,7 @@
       "_origin": "ast",
       "id": "backend_ai_secos_core_finding_engine_correlator_rationale_28",
       "community": 8,
-      "community_name": "container.py",
+      "community_name": "SecurityFinding",
       "norm_label": "identity correlator. the default at milestone 1."
     },
     {
@@ -3555,7 +3555,7 @@
       "_origin": "ast",
       "id": "backend_ai_secos_core_finding_engine_deduplicator",
       "community": 83,
-      "community_name": "SecurityFinding",
+      "community_name": "DefaultFindingDeduplicator",
       "norm_label": "deduplicator.py"
     },
     {
@@ -3565,7 +3565,7 @@
       "source_location": "L29",
       "_origin": "ast",
       "id": "backend_ai_secos_core_finding_engine_deduplicator_findingdeduplicator",
-      "community": 83,
+      "community": 8,
       "community_name": "SecurityFinding",
       "norm_label": "findingdeduplicator"
     },
@@ -3576,7 +3576,7 @@
       "source_location": "L33",
       "_origin": "ast",
       "id": "backend_ai_secos_core_finding_engine_deduplicator_findingdeduplicator_ingest",
-      "community": 83,
+      "community": 8,
       "community_name": "SecurityFinding",
       "norm_label": ".ingest()"
     },
@@ -3587,7 +3587,7 @@
       "source_location": "L43",
       "_origin": "ast",
       "id": "backend_ai_secos_core_finding_engine_deduplicator_findingdeduplicator_known",
-      "community": 83,
+      "community": 8,
       "community_name": "SecurityFinding",
       "norm_label": ".known()"
     },
@@ -3598,7 +3598,7 @@
       "source_location": "L46",
       "_origin": "ast",
       "id": "backend_ai_secos_core_finding_engine_deduplicator_findingdeduplicator_all",
-      "community": 83,
+      "community": 8,
       "community_name": "SecurityFinding",
       "norm_label": ".all()"
     },
@@ -3609,7 +3609,7 @@
       "source_location": "L49",
       "_origin": "ast",
       "id": "backend_ai_secos_core_finding_engine_deduplicator_findingdeduplicator_reset",
-      "community": 83,
+      "community": 8,
       "community_name": "SecurityFinding",
       "norm_label": ".reset()"
     },
@@ -3621,7 +3621,7 @@
       "_origin": "ast",
       "id": "backend_ai_secos_core_finding_engine_deduplicator_promote_severity",
       "community": 83,
-      "community_name": "SecurityFinding",
+      "community_name": "DefaultFindingDeduplicator",
       "norm_label": "_promote_severity()"
     },
     {
@@ -3632,7 +3632,7 @@
       "_origin": "ast",
       "id": "backend_ai_secos_core_finding_engine_deduplicator_py_severity",
       "community": 83,
-      "community_name": "SecurityFinding",
+      "community_name": "DefaultFindingDeduplicator",
       "norm_label": "severity"
     },
     {
@@ -3643,7 +3643,7 @@
       "_origin": "ast",
       "id": "backend_ai_secos_core_finding_engine_deduplicator_defaultfindingdeduplicator",
       "community": 83,
-      "community_name": "SecurityFinding",
+      "community_name": "DefaultFindingDeduplicator",
       "norm_label": "defaultfindingdeduplicator"
     },
     {
@@ -3654,7 +3654,7 @@
       "_origin": "ast",
       "id": "backend_ai_secos_core_finding_engine_deduplicator_defaultfindingdeduplicator_init",
       "community": 83,
-      "community_name": "SecurityFinding",
+      "community_name": "DefaultFindingDeduplicator",
       "norm_label": ".__init__()"
     },
     {
@@ -3665,7 +3665,7 @@
       "_origin": "ast",
       "id": "backend_ai_secos_core_finding_engine_deduplicator_defaultfindingdeduplicator_ingest",
       "community": 83,
-      "community_name": "SecurityFinding",
+      "community_name": "DefaultFindingDeduplicator",
       "norm_label": ".ingest()"
     },
     {
@@ -3676,7 +3676,7 @@
       "_origin": "ast",
       "id": "backend_ai_secos_core_finding_engine_deduplicator_defaultfindingdeduplicator_known",
       "community": 83,
-      "community_name": "SecurityFinding",
+      "community_name": "DefaultFindingDeduplicator",
       "norm_label": ".known()"
     },
     {
@@ -3687,7 +3687,7 @@
       "_origin": "ast",
       "id": "backend_ai_secos_core_finding_engine_deduplicator_defaultfindingdeduplicator_all",
       "community": 83,
-      "community_name": "SecurityFinding",
+      "community_name": "DefaultFindingDeduplicator",
       "norm_label": ".all()"
     },
     {
@@ -3698,7 +3698,7 @@
       "_origin": "ast",
       "id": "backend_ai_secos_core_finding_engine_deduplicator_defaultfindingdeduplicator_reset",
       "community": 83,
-      "community_name": "SecurityFinding",
+      "community_name": "DefaultFindingDeduplicator",
       "norm_label": ".reset()"
     },
     {
@@ -3709,7 +3709,7 @@
       "_origin": "ast",
       "id": "backend_ai_secos_core_finding_engine_deduplicator_merge",
       "community": 83,
-      "community_name": "SecurityFinding",
+      "community_name": "DefaultFindingDeduplicator",
       "norm_label": "_merge()"
     },
     {
@@ -3720,7 +3720,7 @@
       "_origin": "ast",
       "id": "backend_ai_secos_core_finding_engine_deduplicator_max_or_none",
       "community": 83,
-      "community_name": "SecurityFinding",
+      "community_name": "DefaultFindingDeduplicator",
       "norm_label": "_max_or_none()"
     },
     {
@@ -3731,7 +3731,7 @@
       "_origin": "ast",
       "id": "backend_ai_secos_core_finding_engine_deduplicator_rationale_1",
       "community": 83,
-      "community_name": "SecurityFinding",
+      "community_name": "DefaultFindingDeduplicator",
       "norm_label": "deduplication: collapsing equivalent findings. two findings with the same..."
     },
     {
@@ -3741,7 +3741,7 @@
       "source_location": "L30",
       "_origin": "ast",
       "id": "backend_ai_secos_core_finding_engine_deduplicator_rationale_30",
-      "community": 83,
+      "community": 8,
       "community_name": "SecurityFinding",
       "norm_label": "stateful dedupe of findings by fingerprint."
     },
@@ -3752,7 +3752,7 @@
       "source_location": "L34",
       "_origin": "ast",
       "id": "backend_ai_secos_core_finding_engine_deduplicator_rationale_34",
-      "community": 83,
+      "community": 8,
       "community_name": "SecurityFinding",
       "norm_label": "insert one finding. returns `(stored_finding, was_new)`. when `was_new=false`,..."
     },
@@ -3764,7 +3764,7 @@
       "_origin": "ast",
       "id": "backend_ai_secos_core_finding_engine_deduplicator_rationale_66",
       "community": 83,
-      "community_name": "SecurityFinding",
+      "community_name": "DefaultFindingDeduplicator",
       "norm_label": "in-memory implementation. suitable for single-process milestone 1 / milestone 2..."
     },
     {
@@ -3775,7 +3775,7 @@
       "_origin": "ast",
       "id": "backend_ai_secos_core_finding_engine_deduplicator_rationale_105",
       "community": 83,
-      "community_name": "SecurityFinding",
+      "community_name": "DefaultFindingDeduplicator",
       "norm_label": "merge a re-observed finding with its prior canonical record. strategy: -..."
     },
     {
@@ -3786,7 +3786,7 @@
       "_origin": "ast",
       "id": "backend_ai_secos_core_finding_engine_engine",
       "community": 8,
-      "community_name": "container.py",
+      "community_name": "SecurityFinding",
       "norm_label": "finding_engine/engine.py"
     },
     {
@@ -3797,7 +3797,7 @@
       "_origin": "ast",
       "id": "backend_ai_secos_core_finding_engine_engine_findingengineconfig",
       "community": 8,
-      "community_name": "container.py",
+      "community_name": "SecurityFinding",
       "norm_label": "findingengineconfig"
     },
     {
@@ -3808,7 +3808,7 @@
       "_origin": "ast",
       "id": "backend_ai_secos_core_finding_engine_engine_findingenginecontext",
       "community": 8,
-      "community_name": "container.py",
+      "community_name": "SecurityFinding",
       "norm_label": "findingenginecontext"
     },
     {
@@ -3819,7 +3819,7 @@
       "_origin": "ast",
       "id": "backend_ai_secos_core_finding_engine_engine_findingengine",
       "community": 8,
-      "community_name": "container.py",
+      "community_name": "SecurityFinding",
       "norm_label": "findingengine"
     },
     {
@@ -3830,7 +3830,7 @@
       "_origin": "ast",
       "id": "backend_ai_secos_core_finding_engine_engine_findingengine_process",
       "community": 8,
-      "community_name": "container.py",
+      "community_name": "SecurityFinding",
       "norm_label": ".process()"
     },
     {
@@ -3841,7 +3841,7 @@
       "_origin": "ast",
       "id": "backend_ai_secos_core_finding_engine_engine_defaultfindingengine",
       "community": 8,
-      "community_name": "container.py",
+      "community_name": "SecurityFinding",
       "norm_label": "defaultfindingengine"
     },
     {
@@ -3852,7 +3852,7 @@
       "_origin": "ast",
       "id": "backend_ai_secos_core_finding_engine_engine_defaultfindingengine_post_init",
       "community": 8,
-      "community_name": "container.py",
+      "community_name": "SecurityFinding",
       "norm_label": ".__post_init__()"
     },
     {
@@ -3863,7 +3863,7 @@
       "_origin": "ast",
       "id": "backend_ai_secos_core_finding_engine_engine_defaultfindingengine_process",
       "community": 8,
-      "community_name": "container.py",
+      "community_name": "SecurityFinding",
       "norm_label": ".process()"
     },
     {
@@ -3874,7 +3874,7 @@
       "_origin": "ast",
       "id": "backend_ai_secos_core_finding_engine_engine_rationale_1",
       "community": 8,
-      "community_name": "container.py",
+      "community_name": "SecurityFinding",
       "norm_label": "finding engine \u2014 the pipeline orchestrator. pipeline order (matches..."
     },
     {
@@ -3885,7 +3885,7 @@
       "_origin": "ast",
       "id": "backend_ai_secos_core_finding_engine_engine_rationale_38",
       "community": 8,
-      "community_name": "container.py",
+      "community_name": "SecurityFinding",
       "norm_label": "toggles that do not require a new class."
     },
     {
@@ -3896,7 +3896,7 @@
       "_origin": "ast",
       "id": "backend_ai_secos_core_finding_engine_engine_rationale_46",
       "community": 8,
-      "community_name": "container.py",
+      "community_name": "SecurityFinding",
       "norm_label": "the context fields a finding needs to exist at all."
     },
     {
@@ -3907,7 +3907,7 @@
       "_origin": "ast",
       "id": "backend_ai_secos_core_finding_engine_engine_rationale_54",
       "community": 8,
-      "community_name": "container.py",
+      "community_name": "SecurityFinding",
       "norm_label": "orchestrates the pipeline for one or more raw plugin results."
     },
     {
@@ -3918,7 +3918,7 @@
       "_origin": "ast",
       "id": "backend_ai_secos_core_finding_engine_engine_rationale_63",
       "community": 8,
-      "community_name": "container.py",
+      "community_name": "SecurityFinding",
       "norm_label": "run the full pipeline on one plugin's raw output. returns deduplicated..."
     },
     {
@@ -3929,7 +3929,7 @@
       "_origin": "ast",
       "id": "backend_ai_secos_core_finding_engine_engine_rationale_72",
       "community": 8,
-      "community_name": "container.py",
+      "community_name": "SecurityFinding",
       "norm_label": "default pipeline implementation. all collaborators are injectable."
     },
     {
@@ -3940,7 +3940,7 @@
       "_origin": "ast",
       "id": "backend_ai_secos_core_finding_engine_enricher",
       "community": 8,
-      "community_name": "container.py",
+      "community_name": "SecurityFinding",
       "norm_label": "enricher.py"
     },
     {
@@ -3951,7 +3951,7 @@
       "_origin": "ast",
       "id": "backend_ai_secos_core_finding_engine_enricher_findingenricher",
       "community": 8,
-      "community_name": "container.py",
+      "community_name": "SecurityFinding",
       "norm_label": "findingenricher"
     },
     {
@@ -3961,7 +3961,7 @@
       "source_location": "L20",
       "_origin": "ast",
       "id": "backend_ai_secos_core_finding_engine_enricher_findingenricher_enrich",
-      "community": 83,
+      "community": 8,
       "community_name": "SecurityFinding",
       "norm_label": ".enrich()"
     },
@@ -3973,7 +3973,7 @@
       "_origin": "ast",
       "id": "backend_ai_secos_core_finding_engine_enricher_noopfindingenricher",
       "community": 8,
-      "community_name": "container.py",
+      "community_name": "SecurityFinding",
       "norm_label": "noopfindingenricher"
     },
     {
@@ -3983,7 +3983,7 @@
       "source_location": "L28",
       "_origin": "ast",
       "id": "backend_ai_secos_core_finding_engine_enricher_noopfindingenricher_enrich",
-      "community": 83,
+      "community": 8,
       "community_name": "SecurityFinding",
       "norm_label": ".enrich()"
     },
@@ -3995,7 +3995,7 @@
       "_origin": "ast",
       "id": "backend_ai_secos_core_finding_engine_enricher_rationale_1",
       "community": 8,
-      "community_name": "container.py",
+      "community_name": "SecurityFinding",
       "norm_label": "finding enricher \u2014 the contract and the no-op default. enrichers attach..."
     },
     {
@@ -4006,7 +4006,7 @@
       "_origin": "ast",
       "id": "backend_ai_secos_core_finding_engine_enricher_rationale_17",
       "community": 8,
-      "community_name": "container.py",
+      "community_name": "SecurityFinding",
       "norm_label": "augments a single canonical securityfinding with external context."
     },
     {
@@ -4016,7 +4016,7 @@
       "source_location": "L21",
       "_origin": "ast",
       "id": "backend_ai_secos_core_finding_engine_enricher_rationale_21",
-      "community": 83,
+      "community": 8,
       "community_name": "SecurityFinding",
       "norm_label": "return a new (or in-place enriched) finding."
     },
@@ -4028,7 +4028,7 @@
       "_origin": "ast",
       "id": "backend_ai_secos_core_finding_engine_enricher_rationale_26",
       "community": 8,
-      "community_name": "container.py",
+      "community_name": "SecurityFinding",
       "norm_label": "identity enricher. the default at milestone 1."
     },
     {
@@ -4039,7 +4039,7 @@
       "_origin": "ast",
       "id": "backend_ai_secos_core_finding_engine_fingerprint",
       "community": 83,
-      "community_name": "SecurityFinding",
+      "community_name": "DefaultFindingDeduplicator",
       "norm_label": "fingerprint.py"
     },
     {
@@ -4050,7 +4050,7 @@
       "_origin": "ast",
       "id": "backend_ai_secos_core_finding_engine_fingerprint_findingfingerprinter",
       "community": 83,
-      "community_name": "SecurityFinding",
+      "community_name": "DefaultFindingDeduplicator",
       "norm_label": "findingfingerprinter"
     },
     {
@@ -4060,8 +4060,8 @@
       "source_location": "L23",
       "_origin": "ast",
       "id": "backend_ai_secos_core_finding_engine_fingerprint_findingfingerprinter_fingerprint",
-      "community": 39,
-      "community_name": "value_objects.py",
+      "community": 83,
+      "community_name": "DefaultFindingDeduplicator",
       "norm_label": ".fingerprint()"
     },
     {
@@ -4072,7 +4072,7 @@
       "_origin": "ast",
       "id": "findingfingerprint",
       "community": 39,
-      "community_name": "value_objects.py",
+      "community_name": "FindingEvidence",
       "norm_label": "findingfingerprint"
     },
     {
@@ -4083,7 +4083,7 @@
       "_origin": "ast",
       "id": "backend_ai_secos_core_finding_engine_fingerprint_defaultfindingfingerprinter",
       "community": 83,
-      "community_name": "SecurityFinding",
+      "community_name": "DefaultFindingDeduplicator",
       "norm_label": "defaultfindingfingerprinter"
     },
     {
@@ -4094,7 +4094,7 @@
       "_origin": "ast",
       "id": "backend_ai_secos_core_finding_engine_fingerprint_defaultfindingfingerprinter_fingerprint",
       "community": 83,
-      "community_name": "SecurityFinding",
+      "community_name": "DefaultFindingDeduplicator",
       "norm_label": ".fingerprint()"
     },
     {
@@ -4105,7 +4105,7 @@
       "_origin": "ast",
       "id": "backend_ai_secos_core_finding_engine_fingerprint_defaultfindingfingerprinter_sorted",
       "community": 83,
-      "community_name": "SecurityFinding",
+      "community_name": "DefaultFindingDeduplicator",
       "norm_label": "._sorted()"
     },
     {
@@ -4116,7 +4116,7 @@
       "_origin": "ast",
       "id": "backend_ai_secos_core_finding_engine_fingerprint_defaultfindingfingerprinter_canonical_bytes",
       "community": 83,
-      "community_name": "SecurityFinding",
+      "community_name": "DefaultFindingDeduplicator",
       "norm_label": "._canonical_bytes()"
     },
     {
@@ -4127,7 +4127,7 @@
       "_origin": "ast",
       "id": "backend_ai_secos_core_finding_engine_fingerprint_rationale_1",
       "community": 83,
-      "community_name": "SecurityFinding",
+      "community_name": "DefaultFindingDeduplicator",
       "norm_label": "deterministic fingerprinting contract. two findings with identical `(asset,..."
     },
     {
@@ -4138,7 +4138,7 @@
       "_origin": "ast",
       "id": "backend_ai_secos_core_finding_engine_fingerprint_rationale_20",
       "community": 83,
-      "community_name": "SecurityFinding",
+      "community_name": "DefaultFindingDeduplicator",
       "norm_label": "computes fingerprints for findings."
     },
     {
@@ -4149,7 +4149,7 @@
       "_origin": "ast",
       "id": "backend_ai_secos_core_finding_engine_fingerprint_rationale_28",
       "community": 83,
-      "community_name": "SecurityFinding",
+      "community_name": "DefaultFindingDeduplicator",
       "norm_label": "default deterministic fingerprinter. the hash is built from fields that..."
     },
     {
@@ -4160,7 +4160,7 @@
       "_origin": "ast",
       "id": "backend_ai_secos_core_finding_engine_fingerprint_rationale_55",
       "community": 83,
-      "community_name": "SecurityFinding",
+      "community_name": "DefaultFindingDeduplicator",
       "norm_label": "stable byte representation (sorted keys, list-of-tuples)."
     },
     {
@@ -4171,7 +4171,7 @@
       "_origin": "ast",
       "id": "backend_ai_secos_core_finding_engine_normalizer",
       "community": 8,
-      "community_name": "container.py",
+      "community_name": "SecurityFinding",
       "norm_label": "finding_engine/normalizer.py"
     },
     {
@@ -4182,7 +4182,7 @@
       "_origin": "ast",
       "id": "backend_ai_secos_core_finding_engine_normalizer_normalizationerror",
       "community": 8,
-      "community_name": "container.py",
+      "community_name": "SecurityFinding",
       "norm_label": "normalizationerror"
     },
     {
@@ -4193,7 +4193,7 @@
       "_origin": "ast",
       "id": "backend_ai_secos_core_finding_engine_normalizer_findingnormalizer",
       "community": 8,
-      "community_name": "container.py",
+      "community_name": "SecurityFinding",
       "norm_label": "findingnormalizer"
     },
     {
@@ -4203,7 +4203,7 @@
       "source_location": "L43",
       "_origin": "ast",
       "id": "backend_ai_secos_core_finding_engine_normalizer_findingnormalizer_normalize",
-      "community": 83,
+      "community": 8,
       "community_name": "SecurityFinding",
       "norm_label": ".normalize()"
     },
@@ -4214,7 +4214,7 @@
       "source_location": "",
       "_origin": "ast",
       "id": "backend_ai_secos_core_finding_engine_normalizer_py_any",
-      "community": 83,
+      "community": 8,
       "community_name": "SecurityFinding",
       "norm_label": "any"
     },
@@ -4225,7 +4225,7 @@
       "source_location": "",
       "_origin": "ast",
       "id": "assessmentid",
-      "community": 83,
+      "community": 8,
       "community_name": "SecurityFinding",
       "norm_label": "assessmentid"
     },
@@ -4237,7 +4237,7 @@
       "_origin": "ast",
       "id": "backend_ai_secos_core_finding_engine_normalizer_normalizerregistry",
       "community": 8,
-      "community_name": "container.py",
+      "community_name": "SecurityFinding",
       "norm_label": "normalizerregistry"
     },
     {
@@ -4248,7 +4248,7 @@
       "_origin": "ast",
       "id": "backend_ai_secos_core_finding_engine_normalizer_normalizerregistry_init",
       "community": 8,
-      "community_name": "container.py",
+      "community_name": "SecurityFinding",
       "norm_label": ".__init__()"
     },
     {
@@ -4259,7 +4259,7 @@
       "_origin": "ast",
       "id": "backend_ai_secos_core_finding_engine_normalizer_normalizerregistry_register",
       "community": 8,
-      "community_name": "container.py",
+      "community_name": "SecurityFinding",
       "norm_label": ".register()"
     },
     {
@@ -4270,7 +4270,7 @@
       "_origin": "ast",
       "id": "backend_ai_secos_core_finding_engine_normalizer_normalizerregistry_get",
       "community": 8,
-      "community_name": "container.py",
+      "community_name": "SecurityFinding",
       "norm_label": ".get()"
     },
     {
@@ -4281,7 +4281,7 @@
       "_origin": "ast",
       "id": "backend_ai_secos_core_finding_engine_normalizer_normalizerregistry_has",
       "community": 8,
-      "community_name": "container.py",
+      "community_name": "SecurityFinding",
       "norm_label": ".has()"
     },
     {
@@ -4292,7 +4292,7 @@
       "_origin": "ast",
       "id": "backend_ai_secos_core_finding_engine_normalizer_normalizerregistry_plugins",
       "community": 8,
-      "community_name": "container.py",
+      "community_name": "SecurityFinding",
       "norm_label": ".plugins()"
     },
     {
@@ -4303,7 +4303,7 @@
       "_origin": "ast",
       "id": "backend_ai_secos_core_finding_engine_normalizer_rationale_1",
       "community": 8,
-      "community_name": "container.py",
+      "community_name": "SecurityFinding",
       "norm_label": "normalizer interface + registry. the normalizer is how raw plugin output..."
     },
     {
@@ -4314,7 +4314,7 @@
       "_origin": "ast",
       "id": "backend_ai_secos_core_finding_engine_normalizer_rationale_34",
       "community": 8,
-      "community_name": "container.py",
+      "community_name": "SecurityFinding",
       "norm_label": "turns a plugin-specific raw output into a `securityfinding`. a single input may..."
     },
     {
@@ -4324,7 +4324,7 @@
       "source_location": "L51",
       "_origin": "ast",
       "id": "backend_ai_secos_core_finding_engine_normalizer_rationale_51",
-      "community": 83,
+      "community": 8,
       "community_name": "SecurityFinding",
       "norm_label": "yield canonical findings from a raw plugin output. implementations must yield..."
     },
@@ -4336,7 +4336,7 @@
       "_origin": "ast",
       "id": "backend_ai_secos_core_finding_engine_normalizer_rationale_61",
       "community": 8,
-      "community_name": "container.py",
+      "community_name": "SecurityFinding",
       "norm_label": "maps `(plugin_id)` \u2192 normalizer instance. a `normalizerregistry` produces no..."
     },
     {
@@ -4347,7 +4347,7 @@
       "_origin": "ast",
       "id": "backend_ai_secos_core_finding_engine_normalizers_httpx",
       "community": 39,
-      "community_name": "value_objects.py",
+      "community_name": "FindingEvidence",
       "norm_label": "httpx.py"
     },
     {
@@ -4358,7 +4358,7 @@
       "_origin": "ast",
       "id": "backend_ai_secos_core_finding_engine_normalizers_httpx_httpxpluginid",
       "community": 39,
-      "community_name": "value_objects.py",
+      "community_name": "FindingEvidence",
       "norm_label": "httpxpluginid"
     },
     {
@@ -4380,7 +4380,7 @@
       "_origin": "ast",
       "id": "backend_ai_secos_core_finding_engine_normalizers_httpx_httpxnormalizer_normalize",
       "community": 39,
-      "community_name": "value_objects.py",
+      "community_name": "FindingEvidence",
       "norm_label": ".normalize()"
     },
     {
@@ -4391,7 +4391,7 @@
       "_origin": "ast",
       "id": "backend_ai_secos_core_finding_engine_normalizers_httpx_py_any",
       "community": 39,
-      "community_name": "value_objects.py",
+      "community_name": "FindingEvidence",
       "norm_label": "any"
     },
     {
@@ -4402,7 +4402,7 @@
       "_origin": "ast",
       "id": "backend_ai_secos_core_finding_engine_normalizers_httpx_extract_items",
       "community": 39,
-      "community_name": "value_objects.py",
+      "community_name": "FindingEvidence",
       "norm_label": "_extract_items()"
     },
     {
@@ -4413,7 +4413,7 @@
       "_origin": "ast",
       "id": "backend_ai_secos_core_finding_engine_normalizers_httpx_normalize_one",
       "community": 39,
-      "community_name": "value_objects.py",
+      "community_name": "FindingEvidence",
       "norm_label": "_normalize_one()"
     },
     {
@@ -4424,7 +4424,7 @@
       "_origin": "ast",
       "id": "backend_ai_secos_core_finding_engine_normalizers_httpx_normalize_tech",
       "community": 39,
-      "community_name": "value_objects.py",
+      "community_name": "FindingEvidence",
       "norm_label": "_normalize_tech()"
     },
     {
@@ -4435,7 +4435,7 @@
       "_origin": "ast",
       "id": "backend_ai_secos_core_finding_engine_normalizers_httpx_title",
       "community": 39,
-      "community_name": "value_objects.py",
+      "community_name": "FindingEvidence",
       "norm_label": "_title()"
     },
     {
@@ -4446,7 +4446,7 @@
       "_origin": "ast",
       "id": "backend_ai_secos_core_finding_engine_normalizers_httpx_severity_from_status",
       "community": 39,
-      "community_name": "value_objects.py",
+      "community_name": "FindingEvidence",
       "norm_label": "_severity_from_status()"
     },
     {
@@ -4457,7 +4457,7 @@
       "_origin": "ast",
       "id": "backend_ai_secos_core_finding_engine_normalizers_httpx_confidence",
       "community": 39,
-      "community_name": "value_objects.py",
+      "community_name": "FindingEvidence",
       "norm_label": "_confidence()"
     },
     {
@@ -4468,7 +4468,7 @@
       "_origin": "ast",
       "id": "backend_ai_secos_core_finding_engine_normalizers_httpx_make_httpx_input",
       "community": 39,
-      "community_name": "value_objects.py",
+      "community_name": "FindingEvidence",
       "norm_label": "make_httpx_input()"
     },
     {
@@ -4479,7 +4479,7 @@
       "_origin": "ast",
       "id": "backend_ai_secos_core_finding_engine_normalizers_httpx_rationale_1",
       "community": 39,
-      "community_name": "value_objects.py",
+      "community_name": "FindingEvidence",
       "norm_label": "http probe (httpx) plugin \u2014 normalizer. converts raw `httpx` output into..."
     },
     {
@@ -4490,7 +4490,7 @@
       "_origin": "ast",
       "id": "backend_ai_secos_core_finding_engine_normalizers_httpx_rationale_50",
       "community": 39,
-      "community_name": "value_objects.py",
+      "community_name": "FindingEvidence",
       "norm_label": "bundle the httpx plugin id constant."
     },
     {
@@ -4512,7 +4512,7 @@
       "_origin": "ast",
       "id": "backend_ai_secos_core_finding_engine_normalizers_httpx_rationale_152",
       "community": 39,
-      "community_name": "value_objects.py",
+      "community_name": "FindingEvidence",
       "norm_label": "stack detection \u2192 asset_inventory findings."
     },
     {
@@ -4523,7 +4523,7 @@
       "_origin": "ast",
       "id": "backend_ai_secos_core_finding_engine_normalizers_httpx_rationale_224",
       "community": 39,
-      "community_name": "value_objects.py",
+      "community_name": "FindingEvidence",
       "norm_label": "convenience: build the stdin payload for the httpx executable."
     },
     {
@@ -4534,7 +4534,7 @@
       "_origin": "ast",
       "id": "backend_ai_secos_core_finding_engine_normalizers_nmap",
       "community": 39,
-      "community_name": "value_objects.py",
+      "community_name": "FindingEvidence",
       "norm_label": "nmap.py"
     },
     {
@@ -4556,7 +4556,7 @@
       "_origin": "ast",
       "id": "backend_ai_secos_core_finding_engine_normalizers_nmap_nmapnormalizer_normalize",
       "community": 39,
-      "community_name": "value_objects.py",
+      "community_name": "FindingEvidence",
       "norm_label": ".normalize()"
     },
     {
@@ -4567,7 +4567,7 @@
       "_origin": "ast",
       "id": "backend_ai_secos_core_finding_engine_normalizers_nmap_py_any",
       "community": 39,
-      "community_name": "value_objects.py",
+      "community_name": "FindingEvidence",
       "norm_label": "any"
     },
     {
@@ -4578,7 +4578,7 @@
       "_origin": "ast",
       "id": "backend_ai_secos_core_finding_engine_normalizers_nmap_normalize_host",
       "community": 39,
-      "community_name": "value_objects.py",
+      "community_name": "FindingEvidence",
       "norm_label": "_normalize_host()"
     },
     {
@@ -4589,7 +4589,7 @@
       "_origin": "ast",
       "id": "backend_ai_secos_core_finding_engine_normalizers_nmap_create_os_finding",
       "community": 39,
-      "community_name": "value_objects.py",
+      "community_name": "FindingEvidence",
       "norm_label": "_create_os_finding()"
     },
     {
@@ -4600,7 +4600,7 @@
       "_origin": "ast",
       "id": "backend_ai_secos_core_finding_engine_normalizers_nmap_rationale_1",
       "community": 39,
-      "community_name": "value_objects.py",
+      "community_name": "FindingEvidence",
       "norm_label": "nmap plugin \u2014 normalizer. converts raw `nmap` output into canonical..."
     },
     {
@@ -4622,7 +4622,7 @@
       "_origin": "ast",
       "id": "backend_ai_secos_core_finding_engine_normalizers_nmap_rationale_73",
       "community": 39,
-      "community_name": "value_objects.py",
+      "community_name": "FindingEvidence",
       "norm_label": "normalize all open ports from a host into findings."
     },
     {
@@ -4633,7 +4633,7 @@
       "_origin": "ast",
       "id": "backend_ai_secos_core_finding_engine_normalizers_nmap_rationale_162",
       "community": 39,
-      "community_name": "value_objects.py",
+      "community_name": "FindingEvidence",
       "norm_label": "create a finding for detected os."
     },
     {
@@ -4643,8 +4643,8 @@
       "source_location": "L1",
       "_origin": "ast",
       "id": "backend_ai_secos_core_finding_engine_normalizers_nuclei",
-      "community": 39,
-      "community_name": "value_objects.py",
+      "community": 8,
+      "community_name": "SecurityFinding",
       "norm_label": "nuclei.py"
     },
     {
@@ -4666,7 +4666,7 @@
       "_origin": "ast",
       "id": "backend_ai_secos_core_finding_engine_normalizers_nuclei_nucleinormalizer_normalize",
       "community": 39,
-      "community_name": "value_objects.py",
+      "community_name": "FindingEvidence",
       "norm_label": ".normalize()"
     },
     {
@@ -4677,7 +4677,7 @@
       "_origin": "ast",
       "id": "backend_ai_secos_core_finding_engine_normalizers_nuclei_py_any",
       "community": 39,
-      "community_name": "value_objects.py",
+      "community_name": "FindingEvidence",
       "norm_label": "any"
     },
     {
@@ -4688,7 +4688,7 @@
       "_origin": "ast",
       "id": "backend_ai_secos_core_finding_engine_normalizers_nuclei_normalize_one",
       "community": 39,
-      "community_name": "value_objects.py",
+      "community_name": "FindingEvidence",
       "norm_label": "_normalize_one()"
     },
     {
@@ -4699,7 +4699,7 @@
       "_origin": "ast",
       "id": "backend_ai_secos_core_finding_engine_normalizers_nuclei_categorize",
       "community": 39,
-      "community_name": "value_objects.py",
+      "community_name": "FindingEvidence",
       "norm_label": "_categorize()"
     },
     {
@@ -4709,8 +4709,8 @@
       "source_location": "L1",
       "_origin": "ast",
       "id": "backend_ai_secos_core_finding_engine_normalizers_nuclei_rationale_1",
-      "community": 39,
-      "community_name": "value_objects.py",
+      "community": 8,
+      "community_name": "SecurityFinding",
       "norm_label": "nuclei plugin \u2014 normalizer. converts raw `nuclei` output into canonical..."
     },
     {
@@ -4732,7 +4732,7 @@
       "_origin": "ast",
       "id": "backend_ai_secos_core_finding_engine_normalizers_nuclei_rationale_74",
       "community": 39,
-      "community_name": "value_objects.py",
+      "community_name": "FindingEvidence",
       "norm_label": "normalize a single nuclei finding."
     },
     {
@@ -4743,7 +4743,7 @@
       "_origin": "ast",
       "id": "backend_ai_secos_core_finding_engine_normalizers_nuclei_rationale_147",
       "community": 39,
-      "community_name": "value_objects.py",
+      "community_name": "FindingEvidence",
       "norm_label": "map nuclei tags to finding category."
     },
     {
@@ -4753,8 +4753,8 @@
       "source_location": "L1",
       "_origin": "ast",
       "id": "backend_ai_secos_core_finding_engine_normalizers_semgrep",
-      "community": 76,
-      "community_name": "semgrep.py",
+      "community": 8,
+      "community_name": "SecurityFinding",
       "norm_label": "semgrep.py"
     },
     {
@@ -4775,8 +4775,8 @@
       "source_location": "L53",
       "_origin": "ast",
       "id": "backend_ai_secos_core_finding_engine_normalizers_semgrep_semgrepnormalizer_normalize",
-      "community": 76,
-      "community_name": "semgrep.py",
+      "community": 39,
+      "community_name": "FindingEvidence",
       "norm_label": ".normalize()"
     },
     {
@@ -4786,8 +4786,8 @@
       "source_location": "",
       "_origin": "ast",
       "id": "backend_ai_secos_core_finding_engine_normalizers_semgrep_py_any",
-      "community": 76,
-      "community_name": "semgrep.py",
+      "community": 39,
+      "community_name": "FindingEvidence",
       "norm_label": "any"
     },
     {
@@ -4797,8 +4797,8 @@
       "source_location": "L66",
       "_origin": "ast",
       "id": "backend_ai_secos_core_finding_engine_normalizers_semgrep_normalize_one",
-      "community": 76,
-      "community_name": "semgrep.py",
+      "community": 39,
+      "community_name": "FindingEvidence",
       "norm_label": "_normalize_one()"
     },
     {
@@ -4808,8 +4808,8 @@
       "source_location": "L140",
       "_origin": "ast",
       "id": "backend_ai_secos_core_finding_engine_normalizers_semgrep_categorize_semgrep",
-      "community": 76,
-      "community_name": "semgrep.py",
+      "community": 39,
+      "community_name": "FindingEvidence",
       "norm_label": "_categorize_semgrep()"
     },
     {
@@ -4819,8 +4819,8 @@
       "source_location": "L168",
       "_origin": "ast",
       "id": "backend_ai_secos_core_finding_engine_normalizers_semgrep_extract_tags",
-      "community": 76,
-      "community_name": "semgrep.py",
+      "community": 39,
+      "community_name": "FindingEvidence",
       "norm_label": "_extract_tags()"
     },
     {
@@ -4830,8 +4830,8 @@
       "source_location": "L1",
       "_origin": "ast",
       "id": "backend_ai_secos_core_finding_engine_normalizers_semgrep_rationale_1",
-      "community": 76,
-      "community_name": "semgrep.py",
+      "community": 8,
+      "community_name": "SecurityFinding",
       "norm_label": "semgrep plugin \u2014 normalizer. converts raw `semgrep` output into canonical..."
     },
     {
@@ -4852,8 +4852,8 @@
       "source_location": "L72",
       "_origin": "ast",
       "id": "backend_ai_secos_core_finding_engine_normalizers_semgrep_rationale_72",
-      "community": 76,
-      "community_name": "semgrep.py",
+      "community": 39,
+      "community_name": "FindingEvidence",
       "norm_label": "normalize a single semgrep finding."
     },
     {
@@ -4863,8 +4863,8 @@
       "source_location": "L141",
       "_origin": "ast",
       "id": "backend_ai_secos_core_finding_engine_normalizers_semgrep_rationale_141",
-      "community": 76,
-      "community_name": "semgrep.py",
+      "community": 39,
+      "community_name": "FindingEvidence",
       "norm_label": "categorize semgrep finding based on check_id and metadata."
     },
     {
@@ -4874,8 +4874,8 @@
       "source_location": "L169",
       "_origin": "ast",
       "id": "backend_ai_secos_core_finding_engine_normalizers_semgrep_rationale_169",
-      "community": 76,
-      "community_name": "semgrep.py",
+      "community": 39,
+      "community_name": "FindingEvidence",
       "norm_label": "extract tags from semgrep metadata."
     },
     {
@@ -4885,8 +4885,8 @@
       "source_location": "L1",
       "_origin": "ast",
       "id": "backend_ai_secos_core_finding_engine_normalizers_subfinder",
-      "community": 39,
-      "community_name": "value_objects.py",
+      "community": 8,
+      "community_name": "SecurityFinding",
       "norm_label": "subfinder.py"
     },
     {
@@ -4908,7 +4908,7 @@
       "_origin": "ast",
       "id": "backend_ai_secos_core_finding_engine_normalizers_subfinder_subfindernormalizer_normalize",
       "community": 39,
-      "community_name": "value_objects.py",
+      "community_name": "FindingEvidence",
       "norm_label": ".normalize()"
     },
     {
@@ -4919,7 +4919,7 @@
       "_origin": "ast",
       "id": "backend_ai_secos_core_finding_engine_normalizers_subfinder_py_any",
       "community": 39,
-      "community_name": "value_objects.py",
+      "community_name": "FindingEvidence",
       "norm_label": "any"
     },
     {
@@ -4930,7 +4930,7 @@
       "_origin": "ast",
       "id": "backend_ai_secos_core_finding_engine_normalizers_subfinder_normalize_one",
       "community": 39,
-      "community_name": "value_objects.py",
+      "community_name": "FindingEvidence",
       "norm_label": "_normalize_one()"
     },
     {
@@ -4940,8 +4940,8 @@
       "source_location": "L1",
       "_origin": "ast",
       "id": "backend_ai_secos_core_finding_engine_normalizers_subfinder_rationale_1",
-      "community": 39,
-      "community_name": "value_objects.py",
+      "community": 8,
+      "community_name": "SecurityFinding",
       "norm_label": "subfinder plugin \u2014 normalizer. converts raw `subfinder` output into canonical..."
     },
     {
@@ -4963,7 +4963,7 @@
       "_origin": "ast",
       "id": "backend_ai_secos_core_finding_engine_normalizers_subfinder_rationale_56",
       "community": 39,
-      "community_name": "value_objects.py",
+      "community_name": "FindingEvidence",
       "norm_label": "normalize a single subdomain."
     },
     {
@@ -4974,7 +4974,7 @@
       "_origin": "ast",
       "id": "backend_ai_secos_core_finding_engine_normalizers_trivy",
       "community": 39,
-      "community_name": "value_objects.py",
+      "community_name": "FindingEvidence",
       "norm_label": "trivy.py"
     },
     {
@@ -4996,7 +4996,7 @@
       "_origin": "ast",
       "id": "backend_ai_secos_core_finding_engine_normalizers_trivy_trivynormalizer_normalize",
       "community": 39,
-      "community_name": "value_objects.py",
+      "community_name": "FindingEvidence",
       "norm_label": ".normalize()"
     },
     {
@@ -5007,7 +5007,7 @@
       "_origin": "ast",
       "id": "backend_ai_secos_core_finding_engine_normalizers_trivy_py_any",
       "community": 39,
-      "community_name": "value_objects.py",
+      "community_name": "FindingEvidence",
       "norm_label": "any"
     },
     {
@@ -5018,7 +5018,7 @@
       "_origin": "ast",
       "id": "backend_ai_secos_core_finding_engine_normalizers_trivy_normalize_vulnerability",
       "community": 39,
-      "community_name": "value_objects.py",
+      "community_name": "FindingEvidence",
       "norm_label": "_normalize_vulnerability()"
     },
     {
@@ -5029,7 +5029,7 @@
       "_origin": "ast",
       "id": "backend_ai_secos_core_finding_engine_normalizers_trivy_normalize_misconfiguration",
       "community": 39,
-      "community_name": "value_objects.py",
+      "community_name": "FindingEvidence",
       "norm_label": "_normalize_misconfiguration()"
     },
     {
@@ -5040,7 +5040,7 @@
       "_origin": "ast",
       "id": "backend_ai_secos_core_finding_engine_normalizers_trivy_extract_cvss",
       "community": 39,
-      "community_name": "value_objects.py",
+      "community_name": "FindingEvidence",
       "norm_label": "_extract_cvss()"
     },
     {
@@ -5051,7 +5051,7 @@
       "_origin": "ast",
       "id": "backend_ai_secos_core_finding_engine_normalizers_trivy_rationale_1",
       "community": 39,
-      "community_name": "value_objects.py",
+      "community_name": "FindingEvidence",
       "norm_label": "trivy plugin \u2014 normalizer. converts raw `trivy` output into canonical..."
     },
     {
@@ -5073,7 +5073,7 @@
       "_origin": "ast",
       "id": "backend_ai_secos_core_finding_engine_normalizers_trivy_rationale_92",
       "community": 39,
-      "community_name": "value_objects.py",
+      "community_name": "FindingEvidence",
       "norm_label": "normalize a single vulnerability finding."
     },
     {
@@ -5084,7 +5084,7 @@
       "_origin": "ast",
       "id": "backend_ai_secos_core_finding_engine_normalizers_trivy_rationale_157",
       "community": 39,
-      "community_name": "value_objects.py",
+      "community_name": "FindingEvidence",
       "norm_label": "normalize a single misconfiguration finding."
     },
     {
@@ -5095,7 +5095,7 @@
       "_origin": "ast",
       "id": "backend_ai_secos_core_finding_engine_normalizers_trivy_rationale_211",
       "community": 39,
-      "community_name": "value_objects.py",
+      "community_name": "FindingEvidence",
       "norm_label": "extract cvss score from trivy vulnerability data."
     },
     {
@@ -5259,8 +5259,8 @@
       "source_location": "L74",
       "_origin": "ast",
       "id": "backend_ai_secos_core_infrastructure_logging_configure_logging",
-      "community": 72,
-      "community_name": "infrastructure/logging.py",
+      "community": 18,
+      "community_name": "container.py",
       "norm_label": "configure_logging()"
     },
     {
@@ -5270,8 +5270,8 @@
       "source_location": "L95",
       "_origin": "ast",
       "id": "backend_ai_secos_core_infrastructure_logging_get_logger",
-      "community": 72,
-      "community_name": "infrastructure/logging.py",
+      "community": 18,
+      "community_name": "container.py",
       "norm_label": "get_logger()"
     },
     {
@@ -5281,8 +5281,8 @@
       "source_location": "",
       "_origin": "ast",
       "id": "logger",
-      "community": 72,
-      "community_name": "infrastructure/logging.py",
+      "community": 18,
+      "community_name": "container.py",
       "norm_label": "logger"
     },
     {
@@ -5347,8 +5347,8 @@
       "source_location": "L77",
       "_origin": "ast",
       "id": "backend_ai_secos_core_infrastructure_logging_rationale_77",
-      "community": 72,
-      "community_name": "infrastructure/logging.py",
+      "community": 18,
+      "community_name": "container.py",
       "norm_label": "configure the root logger. idempotent: safe to call multiple times."
     },
     {
@@ -5358,8 +5358,8 @@
       "source_location": "L96",
       "_origin": "ast",
       "id": "backend_ai_secos_core_infrastructure_logging_rationale_96",
-      "community": 72,
-      "community_name": "infrastructure/logging.py",
+      "community": 18,
+      "community_name": "container.py",
       "norm_label": "return a logger; configure on first use."
     },
     {
@@ -6667,7 +6667,7 @@
       "source_location": "L41",
       "_origin": "ast",
       "id": "backend_ai_secos_core_plugin_system_validator_pluginvalidator",
-      "community": 8,
+      "community": 18,
       "community_name": "container.py",
       "norm_label": "pluginvalidator"
     },
@@ -6678,7 +6678,7 @@
       "source_location": "L54",
       "_origin": "ast",
       "id": "backend_ai_secos_core_plugin_system_validator_pluginvalidator_init",
-      "community": 8,
+      "community": 18,
       "community_name": "container.py",
       "norm_label": ".__init__()"
     },
@@ -6755,7 +6755,7 @@
       "source_location": "L42",
       "_origin": "ast",
       "id": "backend_ai_secos_core_plugin_system_validator_rationale_42",
-      "community": 8,
+      "community": 18,
       "community_name": "container.py",
       "norm_label": "validates a manifest + proposed invocation parameters. stateless aside from..."
     },
@@ -10627,8 +10627,8 @@
       "source_location": "L1",
       "_origin": "ast",
       "id": "backend_ai_secos_core_shared_value_objects",
-      "community": 39,
-      "community_name": "value_objects.py",
+      "community": 8,
+      "community_name": "SecurityFinding",
       "norm_label": "value_objects.py"
     },
     {
@@ -10649,8 +10649,8 @@
       "source_location": "",
       "_origin": "ast",
       "id": "backend_ai_secos_core_shared_value_objects_py_str",
-      "community": 39,
-      "community_name": "value_objects.py",
+      "community": 5,
+      "community_name": "Severity",
       "norm_label": "str"
     },
     {
@@ -10660,8 +10660,8 @@
       "source_location": "",
       "_origin": "ast",
       "id": "backend_ai_secos_core_shared_value_objects_py_enum",
-      "community": 39,
-      "community_name": "value_objects.py",
+      "community": 5,
+      "community_name": "Severity",
       "norm_label": "enum"
     },
     {
@@ -10682,8 +10682,8 @@
       "source_location": "L60",
       "_origin": "ast",
       "id": "backend_ai_secos_core_shared_value_objects_workflowstepkind",
-      "community": 39,
-      "community_name": "value_objects.py",
+      "community": 5,
+      "community_name": "Severity",
       "norm_label": "workflowstepkind"
     },
     {
@@ -10715,8 +10715,8 @@
       "source_location": "L86",
       "_origin": "ast",
       "id": "backend_ai_secos_core_shared_value_objects_supportedassettype",
-      "community": 39,
-      "community_name": "value_objects.py",
+      "community": 8,
+      "community_name": "SecurityFinding",
       "norm_label": "supportedassettype"
     },
     {
@@ -10726,8 +10726,8 @@
       "source_location": "L94",
       "_origin": "ast",
       "id": "backend_ai_secos_core_shared_value_objects_requiredplugin",
-      "community": 39,
-      "community_name": "value_objects.py",
+      "community": 8,
+      "community_name": "SecurityFinding",
       "norm_label": "requiredplugin"
     },
     {
@@ -10737,8 +10737,8 @@
       "source_location": "L103",
       "_origin": "ast",
       "id": "backend_ai_secos_core_shared_value_objects_compliancetag",
-      "community": 39,
-      "community_name": "value_objects.py",
+      "community": 8,
+      "community_name": "SecurityFinding",
       "norm_label": "compliancetag"
     },
     {
@@ -10804,7 +10804,7 @@
       "_origin": "ast",
       "id": "backend_ai_secos_core_shared_value_objects_findingevidence",
       "community": 39,
-      "community_name": "value_objects.py",
+      "community_name": "FindingEvidence",
       "norm_label": "findingevidence"
     },
     {
@@ -10847,8 +10847,8 @@
       "source_location": "L199",
       "_origin": "ast",
       "id": "backend_ai_secos_core_shared_value_objects_default_fingerprint_key",
-      "community": 39,
-      "community_name": "value_objects.py",
+      "community": 8,
+      "community_name": "SecurityFinding",
       "norm_label": "_default_fingerprint_key()"
     },
     {
@@ -10858,7 +10858,7 @@
       "source_location": "L203",
       "_origin": "ast",
       "id": "backend_ai_secos_core_shared_value_objects_securityfinding",
-      "community": 83,
+      "community": 8,
       "community_name": "SecurityFinding",
       "norm_label": "securityfinding"
     },
@@ -10880,8 +10880,8 @@
       "source_location": "L1",
       "_origin": "ast",
       "id": "backend_ai_secos_core_shared_value_objects_rationale_1",
-      "community": 39,
-      "community_name": "value_objects.py",
+      "community": 8,
+      "community_name": "SecurityFinding",
       "norm_label": "reusable value objects (the platform's vocabulary). these are the typed shapes..."
     },
     {
@@ -10902,8 +10902,8 @@
       "source_location": "L61",
       "_origin": "ast",
       "id": "backend_ai_secos_core_shared_value_objects_rationale_61",
-      "community": 39,
-      "community_name": "value_objects.py",
+      "community": 5,
+      "community_name": "Severity",
       "norm_label": "the kinds of step a workflow may declare."
     },
     {
@@ -10924,8 +10924,8 @@
       "source_location": "L87",
       "_origin": "ast",
       "id": "backend_ai_secos_core_shared_value_objects_rationale_87",
-      "community": 39,
-      "community_name": "value_objects.py",
+      "community": 8,
+      "community_name": "SecurityFinding",
       "norm_label": "an asset type a capability can handle (e.g. 'domain', 'ip')."
     },
     {
@@ -10935,8 +10935,8 @@
       "source_location": "L95",
       "_origin": "ast",
       "id": "backend_ai_secos_core_shared_value_objects_rationale_95",
-      "community": 39,
-      "community_name": "value_objects.py",
+      "community": 8,
+      "community_name": "SecurityFinding",
       "norm_label": "a plugin a capability depends on."
     },
     {
@@ -10946,8 +10946,8 @@
       "source_location": "L104",
       "_origin": "ast",
       "id": "backend_ai_secos_core_shared_value_objects_rationale_104",
-      "community": 39,
-      "community_name": "value_objects.py",
+      "community": 8,
+      "community_name": "SecurityFinding",
       "norm_label": "a compliance framework mapping."
     },
     {
@@ -10991,7 +10991,7 @@
       "_origin": "ast",
       "id": "backend_ai_secos_core_shared_value_objects_rationale_174",
       "community": 39,
-      "community_name": "value_objects.py",
+      "community_name": "FindingEvidence",
       "norm_label": "opaque evidence payload attached to a securityfinding. downstream code reads..."
     },
     {
@@ -11012,7 +11012,7 @@
       "source_location": "L204",
       "_origin": "ast",
       "id": "backend_ai_secos_core_shared_value_objects_rationale_204",
-      "community": 83,
+      "community": 8,
       "community_name": "SecurityFinding",
       "norm_label": "universal language of the platform. two findings with identical `(asset, cwe,..."
     },
@@ -11078,7 +11078,7 @@
       "source_location": "L1",
       "_origin": "ast",
       "id": "backend_ai_secos_core_tests_platform_test_container",
-      "community": 8,
+      "community": 18,
       "community_name": "container.py",
       "norm_label": "test_container.py"
     },
@@ -11089,7 +11089,7 @@
       "source_location": "L16",
       "_origin": "ast",
       "id": "backend_ai_secos_core_tests_platform_test_container_test_container_freeze",
-      "community": 8,
+      "community": 18,
       "community_name": "container.py",
       "norm_label": "test_container_freeze()"
     },
@@ -11100,7 +11100,7 @@
       "source_location": "L21",
       "_origin": "ast",
       "id": "backend_ai_secos_core_tests_platform_test_container_test_settings_values",
-      "community": 8,
+      "community": 18,
       "community_name": "container.py",
       "norm_label": "test_settings_values()"
     },
@@ -11111,7 +11111,7 @@
       "source_location": "L30",
       "_origin": "ast",
       "id": "backend_ai_secos_core_tests_platform_test_container_test_plugin_loader_discovery",
-      "community": 8,
+      "community": 18,
       "community_name": "container.py",
       "norm_label": "test_plugin_loader_discovery()"
     },
@@ -11122,7 +11122,7 @@
       "source_location": "L1",
       "_origin": "ast",
       "id": "backend_ai_secos_core_tests_platform_test_container_rationale_1",
-      "community": 8,
+      "community": 18,
       "community_name": "container.py",
       "norm_label": "container / di tests. targets: - roundtrip build + freeze - settings typing -..."
     },
@@ -11463,8 +11463,8 @@
       "source_location": "",
       "_origin": "ast",
       "id": "backend_app_api_v1_init_py_post",
-      "community": 58,
-      "community_name": "v1/__init__.py",
+      "community": 76,
+      "community_name": "Assessment",
       "norm_label": "post"
     },
     {
@@ -11474,8 +11474,8 @@
       "source_location": "L228",
       "_origin": "ast",
       "id": "backend_app_api_v1_init_run_assessment",
-      "community": 58,
-      "community_name": "v1/__init__.py",
+      "community": 76,
+      "community_name": "Assessment",
       "norm_label": "run_assessment()"
     },
     {
@@ -11485,8 +11485,8 @@
       "source_location": "",
       "_origin": "ast",
       "id": "backend_app_api_v1_init_py_asyncsession",
-      "community": 58,
-      "community_name": "v1/__init__.py",
+      "community": 76,
+      "community_name": "Assessment",
       "norm_label": "asyncsession"
     },
     {
@@ -11540,8 +11540,8 @@
       "source_location": "L229",
       "_origin": "ast",
       "id": "backend_app_api_v1_init_rationale_229",
-      "community": 58,
-      "community_name": "v1/__init__.py",
+      "community": 76,
+      "community_name": "Assessment",
       "norm_label": "run a security assessment scan."
     },
     {
@@ -12674,7 +12674,7 @@
       "_origin": "ast",
       "id": "backend_app_api_v1_findings",
       "community": 46,
-      "community_name": "findings.py",
+      "community_name": "repositories/__init__.py",
       "norm_label": "findings.py"
     },
     {
@@ -12685,7 +12685,7 @@
       "_origin": "ast",
       "id": "backend_app_api_v1_findings_bulkupdaterequest",
       "community": 46,
-      "community_name": "findings.py",
+      "community_name": "repositories/__init__.py",
       "norm_label": "bulkupdaterequest"
     },
     {
@@ -12696,7 +12696,7 @@
       "_origin": "ast",
       "id": "backend_app_api_v1_findings_py_get",
       "community": 46,
-      "community_name": "findings.py",
+      "community_name": "repositories/__init__.py",
       "norm_label": "get"
     },
     {
@@ -12707,7 +12707,7 @@
       "_origin": "ast",
       "id": "backend_app_api_v1_findings_list_findings",
       "community": 46,
-      "community_name": "findings.py",
+      "community_name": "repositories/__init__.py",
       "norm_label": "list_findings()"
     },
     {
@@ -12718,7 +12718,7 @@
       "_origin": "ast",
       "id": "backend_app_api_v1_findings_py_asyncsession",
       "community": 46,
-      "community_name": "findings.py",
+      "community_name": "repositories/__init__.py",
       "norm_label": "asyncsession"
     },
     {
@@ -12729,7 +12729,7 @@
       "_origin": "ast",
       "id": "backend_app_api_v1_findings_get_finding",
       "community": 46,
-      "community_name": "findings.py",
+      "community_name": "repositories/__init__.py",
       "norm_label": "get_finding()"
     },
     {
@@ -12740,7 +12740,7 @@
       "_origin": "ast",
       "id": "backend_app_api_v1_findings_py_uuid",
       "community": 46,
-      "community_name": "findings.py",
+      "community_name": "repositories/__init__.py",
       "norm_label": "uuid"
     },
     {
@@ -12751,7 +12751,7 @@
       "_origin": "ast",
       "id": "backend_app_api_v1_findings_py_patch",
       "community": 46,
-      "community_name": "findings.py",
+      "community_name": "repositories/__init__.py",
       "norm_label": "patch"
     },
     {
@@ -12762,7 +12762,7 @@
       "_origin": "ast",
       "id": "backend_app_api_v1_findings_update_finding",
       "community": 46,
-      "community_name": "findings.py",
+      "community_name": "repositories/__init__.py",
       "norm_label": "update_finding()"
     },
     {
@@ -12773,7 +12773,7 @@
       "_origin": "ast",
       "id": "backend_app_api_v1_findings_py_post",
       "community": 46,
-      "community_name": "findings.py",
+      "community_name": "repositories/__init__.py",
       "norm_label": "post"
     },
     {
@@ -12784,7 +12784,7 @@
       "_origin": "ast",
       "id": "backend_app_api_v1_findings_bulk_update_findings",
       "community": 46,
-      "community_name": "findings.py",
+      "community_name": "repositories/__init__.py",
       "norm_label": "bulk_update_findings()"
     },
     {
@@ -12795,7 +12795,7 @@
       "_origin": "ast",
       "id": "backend_app_api_v1_findings_py_delete",
       "community": 46,
-      "community_name": "findings.py",
+      "community_name": "repositories/__init__.py",
       "norm_label": "delete"
     },
     {
@@ -12806,7 +12806,7 @@
       "_origin": "ast",
       "id": "backend_app_api_v1_findings_delete_finding",
       "community": 46,
-      "community_name": "findings.py",
+      "community_name": "repositories/__init__.py",
       "norm_label": "delete_finding()"
     },
     {
@@ -12817,7 +12817,7 @@
       "_origin": "ast",
       "id": "backend_app_api_v1_findings_rationale_40",
       "community": 46,
-      "community_name": "findings.py",
+      "community_name": "repositories/__init__.py",
       "norm_label": "list findings with pagination. only true positives by default. when no explicit..."
     },
     {
@@ -12828,7 +12828,7 @@
       "_origin": "ast",
       "id": "backend_app_api_v1_findings_rationale_91",
       "community": 46,
-      "community_name": "findings.py",
+      "community_name": "repositories/__init__.py",
       "norm_label": "update finding status / fields."
     },
     {
@@ -12839,7 +12839,7 @@
       "_origin": "ast",
       "id": "backend_app_api_v1_findings_rationale_106",
       "community": 46,
-      "community_name": "findings.py",
+      "community_name": "repositories/__init__.py",
       "norm_label": "bulk update findings by ids."
     },
     {
@@ -14499,8 +14499,8 @@
       "source_location": "L1",
       "_origin": "ast",
       "id": "backend_app_database_init",
-      "community": 43,
-      "community_name": "PluginRegistry",
+      "community": 46,
+      "community_name": "repositories/__init__.py",
       "norm_label": "database/__init__.py"
     },
     {
@@ -14510,8 +14510,8 @@
       "source_location": "L6",
       "_origin": "ast",
       "id": "backend_app_database_init_get_session",
-      "community": 43,
-      "community_name": "PluginRegistry",
+      "community": 46,
+      "community_name": "repositories/__init__.py",
       "norm_label": "get_session()"
     },
     {
@@ -14521,8 +14521,8 @@
       "source_location": "",
       "_origin": "ast",
       "id": "backend_app_database_init_py_asyncsession",
-      "community": 43,
-      "community_name": "PluginRegistry",
+      "community": 46,
+      "community_name": "repositories/__init__.py",
       "norm_label": "asyncsession"
     },
     {
@@ -14532,8 +14532,8 @@
       "source_location": "L7",
       "_origin": "ast",
       "id": "backend_app_database_init_rationale_7",
-      "community": 43,
-      "community_name": "PluginRegistry",
+      "community": 46,
+      "community_name": "repositories/__init__.py",
       "norm_label": "database session dependency."
     },
     {
@@ -14543,8 +14543,8 @@
       "source_location": "L1",
       "_origin": "ast",
       "id": "backend_app_database_session",
-      "community": 35,
-      "community_name": "vapt/routes.py",
+      "community": 46,
+      "community_name": "repositories/__init__.py",
       "norm_label": "session.py"
     },
     {
@@ -14576,8 +14576,8 @@
       "source_location": "L48",
       "_origin": "ast",
       "id": "backend_app_database_session_get_session",
-      "community": 35,
-      "community_name": "vapt/routes.py",
+      "community": 46,
+      "community_name": "repositories/__init__.py",
       "norm_label": "get_session()"
     },
     {
@@ -14587,8 +14587,8 @@
       "source_location": "",
       "_origin": "ast",
       "id": "backend_app_database_session_py_asyncsession",
-      "community": 35,
-      "community_name": "vapt/routes.py",
+      "community": 46,
+      "community_name": "repositories/__init__.py",
       "norm_label": "asyncsession"
     },
     {
@@ -14620,8 +14620,8 @@
       "source_location": "L1",
       "_origin": "ast",
       "id": "backend_app_domain_init",
-      "community": 43,
-      "community_name": "PluginRegistry",
+      "community": 46,
+      "community_name": "repositories/__init__.py",
       "norm_label": "domain/__init__.py"
     },
     {
@@ -14642,8 +14642,8 @@
       "source_location": "L1",
       "_origin": "ast",
       "id": "backend_app_domain_models_assessment",
-      "community": 35,
-      "community_name": "vapt/routes.py",
+      "community": 46,
+      "community_name": "repositories/__init__.py",
       "norm_label": "models/assessment.py"
     },
     {
@@ -14653,8 +14653,8 @@
       "source_location": "L10",
       "_origin": "ast",
       "id": "backend_app_domain_models_assessment_assessment",
-      "community": 35,
-      "community_name": "vapt/routes.py",
+      "community": 76,
+      "community_name": "Assessment",
       "norm_label": "assessment"
     },
     {
@@ -14664,8 +14664,8 @@
       "source_location": "",
       "_origin": "ast",
       "id": "backend_app_domain_models_assessment_py_uuidmixin",
-      "community": 35,
-      "community_name": "vapt/routes.py",
+      "community": 76,
+      "community_name": "Assessment",
       "norm_label": "uuidmixin"
     },
     {
@@ -14675,8 +14675,8 @@
       "source_location": "",
       "_origin": "ast",
       "id": "backend_app_domain_models_assessment_py_timestampmixin",
-      "community": 35,
-      "community_name": "vapt/routes.py",
+      "community": 76,
+      "community_name": "Assessment",
       "norm_label": "timestampmixin"
     },
     {
@@ -14686,8 +14686,8 @@
       "source_location": "L1",
       "_origin": "ast",
       "id": "backend_app_domain_models_asset",
-      "community": 35,
-      "community_name": "vapt/routes.py",
+      "community": 46,
+      "community_name": "repositories/__init__.py",
       "norm_label": "models/asset.py"
     },
     {
@@ -14697,8 +14697,8 @@
       "source_location": "L10",
       "_origin": "ast",
       "id": "backend_app_domain_models_asset_asset",
-      "community": 35,
-      "community_name": "vapt/routes.py",
+      "community": 76,
+      "community_name": "Assessment",
       "norm_label": "asset"
     },
     {
@@ -14708,8 +14708,8 @@
       "source_location": "",
       "_origin": "ast",
       "id": "backend_app_domain_models_asset_py_uuidmixin",
-      "community": 35,
-      "community_name": "vapt/routes.py",
+      "community": 76,
+      "community_name": "Assessment",
       "norm_label": "uuidmixin"
     },
     {
@@ -14719,8 +14719,8 @@
       "source_location": "",
       "_origin": "ast",
       "id": "backend_app_domain_models_asset_py_timestampmixin",
-      "community": 35,
-      "community_name": "vapt/routes.py",
+      "community": 76,
+      "community_name": "Assessment",
       "norm_label": "timestampmixin"
     },
     {
@@ -14730,8 +14730,8 @@
       "source_location": "L1",
       "_origin": "ast",
       "id": "backend_app_domain_models_base",
-      "community": 35,
-      "community_name": "vapt/routes.py",
+      "community": 46,
+      "community_name": "repositories/__init__.py",
       "norm_label": "domain/models/base.py"
     },
     {
@@ -14763,8 +14763,8 @@
       "source_location": "L1",
       "_origin": "ast",
       "id": "backend_app_domain_models_finding",
-      "community": 35,
-      "community_name": "vapt/routes.py",
+      "community": 46,
+      "community_name": "repositories/__init__.py",
       "norm_label": "models/finding.py"
     },
     {
@@ -15215,7 +15215,7 @@
       "_origin": "ast",
       "id": "backend_app_domain_schemas_finding",
       "community": 46,
-      "community_name": "findings.py",
+      "community_name": "repositories/__init__.py",
       "norm_label": "schemas/finding.py"
     },
     {
@@ -15226,7 +15226,7 @@
       "_origin": "ast",
       "id": "backend_app_domain_schemas_finding_findingbase",
       "community": 46,
-      "community_name": "findings.py",
+      "community_name": "repositories/__init__.py",
       "norm_label": "findingbase"
     },
     {
@@ -15237,7 +15237,7 @@
       "_origin": "ast",
       "id": "backend_app_domain_schemas_finding_findingread",
       "community": 46,
-      "community_name": "findings.py",
+      "community_name": "repositories/__init__.py",
       "norm_label": "findingread"
     },
     {
@@ -15248,7 +15248,7 @@
       "_origin": "ast",
       "id": "backend_app_domain_schemas_finding_py_baseschema",
       "community": 46,
-      "community_name": "findings.py",
+      "community_name": "repositories/__init__.py",
       "norm_label": "baseschema"
     },
     {
@@ -15259,7 +15259,7 @@
       "_origin": "ast",
       "id": "backend_app_domain_schemas_finding_findingupdate",
       "community": 46,
-      "community_name": "findings.py",
+      "community_name": "repositories/__init__.py",
       "norm_label": "findingupdate"
     },
     {
@@ -16820,8 +16820,8 @@
       "source_location": "L1",
       "_origin": "ast",
       "id": "backend_app_recon_orchestrator_init",
-      "community": 18,
-      "community_name": "KnowledgeGraph",
+      "community": 58,
+      "community_name": "v1/__init__.py",
       "norm_label": "recon_orchestrator/__init__.py"
     },
     {
@@ -16842,8 +16842,8 @@
       "source_location": "L17",
       "_origin": "ast",
       "id": "backend_app_recon_orchestrator_graph_db_node_id",
-      "community": 18,
-      "community_name": "KnowledgeGraph",
+      "community": 58,
+      "community_name": "v1/__init__.py",
       "norm_label": "_node_id()"
     },
     {
@@ -16853,8 +16853,8 @@
       "source_location": "L21",
       "_origin": "ast",
       "id": "backend_app_recon_orchestrator_graph_db_knowledgegraph",
-      "community": 18,
-      "community_name": "KnowledgeGraph",
+      "community": 58,
+      "community_name": "v1/__init__.py",
       "norm_label": "knowledgegraph"
     },
     {
@@ -16864,8 +16864,8 @@
       "source_location": "L22",
       "_origin": "ast",
       "id": "backend_app_recon_orchestrator_graph_db_knowledgegraph_init",
-      "community": 18,
-      "community_name": "KnowledgeGraph",
+      "community": 58,
+      "community_name": "v1/__init__.py",
       "norm_label": ".__init__()"
     },
     {
@@ -16875,8 +16875,8 @@
       "source_location": "L40",
       "_origin": "ast",
       "id": "backend_app_recon_orchestrator_graph_db_knowledgegraph_close",
-      "community": 18,
-      "community_name": "KnowledgeGraph",
+      "community": 58,
+      "community_name": "v1/__init__.py",
       "norm_label": ".close()"
     },
     {
@@ -16886,8 +16886,8 @@
       "source_location": "L44",
       "_origin": "ast",
       "id": "backend_app_recon_orchestrator_graph_db_knowledgegraph_clear",
-      "community": 18,
-      "community_name": "KnowledgeGraph",
+      "community": 58,
+      "community_name": "v1/__init__.py",
       "norm_label": ".clear()"
     },
     {
@@ -16897,8 +16897,8 @@
       "source_location": "L54",
       "_origin": "ast",
       "id": "backend_app_recon_orchestrator_graph_db_knowledgegraph_upsert_target",
-      "community": 18,
-      "community_name": "KnowledgeGraph",
+      "community": 58,
+      "community_name": "v1/__init__.py",
       "norm_label": ".upsert_target()"
     },
     {
@@ -16908,8 +16908,8 @@
       "source_location": "L70",
       "_origin": "ast",
       "id": "backend_app_recon_orchestrator_graph_db_knowledgegraph_upsert_port",
-      "community": 18,
-      "community_name": "KnowledgeGraph",
+      "community": 58,
+      "community_name": "v1/__init__.py",
       "norm_label": ".upsert_port()"
     },
     {
@@ -16919,8 +16919,8 @@
       "source_location": "L97",
       "_origin": "ast",
       "id": "backend_app_recon_orchestrator_graph_db_knowledgegraph_upsert_service",
-      "community": 18,
-      "community_name": "KnowledgeGraph",
+      "community": 58,
+      "community_name": "v1/__init__.py",
       "norm_label": ".upsert_service()"
     },
     {
@@ -16930,8 +16930,8 @@
       "source_location": "L124",
       "_origin": "ast",
       "id": "backend_app_recon_orchestrator_graph_db_knowledgegraph_add_finding",
-      "community": 18,
-      "community_name": "KnowledgeGraph",
+      "community": 58,
+      "community_name": "v1/__init__.py",
       "norm_label": ".add_finding()"
     },
     {
@@ -16941,8 +16941,8 @@
       "source_location": "L198",
       "_origin": "ast",
       "id": "backend_app_recon_orchestrator_graph_db_knowledgegraph_add_chain_step",
-      "community": 18,
-      "community_name": "KnowledgeGraph",
+      "community": 58,
+      "community_name": "v1/__init__.py",
       "norm_label": ".add_chain_step()"
     },
     {
@@ -16952,8 +16952,8 @@
       "source_location": "",
       "_origin": "ast",
       "id": "backend_app_recon_orchestrator_graph_db_py_any",
-      "community": 18,
-      "community_name": "KnowledgeGraph",
+      "community": 58,
+      "community_name": "v1/__init__.py",
       "norm_label": "any"
     },
     {
@@ -16963,8 +16963,8 @@
       "source_location": "L250",
       "_origin": "ast",
       "id": "backend_app_recon_orchestrator_graph_db_knowledgegraph_fetch_graph",
-      "community": 18,
-      "community_name": "KnowledgeGraph",
+      "community": 58,
+      "community_name": "v1/__init__.py",
       "norm_label": ".fetch_graph()"
     },
     {
@@ -16974,8 +16974,8 @@
       "source_location": "L309",
       "_origin": "ast",
       "id": "backend_app_recon_orchestrator_graph_db_node_tooltip",
-      "community": 18,
-      "community_name": "KnowledgeGraph",
+      "community": 58,
+      "community_name": "v1/__init__.py",
       "norm_label": "_node_tooltip()"
     },
     {
@@ -16996,8 +16996,8 @@
       "source_location": "L209",
       "_origin": "ast",
       "id": "backend_app_recon_orchestrator_graph_db_rationale_209",
-      "community": 18,
-      "community_name": "KnowledgeGraph",
+      "community": 58,
+      "community_name": "v1/__init__.py",
       "norm_label": "record one agent-loop step as a chainstep node linked to the target (target..."
     },
     {
@@ -17337,8 +17337,8 @@
       "source_location": "L1",
       "_origin": "ast",
       "id": "backend_app_repositories_init",
-      "community": 35,
-      "community_name": "vapt/routes.py",
+      "community": 46,
+      "community_name": "repositories/__init__.py",
       "norm_label": "repositories/__init__.py"
     },
     {
@@ -17469,8 +17469,8 @@
       "source_location": "L1",
       "_origin": "ast",
       "id": "backend_app_repositories_init_rationale_1",
-      "community": 35,
-      "community_name": "vapt/routes.py",
+      "community": 46,
+      "community_name": "repositories/__init__.py",
       "norm_label": "repository pattern for data access. each repository: - wraps sqlalchemy queries..."
     },
     {
@@ -20659,8 +20659,8 @@
       "source_location": "L1",
       "_origin": "ast",
       "id": "backend_app_schemas_base",
-      "community": 46,
-      "community_name": "findings.py",
+      "community": 48,
+      "community_name": "assets.py",
       "norm_label": "schemas/base.py"
     },
     {
@@ -20670,8 +20670,8 @@
       "source_location": "L10",
       "_origin": "ast",
       "id": "backend_app_schemas_base_baseschema",
-      "community": 46,
-      "community_name": "findings.py",
+      "community": 48,
+      "community_name": "assets.py",
       "norm_label": "baseschema"
     },
     {
@@ -20692,8 +20692,8 @@
       "source_location": "L29",
       "_origin": "ast",
       "id": "backend_app_schemas_base_paginatedresponse",
-      "community": 46,
-      "community_name": "findings.py",
+      "community": 48,
+      "community_name": "assets.py",
       "norm_label": "paginatedresponse"
     },
     {
@@ -20703,8 +20703,8 @@
       "source_location": "L37",
       "_origin": "ast",
       "id": "backend_app_schemas_base_paginatedresponse_has_next",
-      "community": 46,
-      "community_name": "findings.py",
+      "community": 48,
+      "community_name": "assets.py",
       "norm_label": ".has_next()"
     },
     {
@@ -20714,8 +20714,8 @@
       "source_location": "L41",
       "_origin": "ast",
       "id": "backend_app_schemas_base_paginatedresponse_has_prev",
-      "community": 46,
-      "community_name": "findings.py",
+      "community": 48,
+      "community_name": "assets.py",
       "norm_label": ".has_prev()"
     },
     {
@@ -20725,8 +20725,8 @@
       "source_location": "L45",
       "_origin": "ast",
       "id": "backend_app_schemas_base_errorresponse",
-      "community": 46,
-      "community_name": "findings.py",
+      "community": 48,
+      "community_name": "assets.py",
       "norm_label": "errorresponse"
     },
     {
@@ -23728,8 +23728,8 @@
       "source_location": "L1",
       "_origin": "ast",
       "id": "backend_app_vapt_control",
-      "community": 58,
-      "community_name": "v1/__init__.py",
+      "community": 35,
+      "community_name": "vapt/routes.py",
       "norm_label": "control.py"
     },
     {
@@ -23904,8 +23904,8 @@
       "source_location": "L117",
       "_origin": "ast",
       "id": "backend_app_vapt_control_scancontroller_checkpoint",
-      "community": 58,
-      "community_name": "v1/__init__.py",
+      "community": 35,
+      "community_name": "vapt/routes.py",
       "norm_label": ".checkpoint()"
     },
     {
@@ -24003,8 +24003,8 @@
       "source_location": "L1",
       "_origin": "ast",
       "id": "backend_app_vapt_control_rationale_1",
-      "community": 58,
-      "community_name": "v1/__init__.py",
+      "community": 35,
+      "community_name": "vapt/routes.py",
       "norm_label": "scan control channel in-process control plane for active scans: pause, resume,..."
     },
     {
@@ -24080,8 +24080,8 @@
       "source_location": "L118",
       "_origin": "ast",
       "id": "backend_app_vapt_control_rationale_118",
-      "community": 58,
-      "community_name": "v1/__init__.py",
+      "community": 35,
+      "community_name": "vapt/routes.py",
       "norm_label": "cooperative pause/stop gate. no-op for scans that are not registered. while..."
     },
     {
@@ -25818,8 +25818,8 @@
       "source_location": "L164",
       "_origin": "ast",
       "id": "backend_app_vapt_progress_get_progress_bus",
-      "community": 58,
-      "community_name": "v1/__init__.py",
+      "community": 35,
+      "community_name": "vapt/routes.py",
       "norm_label": "get_progress_bus()"
     },
     {
@@ -30552,7 +30552,7 @@
       "label": "LABELS",
       "file_type": "code",
       "source_file": "frontend/src/components/layout/Topbar.tsx",
-      "source_location": "L7",
+      "source_location": "L8",
       "_origin": "ast",
       "id": "frontend_src_components_layout_topbar_labels",
       "community": 132,
@@ -30563,7 +30563,7 @@
       "label": "Topbar()",
       "file_type": "code",
       "source_file": "frontend/src/components/layout/Topbar.tsx",
-      "source_location": "L17",
+      "source_location": "L18",
       "_origin": "ast",
       "id": "frontend_src_components_layout_topbar_topbar",
       "community": 132,
@@ -34661,9 +34661,9 @@
       "captured_at": null,
       "author": "AstraIX Engineering",
       "contributor": null,
-      "community": 127,
+      "community": 54,
       "norm_label": "trivy security scanner plugin",
-      "community_name": "Trivy Security Scanner Plugin",
+      "community_name": "Finding Engine",
       "id": "plugins_trivy_plugin"
     },
     {
@@ -34787,9 +34787,9 @@
       "captured_at": null,
       "author": null,
       "contributor": null,
-      "community": 127,
+      "community": 54,
       "norm_label": "cloud/posture capability",
-      "community_name": "Trivy Security Scanner Plugin",
+      "community_name": "Finding Engine",
       "id": "trivy_cloud_posture"
     },
     {
@@ -34801,9 +34801,9 @@
       "captured_at": null,
       "author": null,
       "contributor": null,
-      "community": 127,
+      "community": 54,
       "norm_label": "container/security capability",
-      "community_name": "Trivy Security Scanner Plugin",
+      "community_name": "Finding Engine",
       "id": "trivy_container_security"
     },
     {
@@ -34815,9 +34815,9 @@
       "captured_at": null,
       "author": null,
       "contributor": null,
-      "community": 127,
+      "community": 54,
       "norm_label": "iac/security capability",
-      "community_name": "Trivy Security Scanner Plugin",
+      "community_name": "Finding Engine",
       "id": "trivy_iac_security"
     },
     {
@@ -120947,7 +120947,7 @@
       "confidence": "EXTRACTED",
       "confidence_score": 1.0,
       "source_file": "frontend/src/components/layout/Sidebar.tsx",
-      "source_location": "L40",
+      "source_location": "L42",
       "weight": 1.0,
       "_origin": "ast",
       "source": "frontend_src_components_layout_sidebar_sidebar",
@@ -120957,7 +120957,7 @@
       "relation": "contains",
       "confidence": "EXTRACTED",
       "source_file": "frontend/src/components/layout/Topbar.tsx",
-      "source_location": "L7",
+      "source_location": "L8",
       "weight": 1.0,
       "_origin": "ast",
       "source": "frontend_src_components_layout_topbar",
@@ -120968,7 +120968,7 @@
       "relation": "contains",
       "confidence": "EXTRACTED",
       "source_file": "frontend/src/components/layout/Topbar.tsx",
-      "source_location": "L17",
+      "source_location": "L18",
       "weight": 1.0,
       "_origin": "ast",
       "source": "frontend_src_components_layout_topbar",
@@ -120980,7 +120980,7 @@
       "context": "import",
       "confidence": "EXTRACTED",
       "source_file": "frontend/src/components/layout/Topbar.tsx",
-      "source_location": "L5",
+      "source_location": "L6",
       "weight": 1.0,
       "_origin": "ast",
       "source": "frontend_src_components_layout_topbar",
@@ -120992,7 +120992,7 @@
       "context": "import",
       "confidence": "EXTRACTED",
       "source_file": "frontend/src/components/layout/Topbar.tsx",
-      "source_location": "L5",
+      "source_location": "L6",
       "weight": 1.0,
       "_origin": "ast",
       "source": "frontend_src_components_layout_topbar",
@@ -121005,7 +121005,7 @@
       "confidence": "EXTRACTED",
       "confidence_score": 1.0,
       "source_file": "frontend/src/components/layout/Topbar.tsx",
-      "source_location": "L19",
+      "source_location": "L22",
       "weight": 1.0,
       "_origin": "ast",
       "source": "frontend_src_components_layout_topbar_topbar",
@@ -129339,5 +129339,5 @@
       "source_file": "plugins/core/plugin-sdk/plugin.yml"
     }
   ],
-  "built_at_commit": "9df277fa773d1db54e80e44bef7693089f2e59a3"
+  "built_at_commit": "2603a764467d43c21b8e6c6ea40f5b73b749651e"
 }

@@ -670,7 +670,7 @@
     "semantic_hash": "3497a0145d67aafb9e1e8893a4d0c829"
   },
   "frontend/next-env.d.ts": {
-    "mtime": 1786378957.1889434,
+    "mtime": 1787123543.1784182,
     "ast_hash": "1e49761934a5500bd150892b8541acfe",
     "semantic_hash": ""
   },
@@ -780,8 +780,8 @@
     "semantic_hash": ""
   },
   "frontend/src/components/layout/Sidebar.tsx": {
-    "mtime": 1786708357.029578,
-    "ast_hash": "9ef8e60a0b49e80a15090eabb56b29f2",
+    "mtime": 1787123139.921694,
+    "ast_hash": "559b9d3623455560f2cb77eb5139ab61",
     "semantic_hash": ""
   },
   "frontend/src/components/ui/badge.tsx": {
@@ -1450,8 +1450,8 @@
     "semantic_hash": ""
   },
   "frontend/src/components/layout/Topbar.tsx": {
-    "mtime": 1786708348.4409654,
-    "ast_hash": "bfe7077948bb545b18abe9ea40eb5e49",
+    "mtime": 1787123124.7043703,
+    "ast_hash": "83101b6ea6d702614bd1cd4b419b4e45",
     "semantic_hash": ""
   },
   "backend/app/vapt/agents/matrix.py": {
