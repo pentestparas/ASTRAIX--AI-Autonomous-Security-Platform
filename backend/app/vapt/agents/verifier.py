@@ -1,6 +1,6 @@
 import asyncio
 import os
-from typing import List, Optional
+from typing import Any, Awaitable, Callable, Dict, List, Optional
 from app.vapt.models import VAPTFinding, VAPTSeverity, VAPTTarget, VAPTScanRequest, VAPTScanType
 from app.vapt.executor import get_vapt_executor
 from app.core.logging import get_logger
@@ -72,13 +72,22 @@ class VerifierAgent:
             pass
         return None
 
-    async def verify_findings(self, findings: List[VAPTFinding]) -> List[VAPTFinding]:
+    async def verify_findings(
+        self,
+        findings: List[VAPTFinding],
+        scan_id: Optional[str] = None,
+        publish: Optional[Callable[[str, str, Dict[str, Any]], Awaitable[None]]] = None,
+    ) -> List[VAPTFinding]:
         """Verify findings concurrently (bounded) so long-running re-exploits
         (e.g. sqlmap) do not stall the scan for minutes.
 
         Only HIGH/CRITICAL findings are re-exploited, and duplicate
         (title, target) findings are verified once. This keeps the total
         verification time in the low minutes instead of tens of minutes.
+
+        When a ``publish`` callback and ``scan_id`` are provided, every
+        verdict is emitted as a live ``verdict`` event so the scan console
+        can show the AI's per-finding decision (confirmed / downgraded).
         """
         if not findings:
             return findings
@@ -103,6 +112,8 @@ class VerifierAgent:
         cap = int(os.environ.get("VAPT_VERIFY_TIMEOUT", "75"))
 
         async def bounded(finding: VAPTFinding, seq: int) -> VAPTFinding:
+            severity_before = finding.severity.value
+            confidence_before = finding.confidence
             async with sem:
                 try:
                     res = await asyncio.wait_for(self.verify_finding(finding), timeout=cap)
@@ -111,10 +122,45 @@ class VerifierAgent:
                     res = finding
                 if seq % 5 == 0:
                     logger.info("Verifier progress: %d/%d", seq + 1, len(to_verify))
-                return res
+            if publish and scan_id:
+                await publish(scan_id, "verdict", self._verdict_event(
+                    res, severity_before, confidence_before
+                ))
+            return res
 
         await asyncio.gather(*(bounded(f, i) for i, f in enumerate(to_verify)))
         return findings
+
+    def _verdict_event(
+        self,
+        finding: VAPTFinding,
+        severity_before: str,
+        confidence_before: str,
+    ) -> Dict[str, Any]:
+        detail = (
+            finding.details.get("verification")
+            or finding.details.get("verification_error")
+            or ""
+        )
+        if finding.confidence == "confirmed":
+            verdict = "confirmed"
+        elif confidence_before != "unverified" and finding.confidence == "unverified":
+            verdict = "downgraded"
+        elif "Timed out" in str(detail):
+            verdict = "timed_out"
+        else:
+            verdict = "unverified"
+        return {
+            "finding": finding.title[:160],
+            "vulnerability_type": finding.vulnerability_type or "",
+            "tool": self._pick_verify_tool(finding) or "",
+            "verdict": verdict,
+            "severity_before": severity_before,
+            "severity_after": finding.severity.value,
+            "confidence": finding.confidence,
+            "detail": str(detail)[:300],
+            "kb_context": (finding.details.get("kb_exploit_context") or "")[:300],
+        }
 
     def _pick_verify_tool(self, finding: VAPTFinding) -> Optional[str]:
         title_lower = finding.title.lower()

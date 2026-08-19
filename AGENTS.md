@@ -120,6 +120,19 @@ curl http://localhost:8000/health
 docker build -f docker/kali-tools.Dockerfile -t astraix-kali:latest .
 ```
 
+## AI Transparency Panel (scan console)
+
+The live scan console renders an "AI Reasoning — how the model worked" panel fed by four event types on the ScanProgressBus:
+
+| Event | Emitted by | Payload |
+|-------|-----------|---------|
+| `llm_call` | `agent_loop._llm_turn`, `matrix._llm_json` | provider, model, purpose (`agent`/`matrix`/`chain`), ms, ok |
+| `llm_stats` | orchestrator (after matrix phase, agent loop, and at scan end) | phase, calls, ok_calls, total_tokens, elapsed_ms, providers, purposes |
+| `verdict` | `verifier.verify_findings` (per re-exploited finding) | finding, vulnerability_type, tool, verdict (`confirmed`/`downgraded`/`timed_out`/`unverified`), severity_before/after, confidence, detail, kb_context |
+| `matrix_entry_done` | `orchestrator._run_matrix_phase` | id, endpoint, attack_type, suspicious, status, reason (LLM classification), poc_preview, tool, error |
+
+Usage is tracked per scan by `backend/app/vapt/agents/llm_usage.py` (thread-safe, in-memory; `reset_llm_usage(scan_id)` is called at scan start). Token counts are real provider usage when available, else a 4-char/token estimate. All counters are visibility only — a failing tracker never fails the scan.
+
 ## Lint & Type Check
 
 ```bash

@@ -720,8 +720,8 @@
     "semantic_hash": ""
   },
   "frontend/src/app/(main)/scans/page.tsx": {
-    "mtime": 1787058863.0928173,
-    "ast_hash": "04ff35d896cb361ad135c5201815e77e",
+    "mtime": 1787079533.9758255,
+    "ast_hash": "6d0d9bc7fa69edc6c5d45a03f53ce59f",
     "semantic_hash": ""
   },
   "frontend/src/app/(main)/settings/api-keys/page.tsx": {
@@ -870,8 +870,8 @@
     "semantic_hash": "519f330ecaea3fb3b347af74d5be82f9"
   },
   "README.md": {
-    "mtime": 1786710737.7687519,
-    "ast_hash": "dfaa531ea82646e396c9086817d0afcb",
+    "mtime": 1787078603.6349523,
+    "ast_hash": "4b878d96c2fe5be5e4fc9b0ab94a92a5",
     "semantic_hash": ""
   },
   "backend/ai_secos_core/capabilities/library/cloud_posture/manifest.yml": {
@@ -1090,8 +1090,8 @@
     "semantic_hash": "f1f065d5d6d8cb41726c18044f9a9fe9"
   },
   "backend/app/vapt/executor.py": {
-    "mtime": 1787054090.4667401,
-    "ast_hash": "4c0edae64be78cafb5e5620bd8babc9f",
+    "mtime": 1787062348.1541946,
+    "ast_hash": "493daa39f4f97ab69eed8c5a3b3d70eb",
     "semantic_hash": ""
   },
   "backend/app/vapt/models.py": {
@@ -1100,8 +1100,8 @@
     "semantic_hash": ""
   },
   "backend/app/vapt/orchestrator.py": {
-    "mtime": 1787058800.1738093,
-    "ast_hash": "1c21ce9efe6ac54afa58e6cf89a342ab",
+    "mtime": 1787079436.4656615,
+    "ast_hash": "cb239f715e8597afaa8d0b894c692548",
     "semantic_hash": ""
   },
   "backend/app/vapt/routes.py": {
@@ -1110,8 +1110,8 @@
     "semantic_hash": ""
   },
   "backend/app/vapt/tools.py": {
-    "mtime": 1786977690.1852288,
-    "ast_hash": "745d132047a6ab08c27d3f5a5c30b513",
+    "mtime": 1787062157.7054813,
+    "ast_hash": "eb0a30b0c8bebb5ac74d47b3e8ed8aad",
     "semantic_hash": ""
   },
   "frontend/src/app/(main)/vapt/page.tsx": {
@@ -1185,8 +1185,8 @@
     "semantic_hash": "3975ca27c1e780def01c4a44337b588d"
   },
   "backend/app/vapt/agents/planner.py": {
-    "mtime": 1787045189.0995896,
-    "ast_hash": "d240bee9756220d7d06f4d88fc5ddb5d",
+    "mtime": 1787062190.083897,
+    "ast_hash": "4123f55c7d92f849d0e0761f803661eb",
     "semantic_hash": ""
   },
   "backend/app/vapt/agents/researcher.py": {
@@ -1195,8 +1195,8 @@
     "semantic_hash": ""
   },
   "backend/app/vapt/agents/verifier.py": {
-    "mtime": 1786700845.4788792,
-    "ast_hash": "30ad86b13858dee057d57fdca8f8645a",
+    "mtime": 1787079771.1269002,
+    "ast_hash": "20b8c2e9fd3a16c38b88585ab0b408de",
     "semantic_hash": ""
   },
   "backend/app/vapt/progress.py": {
@@ -1220,8 +1220,8 @@
     "semantic_hash": "eb54107525e58817eb81bf9241e0b10a"
   },
   "AGENTS.md": {
-    "mtime": 1787060199.2873604,
-    "ast_hash": "d8cfea41f0ce9d0ab6e0d984fee8591a",
+    "mtime": 1787120733.1571388,
+    "ast_hash": "1fc2687e74bc91246f771c7f043bf694",
     "semantic_hash": ""
   },
   "CHANGELOG.md": {
@@ -1335,8 +1335,8 @@
     "semantic_hash": ""
   },
   "backend/app/vapt/agents/agent_loop.py": {
-    "mtime": 1787045140.40497,
-    "ast_hash": "b753695b4ff253baae56c8fc1fcdeac4",
+    "mtime": 1787079322.84347,
+    "ast_hash": "3e7ff9188466be3a83e5763d2d6694e3",
     "semantic_hash": ""
   },
   "backend/app/vapt/control.py": {
@@ -1455,8 +1455,8 @@
     "semantic_hash": ""
   },
   "backend/app/vapt/agents/matrix.py": {
-    "mtime": 1787057715.5374947,
-    "ast_hash": "28cc431c4897006b5b6413076efa776c",
+    "mtime": 1787079283.988124,
+    "ast_hash": "5242e0497c6e72fc02ef3c95520087e3",
     "semantic_hash": ""
   },
   "backend/app/vapt/agents/recon.py": {
@@ -1485,8 +1485,8 @@
     "semantic_hash": ""
   },
   "docker/fetch-kb.sh": {
-    "mtime": 1787060075.2182662,
-    "ast_hash": "5886e06a56e73097795c1d5f78c55259",
+    "mtime": 1787061104.5485313,
+    "ast_hash": "78a514f294b650b8c5bbd7b25d098e92",
     "semantic_hash": ""
   },
   "docker/kb-pull.sh": {
@@ -1495,8 +1495,33 @@
     "semantic_hash": ""
   },
   "docker/kb-repos.txt": {
-    "mtime": 1787060068.8349257,
-    "ast_hash": "f6e75c4a138b0f2ac889d82335183c9d",
+    "mtime": 1787061127.4498184,
+    "ast_hash": "2e9e8ff314b2452a07b6d35c0c455097",
+    "semantic_hash": ""
+  },
+  "backend/app/vapt/agents/llm_usage.py": {
+    "mtime": 1787079205.4801192,
+    "ast_hash": "8d9d9d6a658cda925fa1e0942ba64f0d",
+    "semantic_hash": ""
+  },
+  "docker/scripts/promptfoo_scanner.py": {
+    "mtime": 1787062010.0405908,
+    "ast_hash": "bb2188d103d9262bc95827b4e4d2cd3d",
+    "semantic_hash": ""
+  },
+  "docs/ARCHITECTURE_REPORT.md": {
+    "mtime": 1787078596.8864322,
+    "ast_hash": "4d0c22eeda46762c99c7103026b246e2",
+    "semantic_hash": ""
+  },
+  "docs/astraix-product-ebook.html": {
+    "mtime": 1787077699.941535,
+    "ast_hash": "2b0db3a331b57451381065c516d2afdd",
+    "semantic_hash": ""
+  },
+  "docs/astraix-product-ebook.pdf": {
+    "mtime": 1787077734.2556787,
+    "ast_hash": "8a5ac5097df84ac346ef1081caff8f28",
     "semantic_hash": ""
   }
 }

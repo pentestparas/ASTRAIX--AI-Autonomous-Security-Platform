@@ -426,9 +426,53 @@ function LiveScanConsole({
       tool: String(e.data?.tool_id || e.data?.tool || "?"),
       decision: String(e.data?.decision || ""),
       reason: String(e.data?.reason || ""),
+      summary: String(e.data?.summary || ""),
       findingCount: Number(e.data?.findings_count || 0),
       error: !!e.data?.error,
     }));
+
+  const verdicts = events
+    .filter((e) => e.type === "verdict")
+    .map((e) => e.data as Record<string, any>);
+
+  const llmCalls = events.filter((e) => e.type === "llm_call");
+  const llmByProvider = new Map<
+    string,
+    { calls: number; ok: number; ms: number; models: Set<string> }
+  >();
+  llmCalls.forEach((e) => {
+    const p = String(e.data?.provider || "LLM");
+    const cur = llmByProvider.get(p) || {
+      calls: 0,
+      ok: 0,
+      ms: 0,
+      models: new Set<string>(),
+    };
+    cur.calls += 1;
+    if (e.data?.ok) cur.ok += 1;
+    cur.ms += Number(e.data?.ms || 0);
+    if (e.data?.model) cur.models.add(String(e.data.model));
+    llmByProvider.set(p, cur);
+  });
+  const llmStatsEvent = events
+    .filter((e) => e.type === "llm_stats")
+    .sort((a, b) => a.ts - b.ts)
+    .at(-1);
+  const llmStatsTotal = llmStatsEvent?.data as
+    | {
+        phase?: string;
+        calls?: number;
+        ok_calls?: number;
+        total_tokens?: number;
+        elapsed_ms?: number;
+        providers?: Record<
+          string,
+          { calls: number; tokens: number; models: Record<string, number> }
+        >;
+        purposes?: Record<string, number>;
+        message?: string;
+      }
+    | undefined;
 
   const lastEventOf = (type: string) =>
     events.filter((e) => e.type === type).sort((a, b) => a.ts - b.ts).at(-1);
@@ -832,23 +876,30 @@ function LiveScanConsole({
             <Brain className="w-3.5 h-3.5" /> Autonomous agent loop
           </p>
           <div className="space-y-1">
-            {agentSteps.slice(-8).map((s) => (
-              <div key={s.key} className="flex items-center gap-2 text-xs">
-                {s.error ? (
-                  <XCircle className="w-3 h-3 text-destructive shrink-0" />
-                ) : s.decision === "ran" ? (
-                  <Check className="w-3 h-3 text-green-500 shrink-0" />
-                ) : (
-                  <Clock className="w-3 h-3 text-muted-foreground shrink-0" />
+            {agentSteps.slice(-10).map((s) => (
+              <div key={s.key} className="text-xs">
+                <div className="flex items-center gap-2">
+                  {s.error ? (
+                    <XCircle className="w-3 h-3 text-destructive shrink-0" />
+                  ) : s.decision === "ran" ? (
+                    <Check className="w-3 h-3 text-green-500 shrink-0" />
+                  ) : (
+                    <Clock className="w-3 h-3 text-muted-foreground shrink-0" />
+                  )}
+                  <span className="font-mono text-muted-foreground shrink-0">
+                    step {s.index}
+                  </span>
+                  <span className="font-mono font-medium">{s.tool}</span>
+                  <span className="text-muted-foreground truncate">{s.reason}</span>
+                  <span className="ml-auto text-[11px] text-muted-foreground shrink-0">
+                    {s.findingCount > 0 ? `+${s.findingCount} findings` : "no findings"}
+                  </span>
+                </div>
+                {s.summary && (
+                  <p className="pl-6 text-muted-foreground line-clamp-2 opacity-80 mt-0.5">
+                    {s.summary}
+                  </p>
                 )}
-                <span className="font-mono text-muted-foreground shrink-0">
-                  step {s.index}
-                </span>
-                <span className="font-mono font-medium">{s.tool}</span>
-                <span className="text-muted-foreground truncate">{s.reason}</span>
-                <span className="ml-auto text-[11px] text-muted-foreground shrink-0">
-                  {s.findingCount > 0 ? `+${s.findingCount} findings` : "no findings"}
-                </span>
               </div>
             ))}
           </div>
@@ -1023,6 +1074,134 @@ function LiveScanConsole({
           </div>
         </div>
       ) : null}
+
+      {(verdicts.length > 0 || llmCalls.length > 0 || llmStatsTotal) && (
+        <div className="rounded-lg border border-primary/20 bg-primary/5 overflow-hidden">
+          <div className="flex items-center justify-between px-3 py-2 border-b border-primary/10">
+            <p className="text-xs font-semibold text-primary flex items-center gap-1.5">
+              <Brain className="w-3.5 h-3.5" /> AI Reasoning — how the model worked
+            </p>
+            {llmStatsTotal?.message && (
+              <span className="text-[11px] text-muted-foreground">
+                {String(llmStatsTotal.message || "")}
+              </span>
+            )}
+          </div>
+          <div className="grid gap-2 p-3 lg:grid-cols-2">
+            <div className="min-w-0 space-y-1.5">
+              <p className="text-[11px] uppercase tracking-wide text-muted-foreground font-medium flex items-center gap-1">
+                <Zap className="w-3 h-3" /> LLM activity
+              </p>
+              {llmStatsTotal ? (
+                <div className="rounded-md border border-primary/10 bg-card/60 p-2 text-xs space-y-1.5">
+                  <div className="grid grid-cols-3 gap-1 font-mono text-muted-foreground">
+                    <span>{llmStatsTotal.calls ?? 0} calls</span>
+                    <span>{llmStatsTotal.ok_calls ?? 0} ok</span>
+                    <span>{llmStatsTotal.total_tokens ?? 0} tokens</span>
+                  </div>
+                  <p className="font-mono text-muted-foreground">
+                    {llmStatsTotal.elapsed_ms ?? 0}ms total · phase {String(llmStatsTotal.phase || "")}
+                  </p>
+                  {(llmStatsTotal.providers &&
+                    Object.entries(llmStatsTotal.providers).length > 0) && (
+                    <div className="flex flex-wrap gap-1">
+                      {Object.entries(llmStatsTotal.providers).map(([name, p]) => (
+                        <span
+                          key={name}
+                          className="inline-flex items-center gap-1 px-1.5 py-0.5 rounded border border-primary/20 bg-card font-mono text-[10px] text-muted-foreground"
+                        >
+                          {name}: {p.calls} calls · {p.tokens} tokens
+                          {p.models &&
+                            Object.keys(p.models).length > 0 &&
+                            ` · ${Object.keys(p.models).join(", ")}`}
+                        </span>
+                      ))}
+                    </div>
+                  )}
+                </div>
+              ) : llmCalls.length > 0 ? (
+                <div className="rounded-md border border-primary/10 bg-card/60 p-2 text-xs space-y-1">
+                  {llmCalls.length > 0 && (
+                    <div className="flex flex-wrap gap-1">
+                      {[...llmByProvider.entries()].map(([name, p]) => (
+                        <span
+                          key={name}
+                          className="px-1.5 py-0.5 rounded border border-primary/20 font-mono text-[10px] text-muted-foreground animate-pulse"
+                        >
+                          {name} · {p.ok}/{p.calls} ok · {[...p.models].join(", ") || "?"}
+                        </span>
+                      ))}
+                    </div>
+                  )}
+                </div>
+              ) : (
+                <p className="text-xs text-muted-foreground">
+                  No LLM calls yet — waiting for planner, matrix or agent loop
+                </p>
+              )}
+            </div>
+            <div className="min-w-0 space-y-1.5">
+              <p className="text-[11px] uppercase tracking-wide text-muted-foreground font-medium flex items-center gap-1">
+                <ShieldCheck className="w-3 h-3" /> Verifier verdicts — false positives eliminated
+              </p>
+              {verdicts.length === 0 ? (
+                <p className="text-xs text-muted-foreground">
+                  No findings verified yet — re-exploitation runs after tool execution
+                </p>
+              ) : (
+                <div className="space-y-1.5">
+                  {verdicts.slice(-10).reverse().map((v, i) => {
+                    const verdict = String(v?.verdict || "unverified");
+                    const badgeClass =
+                      verdict === "confirmed"
+                        ? "border-green-500/30 bg-green-500/10 text-green-400"
+                        : verdict === "downgraded"
+                          ? "border-yellow-500/30 bg-yellow-500/10 text-yellow-400"
+                          : verdict === "timed_out"
+                            ? "border-orange-500/30 bg-orange-500/10 text-orange-400"
+                            : "border-border bg-card text-muted-foreground";
+                    const severityChanged =
+                      String(v?.severity_before || "") !== String(v?.severity_after || "");
+                    return (
+                      <div
+                        key={i}
+                        className="rounded-md border border-primary/10 bg-card/60 p-2 text-[11px] space-y-0.5"
+                      >
+                        <div className="flex items-center justify-between gap-2">
+                          <span className="font-medium truncate">{String(v?.finding || "")}</span>
+                          <Badge className={`font-mono text-[10px] shrink-0 ${badgeClass}`}>
+                            {verdict}
+                          </Badge>
+                        </div>
+                        <p className="text-muted-foreground truncate">
+                          {String(v?.vulnerability_type || "—")}
+                          {String(v?.tool || "") ? ` · re-checked with ${String(v.tool)}` : ""}
+                          {severityChanged && (
+                            <span className="text-amber-400">
+                              {" "}
+                              · {String(v?.severity_before || "")} → {String(v?.severity_after || "")}
+                            </span>
+                          )}
+                        </p>
+                        {String(v?.detail || "") && (
+                          <p className="text-muted-foreground line-clamp-1 font-mono">
+                            {String(v.detail)}
+                          </p>
+                        )}
+                        {String(v?.kb_context || "") && (
+                          <p className="text-muted-foreground line-clamp-1">
+                            KB: {String(v.kb_context)}
+                          </p>
+                        )}
+                      </div>
+                    );
+                  })}
+                </div>
+              )}
+            </div>
+          </div>
+        </div>
+      )}
 
       <div className="h-1.5 rounded-full bg-muted overflow-hidden">
         <div

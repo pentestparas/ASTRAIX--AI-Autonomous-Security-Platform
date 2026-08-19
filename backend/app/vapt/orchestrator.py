@@ -23,6 +23,7 @@ from app.vapt.agents.kb import kb_snippets, kb_context_for_finding, kb_ready
 from app.vapt.agents.planner import get_planner
 from app.vapt.agents.recon import mine_web_surface
 from app.vapt.agents.matrix import MatrixAgent, get_matrix_agent, build_curl_command, parse_probe_output
+from app.vapt.agents.llm_usage import llm_usage_snapshot, reset_llm_usage
 from app.vapt.control import ScanStoppedError, get_scan_controller
 from app.vapt.progress import publish_scan_event, get_progress_bus
 from app.recon_orchestrator.orchestrator import ReconOrchestrator
@@ -111,6 +112,7 @@ class AIOrchestrator:
 
         controller = get_scan_controller()
         controller.register(scan_id, meta={"target": target, "scan_type": scan_type})
+        reset_llm_usage(scan_id)
 
         await publish_scan_event(scan_id, "scan_started", {"target": target, "scan_type": scan_type})
 
@@ -294,7 +296,9 @@ class AIOrchestrator:
             t0 = time.time()
             try:
                 result.findings = await asyncio.wait_for(
-                    self.verifier.verify_findings(result.findings),
+                    self.verifier.verify_findings(
+                        result.findings, scan_id=scan_id, publish=publish_scan_event
+                    ),
                     timeout=int(os.environ.get("VAPT_VERIFY_ALL_TIMEOUT", "240")),
                 )
             except (asyncio.TimeoutError, asyncio.CancelledError):
@@ -339,7 +343,9 @@ class AIOrchestrator:
             }
             try:
                 chain = await asyncio.wait_for(
-                    get_matrix_agent().build_attack_chain(result.findings),
+                    get_matrix_agent().build_attack_chain(
+                        result.findings, scan_id=scan_id, publish=publish_scan_event
+                    ),
                     timeout=int(os.environ.get("VAPT_CHAIN_TIMEOUT", "120")),
                 )
                 insights["attack_chain"] = chain
@@ -349,6 +355,22 @@ class AIOrchestrator:
                 logger.warning("Attack chain synthesis failed: %s", e)
                 insights["attack_chain"] = {"summary": "", "steps": []}
             result.tool_results["ai_insights"] = insights
+            usage = llm_usage_snapshot(scan_id)
+            if usage and usage.get("calls"):
+                await publish_scan_event(scan_id, "llm_stats", {
+                    "phase": "total",
+                    "calls": usage["calls"],
+                    "ok_calls": usage["ok_calls"],
+                    "total_tokens": usage["total_tokens"],
+                    "elapsed_ms": usage["elapsed_ms"],
+                    "providers": usage["providers"],
+                    "purposes": usage["purposes"],
+                    "message": (
+                        f"Scan used {usage['calls']} LLM call(s) across "
+                        f"{len(usage['providers'])} provider(s), "
+                        f"{usage['total_tokens']} tokens in {usage['elapsed_ms'] / 1000:.1f}s"
+                    ),
+                })
             await publish_scan_event(scan_id, "report_ready", insights)
             await publish_scan_event(scan_id, "scan_completed", {
                 "status": result.status,
@@ -440,6 +462,22 @@ class AIOrchestrator:
                     )
                     return result
                 logger.info("Agent loop unavailable - falling back to classic pipeline")
+            group_usage = llm_usage_snapshot(scan_id)
+            if group_usage and group_usage.get("calls"):
+                await publish(scan_id, "llm_stats", {
+                    "phase": "agent_loop",
+                    "calls": group_usage["calls"],
+                    "ok_calls": group_usage["ok_calls"],
+                    "total_tokens": group_usage["total_tokens"],
+                    "elapsed_ms": group_usage["elapsed_ms"],
+                    "providers": group_usage["providers"],
+                    "purposes": group_usage["purposes"],
+                    "message": (
+                        f"Autonomous agent loop: {group_usage['calls']} LLM turn(s), "
+                        f"{group_usage['total_tokens']} tokens, "
+                        f"{group_usage['elapsed_ms'] / 1000:.1f}s"
+                    ),
+                })
 
         result = await self.recon.execute_scan(request, scan_id=scan_id)
 
@@ -600,7 +638,8 @@ class AIOrchestrator:
         try:
             entries, provider = await asyncio.wait_for(
                 get_matrix_agent().generate_matrix(
-                    base, scan_type, target_info, surface, kb_ctx
+                    base, scan_type, target_info, surface, kb_ctx,
+                    scan_id=scan_id, publish=publish,
                 ),
                 timeout=int(os.environ.get("VAPT_MATRIX_LLM_TIMEOUT", "240")),
             )
@@ -608,6 +647,23 @@ class AIOrchestrator:
             logger.warning("Matrix generation failed/timeout: %s", e)
             entries, provider = [], None
         outcome["provider"] = provider
+        usage = llm_usage_snapshot(scan_id)
+        if usage and usage.get("calls"):
+            failure_calls = usage["calls"] - usage["ok_calls"]
+            await publish(scan_id, "llm_stats", {
+                "phase": "matrix",
+                "calls": usage["calls"],
+                "ok_calls": usage["ok_calls"],
+                "total_tokens": usage["total_tokens"],
+                "elapsed_ms": usage["elapsed_ms"],
+                "providers": usage["providers"],
+                "purposes": usage["purposes"],
+                "message": (
+                    f"LLM matrix generation: {usage['calls']} call(s), "
+                    f"{usage['total_tokens']} tokens, {usage['elapsed_ms']:.0f}ms"
+                    + (f" ({failure_calls} failed)" if failure_calls else "")
+                ),
+            })
         await publish(scan_id, "matrix_generated", {
             "entries": len(entries),
             "provider": provider,
@@ -658,8 +714,8 @@ class AIOrchestrator:
                     suspicious, reason = MatrixAgent.classify_entry(
                         entry, status, body, payload_values, output
                     )
-                    probe = {"status": status, "body_len": len(body), "error": err,
-                             "suspicious": suspicious, "reason": reason}
+                    probe = {"status": status, "body": body[:300], "body_len": len(body),
+                             "error": err, "suspicious": suspicious, "reason": reason}
                     if suspicious:
                         outcome["findings"].append(self._matrix_probe_finding(
                             entry, base, status, body, output, reason
@@ -677,6 +733,13 @@ class AIOrchestrator:
                     "attack_type": entry["attack_type"],
                     "suspicious": bool(probe.get("suspicious")),
                     "status": probe.get("status"),
+                    "reason": probe.get("reason") or "",
+                    "poc_preview": (
+                        str(probe.get("body") or "")[:300]
+                        if not probe.get("tool") else ""
+                    ),
+                    "tool": probe.get("tool") or "",
+                    "error": probe.get("error") or "",
                 })
 
         outcome["suspicious"] = sum(

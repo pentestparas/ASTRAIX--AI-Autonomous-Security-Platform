@@ -20,10 +20,12 @@ Design:
 import asyncio
 import json
 import os
+import time
 from dataclasses import dataclass, field
 from typing import Any, Awaitable, Callable, Dict, List, Optional, Tuple
 
 from app.core.logging import get_logger
+from app.vapt.agents.llm_usage import estimate_tokens, record_llm_call, time_tracked
 from app.vapt.models import (
     VAPTFinding,
     VAPTScanResult,
@@ -284,6 +286,7 @@ class AgentLoop:
 
     async def _llm_turn(
         self,
+        scan_id: str,
         messages: List[Dict[str, str]],
         tools: List[Dict[str, Any]],
     ) -> Tuple[Optional[str], List[Dict[str, Any]]]:
@@ -300,6 +303,7 @@ class AgentLoop:
         calls: List[Dict[str, Any]] = []
 
         if settings.LLM_PROVIDER in ("auto", "ollama"):
+            t0 = time.time()
             try:
                 import httpx
 
@@ -331,7 +335,26 @@ class AgentLoop:
                             if isinstance(fn.get("arguments"), str)
                             else (fn.get("arguments") or {}),
                         })
-                    if text or calls:
+                    usage = data.get("prompt_eval_count") or 0, data.get("eval_count") or 0
+                    ok = bool(text or calls)
+                    record_llm_call(
+                        scan_id=scan_id,
+                        provider="Ollama",
+                        model=settings.OLLAMA_MODEL or "ollama",
+                        purpose="agent",
+                        tokens_in=usage[0],
+                        tokens_out=estimate_tokens(text),
+                        ms=time_tracked(t0),
+                        ok=ok,
+                    )
+                    await self._publish(scan_id, "llm_call", {
+                        "provider": "Ollama",
+                        "model": settings.OLLAMA_MODEL or "ollama",
+                        "purpose": "agent",
+                        "ms": time_tracked(t0),
+                        "ok": ok,
+                    })
+                    if ok:
                         return text, calls
                     logger.warning(
                         "Agent loop Ollama returned empty - falling back to NVIDIA"
@@ -340,6 +363,7 @@ class AgentLoop:
                 logger.warning("Agent loop Ollama turn failed: %s", exc)
 
         if settings.LLM_PROVIDER in ("auto", "nvidia", "ollama") and settings.NVIDIA_API_KEY:
+            t0 = time.time()
             try:
                 from openai import AsyncOpenAI
 
@@ -378,6 +402,27 @@ class AgentLoop:
                         "name": call.function.name,
                         "arguments": arguments,
                     })
+                usage = response.usage
+                tokens_in = int(usage.prompt_tokens) if usage else 0
+                tokens_out = int(usage.completion_tokens) if usage else estimate_tokens(text)
+                ok = bool(text or calls)
+                record_llm_call(
+                    scan_id=scan_id,
+                    provider="NVIDIA",
+                    model=model,
+                    purpose="agent",
+                    tokens_in=tokens_in,
+                    tokens_out=tokens_out,
+                    ms=time_tracked(t0),
+                    ok=ok,
+                )
+                await self._publish(scan_id, "llm_call", {
+                    "provider": "NVIDIA",
+                    "model": model,
+                    "purpose": "agent",
+                    "ms": time_tracked(t0),
+                    "ok": ok,
+                })
                 return text, calls
             except Exception as exc:
                 logger.warning("Agent loop NVIDIA turn failed: %s", exc)
@@ -590,7 +635,7 @@ class AgentLoop:
                     tool_id = ""
                     args = {}
                     for attempt in range(3):
-                        text, calls = await self._llm_turn(messages, _current_schemas())
+                        text, calls = await self._llm_turn(scan_id, messages, _current_schemas())
                         if not text and not calls:
                             llm_down_streak += 1
                             logger.warning(

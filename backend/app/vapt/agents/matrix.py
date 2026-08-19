@@ -17,9 +17,15 @@ import asyncio
 import json
 import re
 import shlex
+import time
 from typing import Any, Awaitable, Callable, Dict, List, Optional, Tuple
 
 from app.core.logging import get_logger
+from app.vapt.agents.llm_usage import (
+    estimate_tokens,
+    record_llm_call,
+    time_tracked,
+)
 from app.vapt.models import VAPTSeverity, VAPTFinding
 
 logger = get_logger(__name__)
@@ -137,7 +143,13 @@ class MatrixAgent:
             logger.warning("Ollama matrix LLM failed: %s", e)
             return None
 
-    async def _llm_json(self, prompt: str) -> Tuple[Optional[List[Dict[str, Any]]], Optional[str]]:
+    async def _llm_json(
+        self,
+        prompt: str,
+        scan_id: Optional[str] = None,
+        publish: Optional[Callable[[str, str, Dict[str, Any]], Awaitable[None]]] = None,
+        purpose: str = "matrix",
+    ) -> Tuple[Optional[List[Dict[str, Any]]], Optional[str]]:
         """Ask the LLM (Ollama primary, NVIDIA secondary) for a JSON array."""
         messages = [
             {
@@ -164,17 +176,37 @@ class MatrixAgent:
                 providers.append(("Ollama", self._ollama_llm))
 
         for name, call in providers:
+            t0 = time.time()
             try:
                 result = await call(messages)
             except Exception as e:
                 logger.warning("%s matrix LLM raised: %s", name, e)
                 result = None
+            ms = time_tracked(t0)
             text: Optional[str] = None
             model: Optional[str] = None
             if isinstance(result, tuple):
                 text, model = result
             elif isinstance(result, str):
                 text = result
+            ok = bool(text)
+            record_llm_call(
+                scan_id=scan_id or "",
+                provider=name,
+                model=model or name,
+                purpose=purpose,
+                tokens_out=estimate_tokens(text),
+                ms=ms,
+                ok=ok,
+            )
+            if publish and scan_id:
+                await publish(scan_id, "llm_call", {
+                    "provider": name,
+                    "model": model or name,
+                    "purpose": purpose,
+                    "ms": ms,
+                    "ok": ok,
+                })
             if text:
                 parsed = self._parse_json_list(text)
                 if parsed is not None:
@@ -255,6 +287,8 @@ class MatrixAgent:
         target_info: Dict[str, Any],
         surface: Dict[str, Any],
         kb_context: Optional[List[str]] = None,
+        scan_id: Optional[str] = None,
+        publish: Optional[Callable[[str, str, Dict[str, Any]], Awaitable[None]]] = None,
     ) -> Tuple[List[Dict[str, Any]], Optional[str]]:
         """Build the validated exploitation test matrix for the target."""
         base = target if target.startswith(("http://", "https://")) else f"http://{target}"
@@ -277,7 +311,9 @@ class MatrixAgent:
             f"scan type {scan_type}."
         )
 
-        raw_entries, provider = await self._llm_json(prompt)
+        raw_entries, provider = await self._llm_json(
+            prompt, scan_id=scan_id, publish=publish, purpose="matrix"
+        )
         if not raw_entries:
             return [], provider
 
@@ -320,7 +356,12 @@ class MatrixAgent:
 
     # --------------------------------------------------------------- Attack chain
 
-    async def build_attack_chain(self, findings: List[VAPTFinding]) -> Dict[str, Any]:
+    async def build_attack_chain(
+        self,
+        findings: List[VAPTFinding],
+        scan_id: Optional[str] = None,
+        publish: Optional[Callable[[str, str, Dict[str, Any]], Awaitable[None]]] = None,
+    ) -> Dict[str, Any]:
         """LLM synthesis of the findings into an attack-chain narrative."""
         if not findings:
             return {"summary": "", "steps": []}
@@ -338,7 +379,9 @@ class MatrixAgent:
             '"via": "JWT alg:none forgery", "technique": "JWT bypass", "finding_ref": "title or n/a"}]}. '
             "Max 6 steps. Respond ONLY with JSON."
         )
-        raw, provider = await self._llm_json(prompt)
+        raw, provider = await self._llm_json(
+            prompt, scan_id=scan_id, publish=publish, purpose="chain"
+        )
         if not isinstance(raw, list):
             return {"summary": "", "steps": []}
         steps = [
