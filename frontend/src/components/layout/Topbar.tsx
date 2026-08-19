@@ -2,6 +2,7 @@
 
 import { usePathname } from "next/navigation";
 import { Activity, ChevronRight } from "lucide-react";
+import { useEffect, useState } from "react";
 import { useActiveScansStore } from "@/store/activeScans";
 
 const LABELS: Record<string, string> = {
@@ -16,6 +17,8 @@ const LABELS: Record<string, string> = {
 
 export function Topbar() {
   const pathname = usePathname() ?? "";
+  const [mounted, setMounted] = useState(false);
+  useEffect(() => setMounted(true), []);
   const runningScans = useActiveScansStore((s) => s.runningCount());
   const segments = pathname.split("/").filter(Boolean).slice(0, 2);
   const current = segments[segments.length - 1] ?? "";
@@ -35,7 +38,7 @@ export function Topbar() {
       </nav>
 
       <div className="flex items-center gap-3">
-        {runningScans > 0 && (
+        {mounted && runningScans > 0 && (
           <span className="inline-flex items-center gap-1.5 rounded-full bg-primary/10 border border-primary/25 px-2.5 py-1 text-[11.5px] font-medium text-primary">
             <Activity className="w-3.5 h-3.5" />
             <span className="font-mono tabular-nums">{runningScans}</span>

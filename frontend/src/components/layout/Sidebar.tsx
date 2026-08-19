@@ -16,7 +16,7 @@ import {
   GitBranch,
   Radar,
 } from "lucide-react";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { useActiveScansStore } from "@/store/activeScans";
 
 const navigation = [
@@ -37,6 +37,8 @@ const settingsNav = [
 export function Sidebar() {
   const pathname = usePathname() ?? "";
   const router = useRouter();
+  const [mounted, setMounted] = useState(false);
+  useEffect(() => setMounted(true), []);
   const runningScans = useActiveScansStore((s) => s.runningCount());
   const [settingsOpen, setSettingsOpen] = useState(pathname.startsWith("/settings"));
 
@@ -80,7 +82,7 @@ export function Sidebar() {
             >
               <item.icon className={`w-4 h-4 ${isActive ? "text-primary" : "text-muted-foreground group-hover:text-foreground"}`} />
               {item.name}
-              {item.name === "Scans" && runningScans > 0 && (
+              {mounted && item.name === "Scans" && runningScans > 0 && (
                 <span className="ml-auto inline-flex items-center gap-1.5 rounded-full bg-primary/15 border border-primary/30 px-2 py-0.5 text-[11px] font-semibold font-mono text-primary">
                   <span className="w-1.5 h-1.5 rounded-full bg-primary animate-pulse" />
                   {runningScans}
