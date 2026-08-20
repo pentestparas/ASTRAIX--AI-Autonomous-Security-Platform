@@ -172,47 +172,52 @@ class MatrixAgent:
         if settings.LLM_PROVIDER in ("auto", "ollama", "nvidia"):
             if settings.NVIDIA_API_KEY:
                 providers.append(("NVIDIA", self._nvidia_llm))
-            if settings.LLM_PROVIDER != "nvidia":
-                providers.append(("Ollama", self._ollama_llm))
+            providers.append(("Ollama", self._ollama_llm))
 
-        for name, call in providers:
-            t0 = time.time()
-            try:
-                result = await call(messages)
-            except Exception as e:
-                logger.warning("%s matrix LLM raised: %s", name, e)
-                result = None
-            ms = time_tracked(t0)
-            text: Optional[str] = None
-            model: Optional[str] = None
-            if isinstance(result, tuple):
-                text, model = result
-            elif isinstance(result, str):
-                text = result
-            ok = bool(text)
-            record_llm_call(
-                scan_id=scan_id or "",
-                provider=name,
-                model=model or name,
-                purpose=purpose,
-                tokens_out=estimate_tokens(text),
-                ms=ms,
-                ok=ok,
-            )
-            if publish and scan_id:
-                await publish(scan_id, "llm_call", {
-                    "provider": name,
-                    "model": model or name,
-                    "purpose": purpose,
-                    "ms": ms,
-                    "ok": ok,
-                })
-            if text:
-                parsed = self._parse_json_list(text)
-                if parsed is not None:
-                    return parsed, f"{name}:{model}" if model else name
-                logger.warning("%s matrix LLM returned unparseable content: %.200s",
-                               name, text.replace("\n", " "))
+        # Serialize this whole provider chain against the agent loop's LLM
+        # turns - concurrent scans/agents rate-limit the NIM endpoint and
+        # starve this phase's timeout budget.
+        from app.vapt.agents.llm_lock import get_llm_lock
+
+        async with get_llm_lock():
+            for name, call in providers:
+                t0 = time.time()
+                try:
+                    result = await call(messages)
+                except Exception as e:
+                    logger.warning("%s matrix LLM raised: %s", name, e)
+                    result = None
+                ms = time_tracked(t0)
+                text: Optional[str] = None
+                model: Optional[str] = None
+                if isinstance(result, tuple):
+                    text, model = result
+                elif isinstance(result, str):
+                    text = result
+                ok = bool(text)
+                record_llm_call(
+                    scan_id=scan_id or "",
+                    provider=name,
+                    model=model or name,
+                    purpose=purpose,
+                    tokens_out=estimate_tokens(text),
+                    ms=ms,
+                    ok=ok,
+                )
+                if publish and scan_id:
+                    await publish(scan_id, "llm_call", {
+                        "provider": name,
+                        "model": model or name,
+                        "purpose": purpose,
+                        "ms": ms,
+                        "ok": ok,
+                    })
+                if text:
+                    parsed = self._parse_json_list(text)
+                    if parsed is not None:
+                        return parsed, f"{name}:{model}" if model else name
+                    logger.warning("%s matrix LLM returned unparseable content: %.200s",
+                                   name, text.replace("\n", " "))
         return None, None
 
     @staticmethod
@@ -289,6 +294,7 @@ class MatrixAgent:
         kb_context: Optional[List[str]] = None,
         scan_id: Optional[str] = None,
         publish: Optional[Callable[[str, str, Dict[str, Any]], Awaitable[None]]] = None,
+        session: Optional[Dict[str, Any]] = None,
     ) -> Tuple[List[Dict[str, Any]], Optional[str]]:
         """Build the validated exploitation test matrix for the target."""
         base = target if target.startswith(("http://", "https://")) else f"http://{target}"
@@ -296,10 +302,22 @@ class MatrixAgent:
         hints = ", ".join(surface.get("hints") or [])
         kb_text = "\n".join((kb_context or [])[:2]) or "no KB context"
 
+        session_note = ""
+        if session:
+            session_note = (
+                f"\nAUTHENTICATED SESSION ACQUIRED: default credentials "
+                f"({session.get('credential')}) worked on {session.get('endpoint')}. "
+                "You may now design AUTHENTICATED probes: privilege escalation, IDOR "
+                "(object ids of other users), admin-only endpoints, CSRF, business-logic "
+                "flows (payments, coupons, profile changes). The probes will run with "
+                "the session header attached.\n"
+            )
+
         prompt = (
             f"Target: {base} (type {target_info.get('type')}, scan {scan_type}).\n"
             f"Tech hints: {hints or 'unknown'}.\n"
             f"Discovered endpoints:\n" + ("\n".join(f"- {e}" for e in endpoints[:40]) if endpoints else "- none (design own probes on likely paths)")
+            + session_note
             + f"\n\nKnowledge base grounding:\n{kb_text}\n\n"
             "Design an exploitation test matrix for these endpoints. For each entry return: "
             '{"id": "m1", "endpoint": "/path", "method": "GET|POST|...", "attack_type": "SQLi|XSS|IDOR|...", '
@@ -420,11 +438,15 @@ def get_matrix_agent() -> MatrixAgent:
     return _matrix_agent
 
 
-def build_curl_command(entry: Dict[str, Any], base_url: str) -> str:
+def build_curl_command(
+    entry: Dict[str, Any], base_url: str, auth_header: str = ""
+) -> str:
     """Build the Kali curl probe for one matrix entry.
 
     GET entries encode params into the query string (-G --data-urlencode),
     others send form-encoded params (--data-urlencode) or a JSON body.
+    When an authenticated session exists, the acquired header (Bearer
+    token or cookie) is attached so auth-zone endpoints are testable.
     Output ends with the status marker line so the probe can be parsed.
     """
     url = base_url.rstrip("/") + entry["endpoint"]
@@ -433,6 +455,8 @@ def build_curl_command(entry: Dict[str, Any], base_url: str) -> str:
     json_body = entry.get("json_body")
 
     cmd = ["curl", "-s", "-k", "-L", "-m", "15", "-w", "\\n" + _STATUS_MARKER + "%{http_code}"]
+    if auth_header:
+        cmd += ["-H", shlex.quote(auth_header)]
     if method == "GET":
         if params:
             cmd.append("-G")

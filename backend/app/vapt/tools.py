@@ -396,6 +396,50 @@ TOOLS_REGISTRY: Dict[str, VAPTTool] = {
         requires_url=True,
         output_format="json",
     ),
+    "zap-targeted": VAPTTool(
+        id="zap-targeted",
+        name="ZAP Targeted Scan",
+        command="zap-targeted",
+        description=(
+            "Burp-style targeted active scan against LLM-selected endpoints. "
+            "Pass token=<jwt> to authenticate (injected into every request) and "
+            "urls=<endpoint1,endpoint2> to choose targets - defaults to the "
+            "scan target. Finds SQLi/XSS/authN flaws per-endpoint."
+        ),
+        category=VAPTScanType.WEB,
+        args=[],
+        timeout=1500,
+        requires_url=True,
+        output_format="json",
+    ),
+    "zap-sitemap": VAPTTool(
+        id="zap-sitemap",
+        name="ZAP Site Map",
+        command="zap-sitemap",
+        description="ZAP's discovered site tree + captured requests/responses - feed this back to the agent as context for the next manual-style probe",
+        category=VAPTScanType.WEB,
+        args=[],
+        timeout=120,
+        requires_url=True,
+        output_format="json",
+    ),
+    "zap-tamper": VAPTTool(
+        id="zap-tamper",
+        name="ZAP Manual Tamper",
+        command="zap-tamper",
+        description=(
+            "Burp-style manual request tampering. Re-sends a mutated request "
+            "with the acquired session: pass token=<jwt>, url=<endpoint>, "
+            "param=<name>|header=<name>|body=<raw body>, value=<tampered value>, "
+            "method=GET/POST. Returns the raw response so the agent can diff "
+            "against baseline and decide to mutate further or conclude secure."
+        ),
+        category=VAPTScanType.WEB,
+        args=[],
+        timeout=60,
+        requires_url=True,
+        output_format="text",
+    ),
     "garak": VAPTTool(
         id="garak",
         name="Garak",
@@ -561,6 +605,9 @@ TOOL_GATING: Dict[str, Dict[str, Any]] = {
     "bandit": {"phase": "deep"},
     "searchsploit": {"phase": "deep"},
     "zap": {"phase": "deep", "dangerous": True},
+    "zap-targeted": {"phase": "deep", "dangerous": True},
+    "zap-sitemap": {"phase": "web"},
+    "zap-tamper": {"phase": "deep", "dangerous": True},
     "garak": {"phase": "deep"},
     "promptfoo": {"phase": "deep"},
     "api-surface": {"phase": "web"},

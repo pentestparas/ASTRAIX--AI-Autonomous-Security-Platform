@@ -6,17 +6,31 @@ from uuid import UUID
 from datetime import datetime
 
 from app.database.session import get_session
-from app.repositories import finding_repo
+from app.repositories import finding_repo, assessment_repo
+from app.repositories.organization import MembershipRepository, ProjectRepository
 from app.schemas.base import ResponseSchema, PaginatedResponse
 from app.domain.models.finding import Finding as FindingModel
+from app.domain.models.organization import User
+from app.domain.models.asset import Asset
 from app.domain.schemas.finding import (
     FindingRead,
     FindingUpdate,
 )
+from app.core.auth import get_current_user
 from app.core.logging import get_logger
 
 logger = get_logger(__name__)
 router = APIRouter()
+
+
+async def _user_org_ids(db: AsyncSession, user: User) -> set[str]:
+    memberships = await MembershipRepository(db).get_user_memberships(user.id)
+    return {str(m.organization_id) for m in memberships}
+
+
+async def _require_org_access(db: AsyncSession, user: User, org_id) -> None:
+    if str(org_id) not in await _user_org_ids(db, user):
+        raise HTTPException(status_code=403, detail="No access to this organization")
 
 
 class BulkUpdateRequest(BaseModel):
@@ -35,13 +49,36 @@ async def list_findings(
     asset_id: Optional[str] = None,
     organization_id: Optional[str] = None,
     project_id: Optional[str] = None,
+    current_user: User = Depends(get_current_user),
     db: AsyncSession = Depends(get_session),
 ):
     """List findings with pagination. Only true positives by default.
 
     When no explicit ``status`` filter is given, ``false_positive`` findings
     are excluded so the list represents confirmed vulnerabilities.
+
+    Results are scoped to the caller's organizations; foreign
+    assessment/asset/project/org ids are rejected.
     """
+    allowed_orgs = await _user_org_ids(db, current_user)
+    if organization_id:
+        if str(organization_id) not in allowed_orgs:
+            raise HTTPException(status_code=403, detail="No access to this organization")
+    if assessment_id:
+        assessment = await assessment_repo.get(db, assessment_id)
+        if not assessment or str(assessment.organization_id) not in allowed_orgs:
+            raise HTTPException(status_code=403, detail="No access to this assessment")
+    if asset_id:
+        from sqlalchemy import select
+        asset = (
+            await db.execute(select(Asset).where(Asset.id == str(asset_id)))
+        ).scalar_one_or_none()
+        if not asset or str(asset.organization_id) not in allowed_orgs:
+            raise HTTPException(status_code=403, detail="No access to this asset")
+    if project_id:
+        project = await ProjectRepository(db).get(project_id)
+        if not project or str(project.organization_id) not in allowed_orgs:
+            raise HTTPException(status_code=403, detail="No access to this project")
     filters = {}
     if severity:
         filters["severity"] = severity
@@ -54,7 +91,11 @@ async def list_findings(
     if asset_id:
         filters["asset_id"] = asset_id
     if organization_id:
-        filters["organization_id"] = organization_id
+        filters["organization_id"] = str(organization_id)
+    elif allowed_orgs:
+        filters["organization_id__in"] = allowed_orgs
+    else:
+        filters["organization_id__in"] = [""]
     if project_id:
         filters["project_id"] = project_id
     items = await finding_repo.list(db, skip=(page - 1) * page_size, limit=page_size, **filters)

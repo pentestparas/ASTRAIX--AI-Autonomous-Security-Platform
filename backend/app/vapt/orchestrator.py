@@ -635,11 +635,60 @@ class AIOrchestrator:
             logger.warning("Matrix KB grounding failed/timeout: %s", e)
             kb_ctx = []
 
+        # Session acquisition: try default credentials on discovered login
+        # endpoints so authenticated attack classes (XXE, IDOR, admin API,
+        # CSRF) are testable. Bounded and best-effort.
+        from app.vapt.agents.session import try_acquire_session
+
+        session: Optional[Dict[str, Any]] = None
+        try:
+            session = await asyncio.wait_for(
+                try_acquire_session(
+                    base,
+                    surface.get("endpoints") or [],
+                    scan_id=scan_id,
+                    timeout=float(os.environ.get("VAPT_SESSION_TIMEOUT", "20")),
+                ),
+                timeout=30,
+            )
+        except (asyncio.TimeoutError, Exception) as e:
+            logger.warning("Session acquisition failed for %s: %s", target, e)
+        if session:
+            await publish(scan_id, "session_acquired", {
+                "kind": session["kind"],
+                "endpoint": session["endpoint"],
+                "credential": session["credential"],
+                "evidence": session["evidence"],
+                "message": (
+                    f"Session acquired via default credentials "
+                    f"({session['credential']}) on {session['endpoint']} - "
+                    "running authenticated probes"
+                ),
+            })
+            outcome["findings"].append(VAPTFinding(
+                title="Default Credentials - Weak Authentication",
+                description=(
+                    f"Login endpoint {session['endpoint']} accepts default/vendor "
+                    f"credentials ({session['credential']}), granting a full session "
+                    f"({session['evidence']}). Authenticated test probes were run "
+                    "with this session."
+                ),
+                severity=VAPTSeverity.HIGH,
+                tool_name="session-acquisition",
+                target=target,
+                path=session["endpoint"],
+                vulnerability_type="Broken Authentication",
+                remediation=(
+                    "Disable default/vendor accounts, enforce password policies, "
+                    "and implement account lockout / rate limiting."
+                ),
+            ))
+
         try:
             entries, provider = await asyncio.wait_for(
                 get_matrix_agent().generate_matrix(
                     base, scan_type, target_info, surface, kb_ctx,
-                    scan_id=scan_id, publish=publish,
+                    scan_id=scan_id, publish=publish, session=session,
                 ),
                 timeout=int(os.environ.get("VAPT_MATRIX_LLM_TIMEOUT", "240")),
             )
@@ -705,7 +754,8 @@ class AIOrchestrator:
                     outcome["findings"].extend(tool_findings)
                     probe = {"tool": entry["tool"], "error": err, "raw": (output or "")[-1500:]}
                 else:
-                    cmd = build_curl_command(entry, base)
+                    auth_header = (session or {}).get("header", "") if session else ""
+                    cmd = build_curl_command(entry, base, auth_header)
                     output, err = await executor.run_arbitrary_command(
                         cmd, timeout=int(os.environ.get("VAPT_MATRIX_PROBE_TIMEOUT", "30"))
                     )

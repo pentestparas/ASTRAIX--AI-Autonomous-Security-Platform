@@ -22,12 +22,30 @@ from app.vapt.tools import TOOLS_REGISTRY, get_tool, get_tools_for_scan_type
 
 class VAPTExecutor:
     KALI_IMAGE = "astraix-kali:latest"
+    AGENT_NETWORK = "astraix-network"
 
     def __init__(self):
         self._last_run: Dict[str, float] = {}
         self._rate_limit = 1.0
         self._use_docker = os.environ.get("VAPT_USE_DOCKER", "true").lower() == "true"
         self._docker_client = None
+        self._gateway: Optional[str] = None
+
+    def _agent_gateway(self) -> str:
+        """Gateway IP of the agent network, used to rewrite loopback targets
+        so agent containers can reach host-published ports."""
+        if self._gateway:
+            return self._gateway
+        try:
+            net = self.docker_client.networks.get(self.AGENT_NETWORK)
+            cfgs = net.attrs.get("IPAM", {}).get("Config", [])
+            if cfgs and cfgs[0].get("Gateway"):
+                self._gateway = cfgs[0]["Gateway"]
+        except Exception:
+            pass
+        if not self._gateway:
+            self._gateway = "172.18.0.1"
+        return self._gateway
 
     @property
     def docker_client(self):
@@ -171,7 +189,7 @@ class VAPTExecutor:
                 image=image,
                 command=["sh", "-c", cmd_string],
                 name=container_name,
-                network_mode="bridge",
+                network=self.AGENT_NETWORK,
                 mem_limit="512m",
                 nano_cpus=int(1 * 1e9),
                 environment=passthrough or None,
@@ -236,29 +254,9 @@ class VAPTExecutor:
         return "443" if target.startswith("https") else "80"
 
     def _resolve_target(self, target: str) -> str:
-        """Map loopback targets to the Docker gateway host.
+        from app.vapt.agents.recon import remap_loopback_target
 
-        Tool containers run in isolation, so 'localhost' / '127.0.0.1'
-        inside them points at the container itself. Rewrite loopback
-        hosts to host.docker.internal so users can scan host-published
-        services (e.g. localhost:3002) and the tools still reach them.
-        """
-        loopback = {"localhost", "127.0.0.1", "0.0.0.0", "::1", "[::1]"}
-        scheme, _, after = target.partition("://")
-        if after:
-            hostport, _, path = after.partition("/")
-        else:
-            scheme = ""
-            hostport, _, path = target.partition("/")
-        h, _, p = hostport.rpartition(":")
-        host = h if (h and p.isdigit()) else hostport
-        if host in loopback:
-            new = f"host.docker.internal:{p}" if (h and p.isdigit()) else "host.docker.internal"
-            resolved = f"{scheme}://{new}" if scheme else new
-            if path:
-                resolved = f"{resolved}/{path}"
-            return resolved
-        return target
+        return remap_loopback_target(target)
 
     def _build_docker_command(self, tool: VAPTTool, target: str, quick: bool = False) -> Optional[str]:
         from app.vapt.wordlists import get_wordlist
@@ -371,9 +369,70 @@ class VAPTExecutor:
                 '[ "$P" = "100" ] && break; sleep 2; done; '
                 'curl -s "$Z/JSON/core/view/alerts?start=0&count=500&apikey=$A" 2>/dev/null'
             ),
+            "zap-targeted": self._zap_targeted_cmd(target, "$TOKEN", "$URLS"),
+            "zap-sitemap": (
+                'Z=http://zap:8080; A=astraixzap; '
+                'curl -s "$Z/JSON/core/view/sites?apikey=$A" 2>/dev/null; '
+                'echo; curl -s "$Z/JSON/core/view/messages?start=0&count=200&apikey=$A" 2>/dev/null'
+            ),
+            "zap-tamper": self._zap_tamper_cmd("$TURL", "$TPARAM", "$THEADER", "$TVALUE", "$TMETHOD", "$TBODY"),
         }.get(tool.id)
 
         return tool_cmd
+
+    def _zap_targeted_cmd(self, target: str, token_var: str, urls_var: str) -> str:
+        """Burp-style targeted ZAP scan: LLM-picked URLs, either a full/single
+        URL or a space-separated list. When a Bearer token is provided it is
+        injected into every ZAP request via an HttpSender script (Graal.js),
+        so sessions acquired by the agent are exercised like an authenticated
+        manual tester would do in Burp Suite."""
+        return (
+            'Z=http://zap:8080; A=astraixzap; TK=' + token_var + '; '
+            'TARGET=' + target + '; URLS=${URLS:-$TARGET}; '
+            'cout=""; '
+            'if [ -n "$TK" ]; then '
+            'printf \'function sendingRequest(msg, initiator){ msg.getRequestHeader().setHeader("Authorization", "Bearer %s"); } function responseReceived(msg, initiator) {}\' "$TK" > /tmp/zap_auth.js; '
+            'curl -s -X POST "$Z/JSON/script/action/load/?scriptType=HttpSender&scriptEngine=Graal.js&scriptName=auth_sender&scriptDescription=auth&fileName=/tmp/zap_auth.js" >/dev/null; '
+            'curl -s "$Z/JSON/script/action/enable?scriptName=auth_sender" >/dev/null; '
+            'fi; '
+            'curl -s "$Z/JSON/core/action/newSession?name=scan&overwrite=true&apikey=$A" >/dev/null; '
+            'for U in $URLS; do '
+            'curl -s "$Z/JSON/core/action/accessUrl?url=$U&followRedirects=true&apikey=$A" >/dev/null; '
+            'SID=$(curl -s "$Z/JSON/spider/action/scan?url=$U&maxChildren=25&apikey=$A" | jq -r .scan); '
+            'for i in $(seq 1 60); do P=$(curl -s "$Z/JSON/spider/view/status?scanId=$SID&apikey=$A" | jq -r .status); [ "$P" = "100" ] && break; sleep 2; done; '
+            'ASID=$(curl -s "$Z/JSON/ascan/action/scan?url=$U&recurse=false&apikey=$A" | jq -r .scan); '
+            'for i in $(seq 1 150); do P=$(curl -s "$Z/JSON/ascan/view/status?scanId=$ASID&apikey=$A" | jq -r .status); [ "$P" = "100" ] && break; sleep 2; done; '
+            'done; '
+            'curl -s "$Z/JSON/core/view/alerts?start=0&count=500&apikey=$A" 2>/dev/null'
+        )
+
+    def _zap_tamper_cmd(self, url_var: str, param_var: str, header_var: str, value_var: str, method_var: str, body_var: str) -> str:
+        """Burp-style manual tamper probe. The agent mutates a param/header/body
+        and re-sends the crafted request with the acquired session. The raw
+        response returns for the agent to diff against the baseline and decide
+        whether the tampering surfaced a vulnerability or the endpoint holds."""
+        return (
+            'U=' + url_var + '; P=' + param_var + '; HDR=' + header_var + '; '
+            'V=' + value_var + '; MTHD=' + method_var + '; BODY=' + body_var + '; '
+            'TK=${TOKEN:-}; MTHD=${MTHD:-GET}; '
+            'if [ -n "$P" ] && [ "$MTHD" = "GET" ]; then '
+            'if echo "$U" | grep -q "?"; then U="${U}&${P}=${V}"; else U="${U}?${P}=${V}"; fi; '
+            'fi; '
+            'if [ "$MTHD" = "POST" ] && [ -n "$P" ] && [ -z "$BODY" ]; then BODY="${P}=${V}"; fi; '
+            'AUTH=(); [ -n "$TK" ] && AUTH=(-H "Authorization: Bearer $TK"); '
+            'HDRS=(); [ -n "$HDR" ] && HDRS=(-H "${HDR}: ${V}"); '
+            'echo "=== TAMPER TARGET: $U ==="; '
+            'echo "=== REQUEST ==="; echo "Method: $MTHD"; '
+            '[ -n "$TK" ] && echo "Auth: Bearer (session)"; '
+            '[ -n "$HDR" ] && echo "Injected: ${HDR}: ${V}"; '
+            '[ -n "$BODY" ] && echo "Body: $BODY"; '
+            'echo "=== RESPONSE ==="; '
+            'if [ "$MTHD" = "POST" ]; then '
+            'curl -s -i -X POST "$U" "${AUTH[@]}" "${HDRS[@]}" -H "Content-Type: application/x-www-form-urlencoded" --data "$BODY" -L; '
+            'else '
+            'curl -s -i "$U" "${AUTH[@]}" "${HDRS[@]}" -L; '
+            'fi'
+        )
 
     def _check_rate_limit(self, tool_id: str) -> None:
         now = time.time()
@@ -431,6 +490,7 @@ class VAPTExecutor:
             "garak": self._parse_garak,
             "api-surface": self._parse_api_surface,
             "zap": self._parse_zap,
+            "zap-targeted": self._parse_zap,
             "code-review": self._parse_api_surface,
             "flows": self._parse_api_surface,
             "dom-xss": self._parse_api_surface,
@@ -1352,6 +1412,24 @@ class VAPTExecutor:
     # Agent-loop single-tool execution (Phase 1)
     # ------------------------------------------------------------------
 
+    def _bridge_target(self, target: str) -> str:
+        """Rewrite loopback targets (localhost/127.0.0.1) to the Docker bridge
+        gateway so agent containers reach host-published ports. Fragments
+        (e.g. '#/') are dropped - they are client-side only."""
+        from urllib.parse import urlsplit, urlunsplit
+
+        target = target.split("#", 1)[0].strip()
+        if target and not target.startswith(("http://", "https://")):
+            target = f"http://{target}"
+        try:
+            parts = urlsplit(target)
+            if parts.scheme in ("http", "https") and parts.hostname in ("localhost", "127.0.0.1"):
+                netloc = parts.netloc.replace(parts.hostname, self._agent_gateway(), 1)
+                target = urlunsplit((parts.scheme, netloc, parts.path, parts.query, ""))
+        except ValueError:
+            pass
+        return target
+
     async def run_agent_tool(
         self,
         tool_id: str,
@@ -1374,14 +1452,50 @@ class VAPTExecutor:
         if not await self._check_docker():
             return [], "", "Docker not available - cannot execute real scans"
 
-        target = target.strip()
+        target = self._bridge_target(target)
         if tool.requires_url and not target.startswith(("http://", "https://")):
             target = f"http://{target}"
 
         cmd = self._build_docker_command(tool, target)
         if not cmd:
             return [], "", f"Could not build command for {tool_id}"
-        if extra_args:
+        if tool_id in ("zap-targeted", "zap-tamper"):
+            token = ""
+            urls = ""
+            if tool_id == "zap-tamper":
+                from urllib.parse import quote as _q
+                turl = tparam = theader = tvalue = tmethod = tbody = ""
+                for tok in extra_args.split():
+                    key, _, val = tok.partition("=")
+                    if key == "token" and val:
+                        token = val
+                    elif key == "url" and val:
+                        turl = self._bridge_target(val)
+                    elif key == "param" and val:
+                        tparam = val
+                    elif key == "header" and val:
+                        theader = val
+                    elif key == "value" and val:
+                        tvalue = _q(val, safe="")
+                    elif key == "method" and val:
+                        tmethod = val
+                    elif key == "body" and val:
+                        tbody = _q(val, safe="")
+                for ph, val in (("$TURL", turl), ("$TPARAM", tparam),
+                                ("$THEADER", theader), ("$TVALUE", tvalue),
+                                ("$TMETHOD", tmethod), ("$TBODY", tbody),
+                                ("$TOKEN", token)):
+                    cmd = cmd.replace(ph, val)
+            else:
+                for tok in extra_args.split():
+                    if tok.startswith("token=") and len(tok) > 6:
+                        token = tok[6:]
+                    elif tok.startswith("urls=") and len(tok) > 5:
+                        urls = tok[5:].replace(",", " ")
+                cmd = cmd.replace("URLS=${URLS:-$TARGET}", f"URLS={urls}" if urls else "URLS=$TARGET")
+                cmd = cmd.replace("TK=$TOKEN", f"TK={token}")
+            extra_args = ""
+        elif extra_args:
             cmd_flags = {
                 tok.split("=")[0]
                 for tok in cmd.split()
@@ -1409,7 +1523,14 @@ class VAPTExecutor:
         if extra_args:
             cmd = f"{cmd} {extra_args}"
 
-        cmd = f"timeout --kill-after=5 {tool.timeout}s bash -c '{cmd}'"
+        # Base64 the inner command and pipe it into bash so tool templates
+        # containing single quotes (e.g. the zap auth-sender Graal.js printf)
+        # never break the wrapper quoting. Params are substituted into `cmd`
+        # before this point, so the encoded blob carries the final command.
+        import base64
+
+        encoded = base64.b64encode(cmd.encode("utf-8")).decode("ascii")
+        cmd = f"timeout --kill-after=5 {tool.timeout}s sh -c 'echo {encoded} | base64 -d | bash'"
         container_name = f"astraix-agent-{uuid4().hex[:8]}"
 
         try:

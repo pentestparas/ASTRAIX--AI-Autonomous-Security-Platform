@@ -98,11 +98,14 @@ class ScanProgressBus:
             try:
                 key = self._key(scan_id, _STATUS_KEY_PREFIX)
                 data = await self._redis.hgetall(key)
-                if data:
+                if data and "status" in data:
                     return dict(data)
             except Exception as e:
                 logger.warning("Redis status read failed, using memory: %s", e)
-        return self._memory_status.get(scan_id)
+        st = self._memory_status.get(scan_id)
+        if st and "status" in st:
+            return st
+        return None
 
     async def clear(self, scan_id: str) -> None:
         """Drop all stored events/status for a scan (used on restart)."""

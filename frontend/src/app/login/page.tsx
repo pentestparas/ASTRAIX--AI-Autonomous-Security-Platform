@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import { authApi, organizationsApi } from "@/services/api";
 import { Button } from "@/components/ui/button";
@@ -17,6 +17,22 @@ export default function LoginPage() {
   const [orgName, setOrgName] = useState("");
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
+
+  function nextPath(): string {
+    if (typeof window === "undefined") return "/dashboard";
+    const next = new URLSearchParams(window.location.search).get("next");
+    return next && next.startsWith("/") ? next : "/dashboard";
+  }
+
+  useEffect(() => {
+    if (localStorage.getItem("access_token")) {
+      router.replace(nextPath());
+    }
+  }, [router]);
+
+  function redirectAfterAuth() {
+    router.replace(nextPath());
+  }
 
   async function handleLogin(e: React.FormEvent) {
     e.preventDefault();
@@ -47,7 +63,7 @@ export default function LoginPage() {
             localStorage.setItem("organization_id", orgs[0].id);
           }
         }
-        router.push("/dashboard");
+        redirectAfterAuth();
       } else {
         setError("Login failed - no token received");
       }
@@ -82,7 +98,7 @@ export default function LoginPage() {
           if (orgs.length > 0 && orgs[0].id) {
             localStorage.setItem("organization_id", orgs[0].id);
           }
-          router.push("/dashboard");
+          redirectAfterAuth();
         }
       } else {
         setError("Registration failed");

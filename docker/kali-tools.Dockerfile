@@ -30,9 +30,12 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
     joomscan \
     dirsearch \
     subfinder \
+    amass \
+    assetfinder \
     naabu \
     dnsx \
     httpx-toolkit \
+    dnsutils \
     feroxbuster \
     xsstrike \
     gitleaks \
@@ -51,6 +54,26 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
     python3-pip \
     unzip \
     > /dev/null 2>&1 && rm -rf /var/lib/apt/lists/* && update-ca-certificates --fresh > /dev/null 2>&1
+# Best-effort extras: (a) core verified list above stays strict, (b) everything
+# else installs independently so a single missing package in a Kali snapshot
+# never fails the image build.
+RUN set -e; \
+    for pkg in \
+        amass assetfinder \
+        theharvester recon-ng fierce whois traceroute \
+        enum4linux enum4linux-ng smbmap smbclient nbtscan \
+        tcpdump netcat-traditional socat responder mitmproxy \
+        ettercap-text-only wapiti skipfish \
+        crunch hashid radamsa \
+        impacket-scripts python3-impacket; \
+    do \
+        if apt-get install -y --no-install-recommends "$pkg" > /dev/null 2>&1; then \
+            echo "installed $pkg"; \
+        else \
+            echo "SKIP (unavailable) $pkg"; \
+        fi; \
+    done; \
+    rm -rf /var/lib/apt/lists/*
 # dalfox (Go XSS scanner), kiterunner (API/content discovery) + katana
 # (crawler) - GitHub binaries not in Kali repos. Asset names verified against
 # the releases API 2026-08: dalfox uses x86_64 (not amd64) since v3.x.
@@ -66,6 +89,39 @@ RUN set -eux; \
     unzip -o -q /tmp/katana.zip -d /usr/local/bin; \
     find /usr/local/bin -maxdepth 1 -type f \( -name 'dalfox' -o -name 'kr' -o -name 'katana' \) -exec chmod +x {} +; \
     dalfox --version 2>&1 | head -1; kr --version 2>&1 | head -1; katana --version 2>&1 | head -1
+# subjack (dangling CNAME takeover) + gotator (subdomain permutation) - GitHub
+# binaries not in Kali repos, same release-query pattern as dalfox/kiterunner.
+# Resume-loop tolerant of the flaky release CDN like codeql/trivy below.
+RUN set -eux; \
+    SJ_VER=$(curl -s https://api.github.com/repos/haccer/subjack/releases/latest | jq -r .tag_name); \
+    i=0; while [ $i -lt 6 ]; do \
+        curl -sL -C - --max-time 240 -o /tmp/subjack.tar.gz \
+            "https://github.com/haccer/subjack/releases/download/${SJ_VER}/subjack_${SJ_VER#v}_linux_amd64.tar.gz" \
+        && break; i=$((i+1)); sleep 2; \
+    done; \
+    if tar tzf /tmp/subjack.tar.gz > /dev/null 2>&1; then \
+        tar xzf /tmp/subjack.tar.gz -C /usr/local/bin; chmod +x /usr/local/bin/subjack; \
+    else \
+        echo "subjack download failed; building without subjack"; \
+    fi; \
+    GOT_VER=$(curl -s https://api.github.com/repos/Josue87/gotator/releases/latest | jq -r .tag_name); \
+    i=0; while [ $i -lt 6 ]; do \
+        curl -sL -C - --max-time 240 -o /tmp/gotator.tar.gz \
+            "https://github.com/Josue87/gotator/releases/download/${GOT_VER}/gotator_${GOT_VER#v}_linux_amd64.tar.gz" \
+        && break; i=$((i+1)); sleep 2; \
+    done; \
+    if tar tzf /tmp/gotator.tar.gz > /dev/null 2>&1; then \
+        tar xzf /tmp/gotator.tar.gz -C /usr/local/bin; chmod +x /usr/local/bin/gotator; \
+    else \
+        echo "gotator download failed; building without gotator"; \
+    fi; \
+    . /etc/profile; \
+    ALTERX_URL=$(curl -s https://api.github.com/repos/projectdiscovery/alterx/releases/latest | jq -r '.assets[] | select(.name|test("linux_amd64")) | .browser_download_url' | head -1); \
+    curl -sL --max-time 240 -o /tmp/alterx.zip "$ALTERX_URL" && unzip -o -q /tmp/alterx.zip -d /usr/local/bin || true; \
+    PUREDNS_URL=$(curl -s https://api.github.com/repos/d3mondev/puredns/releases/latest | jq -r '.assets[] | select(.name|test("linux_amd64")) | .browser_download_url' | head -1); \
+    curl -sL --max-time 240 -o /tmp/puredns.tar.gz "$PUREDNS_URL" && tar xzf /tmp/puredns.tar.gz -C /usr/local/bin || true; \
+    (subjack -h 2>&1 | head -1 || true); (gotator -h 2>&1 | head -1 || true); \
+    (alterx -version 2>&1 | head -1 || true); (puredns -h 2>&1 | head -1 || true)
 # pip tools: semgrep (SAST). graphqlmap (GraphQL scanner) is NOT on PyPI -
 # cloned from GitHub like smuggler (request smuggling detector, also not
 # packaged in Kali; both used via /usr/local/bin wrappers).
@@ -101,18 +157,17 @@ COPY docker/scripts/web_form_scanner.py /opt/vapt/web_form_scanner.py
 # Kali repos - pip only. Pulls torch/transformers as deps (image stays
 # single-purpose: AI security testing). Driver script handles endpoint
 # discovery + OpenAI-compatible chat templating for arbitrary targets.
-RUN pip3 install --no-cache-dir --break-system-packages \
-    garak \
-    > /dev/null 2>&1 && \
-    python3 -m garak --version 2>&1 | head -1
+RUN (timeout 600 pip3 install --no-cache-dir --break-system-packages \
+    garak || true) && \
+    (python3 -m garak --version 2>&1 | head -1 || true)
 COPY docker/scripts/garak_scanner.py /opt/vapt/garak_scanner.py
 # promptfoo: LLM red-teaming suite (OWASP LLM Top 10 plugins + jailbreak
 # strategies). Node CLI (npm global); driver script discovers the target's
 # OpenAI-compatible chat endpoint, writes a promptfooconfig.yaml pointing at
 # it, and grades findings with the engagement LLM (env-injected API key).
-RUN apt-get update -qq && apt-get install -y -qq nodejs npm > /dev/null 2>&1 && \
-    npm install -g --silent promptfoo && \
-    promptfoo --version 2>&1 | head -1
+RUN (apt-get update -qq && apt-get install -y -qq nodejs npm > /dev/null 2>&1 || true) && \
+    (npm install -g --silent promptfoo || true) && \
+    (promptfoo --version 2>&1 | head -1 || true)
 COPY docker/scripts/promptfoo_scanner.py /opt/vapt/promptfoo_scanner.py
 # API/endpoint surface discovery scanner used by the 'api-surface' tool
 COPY docker/scripts/api_surface_scanner.py /opt/vapt/api_surface_scanner.py

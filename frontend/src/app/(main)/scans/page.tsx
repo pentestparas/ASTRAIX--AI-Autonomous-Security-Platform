@@ -77,6 +77,7 @@ import {
   Box,
   ChevronDown,
   ChevronUp,
+  Layers,
 } from "lucide-react";
 import { formatDistanceToNow } from "date-fns";
 import type { Project, ScanProgressEvent } from "@/types";
@@ -1379,6 +1380,7 @@ function LiveScanConsole({
 }
 
 export default function ScansPage() {
+  const router = useRouter();
   const [scanResults, setScanResults] = useState<ScanHistoryItem[]>([]);
   const [projects, setProjects] = useState<Project[]>([]);
   const [loading, setLoading] = useState(true);
@@ -1398,63 +1400,121 @@ export default function ScansPage() {
   const [selectedProject, setSelectedProject] = useState<string>("");
   const [loadingProjects, setLoadingProjects] = useState(false);
 
-  const [liveEvents, setLiveEvents] = useState<ScanProgressEvent[]>([]);
-  const [liveScanId, setLiveScanId] = useState<string | null>(null);
-  const [liveRunning, setLiveRunning] = useState(false);
-  const [livePaused, setLivePaused] = useState(false);
-  const [pendingApprovalIds, setPendingApprovalIds] = useState<string[] | null>(null);
   const [confirmStop, setConfirmStop] = useState(false);
   const [expandedFinding, setExpandedFinding] = useState<string | null>(null);
-  const router = useRouter();
-  const liveActiveRef = useRef(false);
+
   const addScan = useActiveScansStore((s) => s.addScan);
   const updateScan = useActiveScansStore((s) => s.updateScan);
   const removeScan = useActiveScansStore((s) => s.removeScan);
+  const activeScans = useActiveScansStore((s) => s.scans);
+
+  interface ScanConsoleState {
+    id: string;
+    target: string;
+    scanType: string;
+    events: ScanProgressEvent[];
+    running: boolean;
+    paused: boolean;
+    pendingApprovalIds: string[] | null;
+  }
+
+  const consoleRef = useRef<Record<string, ScanConsoleState>>({});
+  const pollFlags = useRef<Record<string, boolean>>({});
+  const [consoles, setConsoles] = useState<Record<string, ScanConsoleState>>({});
+  const [activeScanId, setActiveScanId] = useState<string | null>(null);
+
+  const emptyConsole = (id: string, meta?: { target: string; scanType: string }): ScanConsoleState => ({
+    id,
+    target: meta?.target ?? "",
+    scanType: meta?.scanType ?? "",
+    events: [],
+    running: false,
+    paused: false,
+    pendingApprovalIds: null,
+  });
+
+  const commitConsole = (id: string, patch: Partial<ScanConsoleState>) => {
+    const cur = consoleRef.current[id] ?? emptyConsole(id);
+    consoleRef.current[id] = { ...cur, ...patch };
+    setConsoles({ ...consoleRef.current });
+  };
+
+  const advanceAfterFinish = (scanId: string) => {
+    setActiveScanId((cur) => {
+      if (cur !== scanId) return cur;
+      const next = Object.values(consoleRef.current).find((c) => c.running && c.id !== scanId);
+      return next ? next.id : cur;
+    });
+  };
+
+  const startPolling = (scanId: string, meta: { target: string; scanType: string }) => {
+    if (pollFlags.current[scanId]) return;
+    if (!consoleRef.current[scanId]) {
+      consoleRef.current[scanId] = emptyConsole(scanId, meta);
+      setConsoles({ ...consoleRef.current });
+    }
+    pollFlags.current[scanId] = true;
+    void pollProgress(scanId);
+  };
+
+  function switchConsole(id: string) {
+    if (id !== activeScanId) setActiveScanId(id);
+    const st = useActiveScansStore.getState().scans[id];
+    if (st && (st.status === "running" || st.status === "paused") && !pollFlags.current[id]) {
+      startPolling(id, { target: st.target, scanType: st.scanType });
+    }
+  }
 
   async function pollProgress(scanId: string) {
     let since = 0;
-    while (liveActiveRef.current) {
+    while (pollFlags.current[scanId]) {
       try {
         const res = (await vaptScanApi.progress(scanId, since)) as any;
         const events: ScanProgressEvent[] = res?.events || [];
         if (events.length) {
-          setLiveEvents((prev) => [...prev, ...events]);
           since = res?.total ?? since + events.length;
+          commitConsole(scanId, {
+            events: [...(consoleRef.current[scanId]?.events ?? []), ...events],
+          });
           if (events.some((e) => e.type === "tool_approval_requested")) {
             try {
               const apr = (await vaptScanApi.approvals(scanId)) as any;
-              setPendingApprovalIds(
-                (apr?.pending || []).map((p: any) => String(p.approval_id))
-              );
+              commitConsole(scanId, {
+                pendingApprovalIds: (apr?.pending || []).map((p: any) =>
+                  String(p.approval_id)
+                ),
+              });
             } catch {
               // ignore - keep current pending list
             }
           }
           if (events.some((e) => e.type === "scan_completed")) {
+            pollFlags.current[scanId] = false;
+            commitConsole(scanId, { running: false, paused: false });
             updateScan(scanId, { status: "completed" });
             removeScan(scanId);
-            liveActiveRef.current = false;
-            setLiveRunning(false);
-            setLivePaused(false);
+            advanceAfterFinish(scanId);
             void refreshHistory();
             return;
           }
         }
         const status = res?.status?.status;
         if (status === "paused") {
-          setLivePaused(true);
+          commitConsole(scanId, { paused: true, running: true });
           updateScan(scanId, { status: "paused" });
         } else if (status && ["running", "pending", "queued", "planning"].includes(status)) {
-          setLivePaused(false);
+          commitConsole(scanId, { paused: false, running: true });
           updateScan(scanId, { status: "running" });
         }
         if (status && !["running", "pending", "queued", "planning", "paused"].includes(status)) {
-          if (status === "failed") updateScan(scanId, { status: "failed" });
-          if (status === "stopped") updateScan(scanId, { status: "stopped" });
+          pollFlags.current[scanId] = false;
+          commitConsole(scanId, { running: false, paused: false });
+          updateScan(scanId, {
+            status:
+              status === "failed" ? "failed" : status === "stopped" ? "stopped" : "completed",
+          });
           removeScan(scanId);
-          liveActiveRef.current = false;
-          setLiveRunning(false);
-          setLivePaused(false);
+          advanceAfterFinish(scanId);
           void refreshHistory();
           return;
         }
@@ -1466,68 +1526,69 @@ export default function ScansPage() {
   }
 
   async function handlePauseScan() {
-    if (!liveScanId) return;
+    if (!activeScanId) return;
     try {
-      await vaptScanApi.pause(liveScanId);
-      setLivePaused(true);
-      updateScan(liveScanId, { status: "paused" });
+      await vaptScanApi.pause(activeScanId);
+      commitConsole(activeScanId, { paused: true });
+      updateScan(activeScanId, { status: "paused" });
     } catch {
       // ignore - console will reflect the live status on next poll
     }
   }
 
   async function handleResumeScan() {
-    if (!liveScanId) return;
+    if (!activeScanId) return;
     try {
-      await vaptScanApi.resume(liveScanId);
-      setLivePaused(false);
-      updateScan(liveScanId, { status: "running" });
+      await vaptScanApi.resume(activeScanId);
+      commitConsole(activeScanId, { paused: false });
+      updateScan(activeScanId, { status: "running" });
     } catch {
       // ignore - console will reflect the live status on next poll
     }
   }
 
   async function handleResolveApproval(approvalId: string, approved: boolean) {
-    if (!liveScanId) return;
+    if (!activeScanId) return;
     try {
-      await vaptScanApi.approve(liveScanId, approvalId, approved);
-      setLiveEvents((prev) => [
-        ...prev,
-        {
-          type: "tool_approval_resolved",
-          ts: Date.now() / 1000,
-          data: { approval_id: approvalId, approved },
-        } as ScanProgressEvent,
-      ]);
+      await vaptScanApi.approve(activeScanId, approvalId, approved);
+      commitConsole(activeScanId, {
+        events: [
+          ...(consoleRef.current[activeScanId]?.events ?? []),
+          {
+            type: "tool_approval_resolved",
+            ts: Date.now() / 1000,
+            data: { approval_id: approvalId, approved },
+          } as ScanProgressEvent,
+        ],
+      });
     } catch {
       // ignore - console will reflect the live status on next poll
     }
   }
 
   async function handleStopScan() {
-    if (!liveScanId) return;
+    if (!activeScanId) return;
+    const stoppedId = activeScanId;
     setConfirmStop(false);
     try {
-      await vaptScanApi.stop(liveScanId);
+      await vaptScanApi.stop(stoppedId);
     } catch {
       // server may already have finished the scan; fall through to cleanup
     }
-    liveActiveRef.current = false;
-    setLiveRunning(false);
-    setLivePaused(false);
-    updateScan(liveScanId, { status: "stopped" });
-    removeScan(liveScanId);
+    pollFlags.current[stoppedId] = false;
+    commitConsole(stoppedId, { running: false, paused: false });
+    updateScan(stoppedId, { status: "stopped" });
+    removeScan(stoppedId);
+    const next = Object.values(consoleRef.current).find(
+      (c) => c.running && c.id !== stoppedId
+    );
+    setActiveScanId(next ? next.id : null);
     void refreshHistory();
   }
 
   async function handleRestartScan(scan: ScanHistoryItem) {
     if (!scan.target) return;
     try {
-      setLiveEvents([]); setPendingApprovalIds(null);
-      setLiveScanId(scan.id);
-      setLiveRunning(true);
-      setLivePaused(false);
-      liveActiveRef.current = true;
       addScan({
         id: scan.id,
         target: scan.target,
@@ -1535,12 +1596,12 @@ export default function ScansPage() {
         startedAt: Date.now(),
         status: "running",
       });
-      void pollProgress(scan.id);
+      switchConsole(scan.id);
+      startPolling(scan.id, { target: scan.target, scanType: scan.type });
+      setActiveScanId(scan.id);
       await vaptScanApi.restart(scan.id);
     } catch (e) {
       alert(e instanceof Error ? e.message : "Failed to restart scan");
-    } finally {
-      liveActiveRef.current = false;
     }
   }
 
@@ -1618,12 +1679,13 @@ export default function ScansPage() {
               Date.parse(runningFromHistory.started_at ?? "") || Date.now(),
             status: "running",
           });
-          setLiveScanId(runningFromHistory.id);
-          setLiveRunning(true);
           setTarget(runningFromHistory.target);
           setScanType(runningFromHistory.type);
-          liveActiveRef.current = true;
-          void pollProgress(runningFromHistory.id);
+          startPolling(runningFromHistory.id, {
+            target: runningFromHistory.target,
+            scanType: runningFromHistory.type,
+          });
+          setActiveScanId(runningFromHistory.id);
         }
       }
     }).catch((e) => {
@@ -1632,10 +1694,6 @@ export default function ScansPage() {
       setLoading(false);
       setLoadingProjects(false);
     });
-
-    return () => {
-      liveActiveRef.current = false;
-    };
   }, []);
 
   useEffect(() => {
@@ -1645,13 +1703,10 @@ export default function ScansPage() {
     );
     if (running.length === 0) return;
     const first = running[0];
-    setLiveScanId(first.id);
-    setLiveRunning(true);
-    setLivePaused(first.status === "paused");
     setTarget(first.target);
     setScanType(first.scanType);
-    liveActiveRef.current = true;
-    void pollProgress(first.id);
+    startPolling(first.id, { target: first.target, scanType: first.scanType });
+    setActiveScanId(first.id);
   }, []);
 
   function toggleScanType(typeId: string) {
@@ -1688,32 +1743,33 @@ export default function ScansPage() {
         };
 
         const scanId = crypto.randomUUID();
-        setLiveEvents([]); setPendingApprovalIds(null);
-        setLiveScanId(scanId);
-        setLiveRunning(true);
-        liveActiveRef.current = true;
-        addScan({
-          id: scanId,
+        const meta = {
           target: dialogTarget.trim(),
           scanType: capabilityMap[scanTypeId] || "web_vapt",
+        };
+        addScan({
+          id: scanId,
+          target: meta.target,
+          scanType: meta.scanType,
           startedAt: Date.now(),
           status: "running",
         });
-        void pollProgress(scanId);
+        startPolling(scanId, meta);
+        setActiveScanId(scanId);
 
         try {
           await vaptScanApi.run({
-            target: dialogTarget.trim(),
-            scan_type: capabilityMap[scanTypeId] || "web_vapt",
+            target: meta.target,
+            scan_type: meta.scanType,
             organization_id: orgId,
             project_id: selectedProjectDialog || undefined,
             client_scan_id: scanId,
           });
-        } finally {
-          liveActiveRef.current = false;
+        } catch (e) {
+          pollFlags.current[scanId] = false;
+          console.error(e);
         }
       }
-      setLiveRunning(false);
 
       setSuccessMessage(`${selectedScanTypes.length} scan(s) started successfully!`);
       await refreshHistory();
@@ -1742,12 +1798,8 @@ export default function ScansPage() {
     setShowResults(false);
     setResult(null);
     setFindings([]);
-    setLiveEvents([]); setPendingApprovalIds(null);
 
     const scanId = crypto.randomUUID();
-    setLiveScanId(scanId);
-    setLiveRunning(true);
-    liveActiveRef.current = true;
     addScan({
       id: scanId,
       target: target.trim(),
@@ -1755,7 +1807,8 @@ export default function ScansPage() {
       startedAt: Date.now(),
       status: "running",
     });
-    void pollProgress(scanId);
+    startPolling(scanId, { target: target.trim(), scanType });
+    setActiveScanId(scanId);
 
     try {
       const orgId = localStorage.getItem("organization_id");
@@ -1769,8 +1822,10 @@ export default function ScansPage() {
       })) as any as VaptScanResult;
 
       if (data.status === "stopped") {
-        setLiveRunning(false);
-        setLivePaused(false);
+        pollFlags.current[scanId] = false;
+        commitConsole(scanId, { running: false, paused: false });
+        updateScan(scanId, { status: "stopped" });
+        removeScan(scanId);
         void refreshHistory();
         return;
       }
@@ -1811,8 +1866,6 @@ export default function ScansPage() {
       alert(error instanceof Error ? error.message : "Scan failed");
     } finally {
       setScanning(false);
-      liveActiveRef.current = false;
-      setTimeout(() => setLiveRunning(false), 2500);
     }
   }
 
@@ -1985,21 +2038,61 @@ export default function ScansPage() {
               <Eye className="w-5 h-5" />
               Scan Status
             </CardTitle>
+            {Object.values(activeScans).length > 0 && (
+              <div className="flex flex-wrap items-center gap-1.5 mt-2">
+                {Object.values(activeScans).map((scan) => {
+                  const isActive = scan.id === activeScanId;
+                  const isRunning = scan.status === "running" || scan.status === "paused";
+                  return (
+                    <button
+                      key={scan.id}
+                      onClick={() => switchConsole(scan.id)}
+                      className={`inline-flex items-center gap-1.5 px-2.5 py-1 rounded-md border text-xs transition-colors ${
+                        isActive
+                          ? "border-primary/40 bg-primary/10 text-primary font-medium"
+                          : "border-border bg-card text-muted-foreground hover:border-primary/30 hover:text-foreground"
+                      }`}
+                    >
+                      {isActive ? (
+                        <Eye className="w-3 h-3" />
+                      ) : isRunning ? (
+                        <Activity className="w-3 h-3" />
+                      ) : (
+                        <Check className="w-3 h-3 text-green-500" />
+                      )}
+                      <span className={`w-1.5 h-1.5 rounded-full ${scan.status === "running" ? "bg-green-500 animate-pulse" : scan.status === "paused" ? "bg-yellow-500" : scan.status === "failed" ? "bg-red-500" : "bg-muted-foreground"}`} />
+                      <span className="font-mono truncate max-w-[180px]">
+                        {scan.target.replace(/^https?:\/\//, "")}
+                      </span>
+                      <span className="text-[10px] uppercase opacity-70">
+                        {scan.status}
+                      </span>
+                    </button>
+                  );
+                })}
+              </div>
+            )}
           </CardHeader>
           <CardContent>
-            {liveRunning && liveScanId ? (
-              <LiveScanConsole
-                events={liveEvents}
-                target={target}
-                scanType={scanType}
-                running={liveRunning}
-                paused={livePaused}
-                scanId={liveScanId}
-                onResolveApproval={handleResolveApproval}
-                onPause={handlePauseScan}
-                onResume={handleResumeScan}
-                onStop={() => setConfirmStop(true)}
-              />
+            {activeScanId && consoles[activeScanId] ? (
+              (() => {
+                const consoleState = consoles[activeScanId];
+                return (
+                  <LiveScanConsole
+                    events={consoleState.events}
+                    target={consoleState.target || target}
+                    scanType={consoleState.scanType || scanType}
+                    running={consoleState.running}
+                    paused={consoleState.paused}
+                    scanId={consoleState.id}
+                    pendingApprovalIds={consoleState.pendingApprovalIds}
+                    onResolveApproval={handleResolveApproval}
+                    onPause={handlePauseScan}
+                    onResume={handleResumeScan}
+                    onStop={() => setConfirmStop(true)}
+                  />
+                );
+              })()
             ) : scanning ? (
               <div className="flex flex-col items-center justify-center py-8">
                 <Loader2 className="w-12 h-12 animate-spin text-primary mb-4" />

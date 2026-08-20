@@ -290,79 +290,39 @@ class AgentLoop:
         messages: List[Dict[str, str]],
         tools: List[Dict[str, Any]],
     ) -> Tuple[Optional[str], List[Dict[str, Any]]]:
+        """Serialize against the matrix phase's LLM calls.
+
+        The matrix phase and the agent loop run concurrently within a scan
+        and share the same providers; a global asyncio lock keeps bursts from
+        rate-limiting the NVIDIA NIM endpoint or starving the phase budget.
+        """
+        from app.vapt.agents.llm_lock import get_llm_lock
+
+        async with get_llm_lock():
+            return await self._llm_turn_locked(scan_id, messages, tools)
+
+    async def _llm_turn_locked(
+        self,
+        scan_id: str,
+        messages: List[Dict[str, str]],
+        tools: List[Dict[str, Any]],
+    ) -> Tuple[Optional[str], List[Dict[str, Any]]]:
         """Call the LLM with function tools; return (text, tool_calls).
 
-        OLLAMA (qwen3 tool calling) is the PRIMARY provider, NVIDIA NIM
-        (minimax-m3 -> deepseek fallback) is the SECONDARY provider used only
-        when Ollama is down or returns nothing. Returns (None, []) when no
-        provider is reachable.
+        NVIDIA NIM (deepseek-v4) is the PRIMARY provider - sub-second to a few
+        seconds per decision turn. OLLAMA (qwen3-abliterated tool calling) is
+        the local FALLBACK, used only when NVIDIA is down or returns nothing.
+        Returns (None, []) when no provider is reachable.
         """
         from app.core.config import settings
 
         text: Optional[str] = None
         calls: List[Dict[str, Any]] = []
 
-        if settings.LLM_PROVIDER in ("auto", "ollama"):
-            t0 = time.time()
-            try:
-                import httpx
-
-                payload: Dict[str, Any] = {
-                    "model": settings.OLLAMA_MODEL,
-                    "messages": messages,
-                    "stream": False,
-                    "think": False,
-                }
-                if tools:
-                    # Ollama expects the full OpenAI-style tool wrapper,
-                    # and "format": "json" would serialize the tool call
-                    # into content instead of structured tool_calls.
-                    payload["tools"] = tools
-                async with httpx.AsyncClient(timeout=settings.LLM_TIMEOUT) as client:
-                    resp = await client.post(
-                        f"{settings.OLLAMA_BASE_URL.rstrip('/')}/api/chat",
-                        json=payload,
-                    )
-                    resp.raise_for_status()
-                    data = resp.json()
-                    msg = data.get("message", {})
-                    text = (msg.get("content") or "").strip() or None
-                    for call in msg.get("tool_calls") or []:
-                        fn = call.get("function", {})
-                        calls.append({
-                            "name": fn.get("name", ""),
-                            "arguments": json.loads(fn.get("arguments") or "{}")
-                            if isinstance(fn.get("arguments"), str)
-                            else (fn.get("arguments") or {}),
-                        })
-                    usage = data.get("prompt_eval_count") or 0, data.get("eval_count") or 0
-                    ok = bool(text or calls)
-                    record_llm_call(
-                        scan_id=scan_id,
-                        provider="Ollama",
-                        model=settings.OLLAMA_MODEL or "ollama",
-                        purpose="agent",
-                        tokens_in=usage[0],
-                        tokens_out=estimate_tokens(text),
-                        ms=time_tracked(t0),
-                        ok=ok,
-                    )
-                    await self._publish(scan_id, "llm_call", {
-                        "provider": "Ollama",
-                        "model": settings.OLLAMA_MODEL or "ollama",
-                        "purpose": "agent",
-                        "ms": time_tracked(t0),
-                        "ok": ok,
-                    })
-                    if ok:
-                        return text, calls
-                    logger.warning(
-                        "Agent loop Ollama returned empty - falling back to NVIDIA"
-                    )
-            except Exception as exc:
-                logger.warning("Agent loop Ollama turn failed: %s", exc)
-
-        if settings.LLM_PROVIDER in ("auto", "nvidia", "ollama") and settings.NVIDIA_API_KEY:
+        if (
+            settings.LLM_PROVIDER in ("auto", "ollama", "nvidia")
+            and settings.NVIDIA_API_KEY
+        ):
             t0 = time.time()
             try:
                 from openai import AsyncOpenAI
@@ -423,9 +383,71 @@ class AgentLoop:
                     "ms": time_tracked(t0),
                     "ok": ok,
                 })
-                return text, calls
+                if ok:
+                    return text, calls
+                logger.warning("Agent loop NVIDIA returned empty - falling back to Ollama")
             except Exception as exc:
                 logger.warning("Agent loop NVIDIA turn failed: %s", exc)
+
+        if settings.LLM_PROVIDER in ("auto", "ollama", "nvidia"):
+            t0 = time.time()
+            try:
+                import httpx
+
+                payload: Dict[str, Any] = {
+                    "model": settings.OLLAMA_MODEL,
+                    "messages": messages,
+                    "stream": False,
+                    "think": False,
+                }
+                if tools:
+                    # Ollama expects the full OpenAI-style tool wrapper,
+                    # and "format": "json" would serialize the tool call
+                    # into content instead of structured tool_calls.
+                    payload["tools"] = tools
+                async with httpx.AsyncClient(timeout=settings.LLM_TIMEOUT) as client:
+                    resp = await client.post(
+                        f"{settings.OLLAMA_BASE_URL.rstrip('/')}/api/chat",
+                        json=payload,
+                    )
+                    resp.raise_for_status()
+                    data = resp.json()
+                    msg = data.get("message", {})
+                    text = (msg.get("content") or "").strip() or None
+                    for call in msg.get("tool_calls") or []:
+                        fn = call.get("function", {})
+                        calls.append({
+                            "name": fn.get("name", ""),
+                            "arguments": json.loads(fn.get("arguments") or "{}")
+                            if isinstance(fn.get("arguments"), str)
+                            else (fn.get("arguments") or {}),
+                        })
+                    usage = data.get("prompt_eval_count") or 0, data.get("eval_count") or 0
+                    ok = bool(text or calls)
+                    record_llm_call(
+                        scan_id=scan_id,
+                        provider="Ollama",
+                        model=settings.OLLAMA_MODEL or "ollama",
+                        purpose="agent",
+                        tokens_in=usage[0],
+                        tokens_out=estimate_tokens(text),
+                        ms=time_tracked(t0),
+                        ok=ok,
+                    )
+                    await self._publish(scan_id, "llm_call", {
+                        "provider": "Ollama",
+                        "model": settings.OLLAMA_MODEL or "ollama",
+                        "purpose": "agent",
+                        "ms": time_tracked(t0),
+                        "ok": ok,
+                    })
+                    if ok:
+                        return text, calls
+                    logger.warning(
+                        "Agent loop Ollama returned empty"
+                    )
+            except Exception as exc:
+                logger.warning("Agent loop Ollama turn failed: %s", exc)
 
         return None, []
 

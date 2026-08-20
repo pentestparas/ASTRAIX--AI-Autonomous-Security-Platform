@@ -31,7 +31,8 @@ waf-bypass-payload-list=https://github.com/payload-box/waf-bypass-payload-list
 web-cache-poisoning-payloads=https://github.com/payload-box/web-cache-poisoning-payloads
 Web-Security-Academy-Series=https://github.com/rkhal101/Web-Security-Academy-Series
 xss-payload-list=https://github.com/payload-box/xss-payload-list
-xxe-injection-payload-list=https://github.com/payload-box/xxe-injection-payload-list# ---- AI/LLM security additions (2026-08) -----------------------------------
+xxe-injection-payload-list=https://github.com/payload-box/xxe-injection-payload-list
+# ---- AI/LLM security additions (2026-08) -----------------------------------
 anmolksachan-AI-ML-Free-Resources=https://github.com/anmolksachan/AI-ML-Free-Resources-for-Security-and-Prompt-Injection
 awesome-ai-security=https://github.com/ottosulin/awesome-ai-security
 owasp-llm-top10-project=https://github.com/owasp/www-project-top-10-for-large-language-model-applications

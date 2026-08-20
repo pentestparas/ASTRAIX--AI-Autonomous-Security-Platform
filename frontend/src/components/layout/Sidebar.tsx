@@ -44,9 +44,11 @@ export function Sidebar() {
 
   function handleSignOut() {
     localStorage.removeItem("access_token");
+    localStorage.removeItem("refresh_token");
     localStorage.removeItem("user_id");
     localStorage.removeItem("user_email");
     localStorage.removeItem("organization_id");
+    useActiveScansStore.persist.clearStorage();
     router.push("/login");
   }
 

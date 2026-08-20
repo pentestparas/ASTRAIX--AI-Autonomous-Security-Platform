@@ -53,6 +53,14 @@ async def _recover_orphaned_assessments():
                     count=len(orphaned),
                     ids=[str(i) for i in orphaned],
                 )
+                try:
+                    from app.vapt.progress import get_progress_bus
+
+                    bus = get_progress_bus()
+                    for oid in orphaned:
+                        await bus.clear(str(oid))
+                except Exception as exc:
+                    logger.warning("assessments.orphan_progress_cleanup_failed", error=str(exc))
     except Exception as exc:
         logger.warning("assessments.orphan_recovery_failed", error=str(exc))
 

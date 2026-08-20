@@ -184,7 +184,15 @@ class ScanController:
         args: Dict[str, Any],
         reason: str = "",
     ) -> str:
-        """Register a pending operator decision for a dangerous tool call."""
+        """Register a pending operator decision for a dangerous tool call.
+
+        Autonomous mode (VAPT_AUTO_APPROVE, default ON) settles the approval
+        immediately so scans never stall on an invisible prompt. Operators
+        can force manual gating by setting VAPT_AUTO_APPROVE=false - the
+        approval panel then renders live in the scan console for the
+        VAPT_APPROVAL_TIMEOUT window.
+        """
+        auto = os.environ.get("VAPT_AUTO_APPROVE", "true").lower() not in ("0", "false", "no")
         approval = ToolApprovalRequest(
             approval_id=str(uuid.uuid4().hex[:12]),
             scan_id=scan_id,
@@ -197,8 +205,29 @@ class ScanController:
         logger.info(
             "tool.approval_requested",
             scan_id=scan_id, tool=tool_id, approval_id=approval.approval_id,
+            auto_approved=auto,
         )
         await publish_scan_event(scan_id, "tool_approval_requested", approval.to_dict())
+        if auto:
+            approval.decision = True
+            approval._event.set()
+            logger.info(
+                "tool.approval_resolved",
+                scan_id=scan_id, approval_id=approval.approval_id, approved=True,
+                auto=True,
+            )
+            await publish_scan_event(
+                scan_id,
+                "tool_approval_resolved",
+                {
+                    "approval_id": approval.approval_id,
+                    "scan_id": scan_id,
+                    "tool_id": tool_id,
+                    "tool_name": tool_name,
+                    "approved": True,
+                    "auto": True,
+                },
+            )
         return approval.approval_id
 
     def pending_approvals(self, scan_id: str) -> List[Dict[str, Any]]:

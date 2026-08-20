@@ -27,7 +27,8 @@ class BaseRepository(Generic[T]):
 
     async def get(self, db: AsyncSession, id: UUID) -> Optional[T]:
         """Get by ID."""
-        result = await db.execute(select(self.model).where(self.model.id == id))
+        result = await db.execute(select(self.model).where(self.model.id == str(id)))
+        return result.scalar_one_or_none()
         return result.scalar_one_or_none()
 
     async def list(self, db: AsyncSession, skip: int = 0, limit: int = 100, **filters) -> List[T]:
@@ -36,7 +37,9 @@ class BaseRepository(Generic[T]):
         query = select(self.model)
         exclude_status = filters.pop("exclude_status", None)
         for key, value in filters.items():
-            if hasattr(self.model, key):
+            if key.endswith("__in") and hasattr(self.model, key[:-4]):
+                query = query.where(getattr(self.model, key[:-4]).in_(value))
+            elif hasattr(self.model, key):
                 query = query.where(getattr(self.model, key) == value)
         if exclude_status and hasattr(self.model, "status"):
             query = query.where(self.model.status != str(exclude_status))
@@ -50,7 +53,9 @@ class BaseRepository(Generic[T]):
         query = select(func.count()).select_from(self.model)
         exclude_status = filters.pop("exclude_status", None)
         for key, value in filters.items():
-            if hasattr(self.model, key):
+            if key.endswith("__in") and hasattr(self.model, key[:-4]):
+                query = query.where(getattr(self.model, key[:-4]).in_(value))
+            elif hasattr(self.model, key):
                 query = query.where(getattr(self.model, key) == value)
         if exclude_status and hasattr(self.model, "status"):
             query = query.where(self.model.status != str(exclude_status))

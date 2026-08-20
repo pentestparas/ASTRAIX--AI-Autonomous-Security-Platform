@@ -34,6 +34,29 @@ logger = get_logger(__name__)
 router = APIRouter(tags=["VAPT"])
 
 
+async def _require_scan_access(
+    scan_id: str, current_user: User, session: AsyncSession
+) -> None:
+    """Ensure the caller belongs to the organization that owns the scan.
+
+    Scans launched from the product are always persisted as assessments
+    (org + project); scans without an assessment row are not reachable.
+    """
+    from app.repositories.organization import MembershipRepository
+
+    try:
+        assessment = await assessment_repo.get(session, str(scan_id))
+    except Exception:
+        assessment = None
+    if not assessment:
+        raise HTTPException(status_code=404, detail="Scan not found")
+    memberships = await MembershipRepository(session).get_user_memberships(current_user.id)
+    if str(assessment.organization_id) not in {
+        str(m.organization_id) for m in memberships
+    }:
+        raise HTTPException(status_code=403, detail="No access to this scan")
+
+
 def _finding_fingerprint(finding, target: str) -> str:
     """Tool-scoped, detail-aware fingerprint so findings from different tools
     (or distinct evidence for the same title) are kept, while true duplicates
@@ -248,6 +271,9 @@ async def _run_scan_background(
     the HTTP caller returns immediately. The assessment row was persisted as
     "running"; this task updates it (completed/failed/stopped) when done."""
     from app.database.session import async_session_maker
+
+    if scan_id:
+        await get_progress_bus().set_status(scan_id, "running")
 
     async with async_session_maker() as session:
         try:
@@ -508,7 +534,8 @@ async def get_scan_progress(
     current_user: User = Depends(get_current_active_user),
     session: AsyncSession = Depends(get_session),
 ) -> dict:
-    """Get live scan progress events since an index."""
+    """Get live scan progress events since an index (org-scoped)."""
+    await _require_scan_access(scan_id, current_user, session)
     bus = get_progress_bus()
     events, total = await bus.events(scan_id, since=since)
     status = await bus.status(scan_id)
@@ -542,7 +569,8 @@ async def list_approvals(
     current_user: User = Depends(get_current_active_user),
     session: AsyncSession = Depends(get_session),
 ):
-    """List pending operator approvals for dangerous agent tool calls."""
+    """List pending operator approvals for dangerous agent tool calls (org-scoped)."""
+    await _require_scan_access(scan_id, current_user, session)
     controller = get_scan_controller()
     return {
         "scan_id": scan_id,
@@ -562,7 +590,8 @@ async def resolve_scan_approval(
     current_user: User = Depends(get_current_active_user),
     session: AsyncSession = Depends(get_session),
 ):
-    """Approve or reject a dangerous tool execution requested by the agent."""
+    """Approve or reject a dangerous tool execution requested by the agent (org-scoped)."""
+    await _require_scan_access(scan_id, current_user, session)
     controller = get_scan_controller()
     if not await controller.resolve_approval(scan_id, approval_id, decision.approved):
         raise HTTPException(status_code=404, detail="Approval not found or already resolved")
@@ -579,7 +608,8 @@ async def pause_scan(
     current_user: User = Depends(get_current_active_user),
     session: AsyncSession = Depends(get_session),
 ):
-    """Pause an active scan at the next checkpoint."""
+    """Pause an active scan at the next checkpoint (org-scoped)."""
+    await _require_scan_access(scan_id, current_user, session)
     controller = get_scan_controller()
     if not controller.is_active(scan_id):
         raise HTTPException(status_code=409, detail="No active scan with that ID")
@@ -595,7 +625,8 @@ async def resume_scan(
     current_user: User = Depends(get_current_active_user),
     session: AsyncSession = Depends(get_session),
 ):
-    """Resume (continue) a paused scan."""
+    """Resume (continue) a paused scan (org-scoped)."""
+    await _require_scan_access(scan_id, current_user, session)
     controller = get_scan_controller()
     if not controller.is_active(scan_id):
         raise HTTPException(status_code=409, detail="No active scan with that ID")
@@ -611,7 +642,8 @@ async def stop_scan(
     current_user: User = Depends(get_current_active_user),
     session: AsyncSession = Depends(get_session),
 ):
-    """Stop an active scan immediately and mark its assessment as stopped."""
+    """Stop an active scan immediately and mark its assessment as stopped (org-scoped)."""
+    await _require_scan_access(scan_id, current_user, session)
     controller = get_scan_controller()
     stopped = await controller.stop(scan_id)
     if not stopped:
@@ -634,6 +666,7 @@ async def restart_scan(
     assessment = await session.get(Assessment, scan_id)
     if not assessment:
         raise HTTPException(status_code=404, detail="Assessment not found")
+    await _require_scan_access(scan_id, current_user, session)
 
     asset = assessment.asset
     if not asset or not asset.identifier:
@@ -685,14 +718,24 @@ async def restart_scan(
 
 
 @router.get("/assessments/{assessment_id}")
-async def get_assessment(assessment_id: UUID, session: AsyncSession = Depends(get_session)):
-    """Get assessment details with findings."""
+async def get_assessment(
+    assessment_id: UUID,
+    current_user: User = Depends(get_current_active_user),
+    session: AsyncSession = Depends(get_session),
+):
+    """Get assessment details with findings (org-scoped)."""
     from app.repositories import assessment_repo, finding_repo
+    from app.repositories.organization import MembershipRepository
 
     assessment_id_str = str(assessment_id)
     assessment = await assessment_repo.get(session, assessment_id_str)
     if not assessment:
         raise HTTPException(status_code=404, detail="Assessment not found")
+
+    memberships = await MembershipRepository(session).get_user_memberships(current_user.id)
+    allowed_orgs = {str(m.organization_id) for m in memberships}
+    if str(assessment.organization_id) not in allowed_orgs:
+        raise HTTPException(status_code=403, detail="No access to this assessment")
 
     findings = await finding_repo.list(session, assessment_id=assessment_id_str)
     config = assessment.config or {}
