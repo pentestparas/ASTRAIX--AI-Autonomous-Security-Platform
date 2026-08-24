@@ -173,7 +173,7 @@ async def get_dashboard_stats(organization_id: UUID = None):
         from datetime import datetime, timedelta
         from app.database.session import async_session_maker
         async with async_session_maker() as session:
-            findings = await finding_repo.count(session, organization_id=str(organization_id))
+            findings = await finding_repo.count(session, organization_id=str(organization_id), exclude_status="false_positive")
             assessments = await assessment_repo.count(session, organization_id=str(organization_id))
             assets = await asset_repo.count(session, organization_id=str(organization_id))
             projects = await session.execute(
@@ -182,12 +182,12 @@ async def get_dashboard_stats(organization_id: UUID = None):
                 )
             )
             total_projects = projects.scalar_one()
-            critical = await finding_repo.count(session, organization_id=str(organization_id), severity="critical")
-            high = await finding_repo.count(session, organization_id=str(organization_id), severity="high")
-            medium = await finding_repo.count(session, organization_id=str(organization_id), severity="medium")
-            low = await finding_repo.count(session, organization_id=str(organization_id), severity="low")
-            open_f = await finding_repo.count(session, organization_id=str(organization_id), status="open")
-            resolved = await finding_repo.count(session, organization_id=str(organization_id), status="resolved")
+            critical = await finding_repo.count(session, organization_id=str(organization_id), severity="critical", exclude_status="false_positive")
+            high = await finding_repo.count(session, organization_id=str(organization_id), severity="high", exclude_status="false_positive")
+            medium = await finding_repo.count(session, organization_id=str(organization_id), severity="medium", exclude_status="false_positive")
+            low = await finding_repo.count(session, organization_id=str(organization_id), severity="low", exclude_status="false_positive")
+            open_f = await finding_repo.count(session, organization_id=str(organization_id), status="open", exclude_status="false_positive")
+            resolved = await finding_repo.count(session, organization_id=str(organization_id), status="resolved", exclude_status="false_positive")
 
             now = datetime.utcnow()
             week_ago = now - timedelta(days=7)

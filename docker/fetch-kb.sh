@@ -43,8 +43,20 @@ print(raw.strip())
       ;;
   esac
   echo "[kb] cloning $name <- $url"
-  rm -rf "$TMP/$name"
-  git clone --depth 1 --quiet "$url" "$TMP/$name"
+  clone_ok=0
+  for attempt in 1 2 3; do
+    rm -rf "$TMP/$name"
+    if git clone --depth 1 --quiet "$url" "$TMP/$name"; then
+      clone_ok=1
+      break
+    fi
+    echo "[kb] clone FAILED for $name (attempt $attempt/3) - retrying"
+    sleep 3
+  done
+  if [ "$clone_ok" -ne 1 ]; then
+    echo "[kb] clone FAILED for $name (skipped)"
+    continue
+  fi
   rm -rf "$TMP/$name/.git"
   rm -rf "$DEST/$name"
   cp -a "$TMP/$name" "$DEST/$name"

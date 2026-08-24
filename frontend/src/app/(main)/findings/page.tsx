@@ -47,19 +47,25 @@ export default function FindingsPage() {
   const [severity, setSeverity] = useState<string>("");
   const [status, setStatus] = useState<string>("");
   const [selected, setSelected] = useState<Finding | null>(null);
+  const [page, setPage] = useState(1);
+  const [pageSize, setPageSize] = useState(100);
+  const [total, setTotal] = useState(0);
+  const [totalPages, setTotalPages] = useState(1);
 
   async function loadFindings() {
     try {
       const orgId = localStorage.getItem("organization_id");
       const res = await findingsApi.list({
-        page: 1,
-        limit: 100,
+        page,
+        page_size: pageSize,
         organization_id: orgId ?? undefined,
         severity: severity || undefined,
         status: status || undefined,
       });
       if (res.success && res.data) {
         setFindings(res.data.items);
+        setTotal(res.data.total ?? 0);
+        setTotalPages(res.data.total_pages ?? 1);
       }
     } catch (e) {
       console.error("Failed to load findings:", e);
@@ -71,7 +77,7 @@ export default function FindingsPage() {
   useEffect(() => {
     setLoading(true);
     loadFindings();
-  }, [severity, status]);
+  }, [severity, status, page, pageSize]);
 
   async function handleStatusChange(id: string, newStatus: Finding["status"]) {
     try {
@@ -99,7 +105,10 @@ export default function FindingsPage() {
           <select
             className="px-2.5 py-1.5 text-sm border rounded-md bg-background"
             value={severity}
-            onChange={(e) => setSeverity(e.target.value)}
+            onChange={(e) => {
+              setPage(1);
+              setSeverity(e.target.value);
+            }}
           >
             <option value="">All Severities</option>
             {Object.entries(severityConfig).map(([key, cfg]) => (
@@ -111,7 +120,10 @@ export default function FindingsPage() {
           <select
             className="px-2.5 py-1.5 text-sm border rounded-md bg-background"
             value={status}
-            onChange={(e) => setStatus(e.target.value)}
+            onChange={(e) => {
+              setPage(1);
+              setStatus(e.target.value);
+            }}
           >
             <option value="">True Positives</option>
             {statusOptions.map((s) => (
@@ -212,6 +224,47 @@ export default function FindingsPage() {
           </Table>
         </CardContent>
       </Card>
+
+      <div className="flex items-center justify-between text-sm text-muted-foreground">
+        <div>
+          {total === 0
+            ? "No findings"
+            : `Showing ${(page - 1) * pageSize + 1}–${Math.min(page * pageSize, total)} of ${total}`}
+        </div>
+        <div className="flex items-center gap-2">
+          <select
+            className="px-2 py-1 border rounded bg-background"
+            value={pageSize}
+            onChange={(e) => {
+              setPage(1);
+              setPageSize(Number(e.target.value));
+            }}
+          >
+            {[50, 100, 200].map((n) => (
+              <option key={n} value={n}>
+                {n}/page
+              </option>
+            ))}
+          </select>
+          <button
+            className="px-2.5 py-1 border rounded bg-background disabled:opacity-50"
+            disabled={page <= 1}
+            onClick={() => setPage((p) => Math.max(1, p - 1))}
+          >
+            Prev
+          </button>
+          <span>
+            Page {page} of {Math.max(1, totalPages)}
+          </span>
+          <button
+            className="px-2.5 py-1 border rounded bg-background disabled:opacity-50"
+            disabled={page >= totalPages}
+            onClick={() => setPage((p) => Math.min(totalPages, p + 1))}
+          >
+            Next
+          </button>
+        </div>
+      </div>
 
       <Dialog open={!!selected} onOpenChange={(open) => !open && setSelected(null)}>
         <DialogContent className="max-w-2xl max-h-[85vh] overflow-y-auto">

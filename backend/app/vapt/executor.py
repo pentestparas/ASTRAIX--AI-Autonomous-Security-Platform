@@ -174,7 +174,7 @@ class VAPTExecutor:
         container_name: str,
         timeout: int,
     ) -> str:
-        client = docker.from_env()
+        client = docker.from_env(timeout=max(timeout * 2, 3600))
         container = None
         try:
             # Forward only the LLM grader key+model (promptfoo scanner reads

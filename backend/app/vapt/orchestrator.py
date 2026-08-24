@@ -606,6 +606,23 @@ class AIOrchestrator:
         await publish(scan_id, "matrix_generating", {
             "message": "Mining web surface (JS bundles) for test-matrix endpoints",
         })
+
+        heartbeat_task: Optional[asyncio.Task] = None
+        heartbeat_cancel = asyncio.Event()
+
+        async def _heartbeat():
+            try:
+                while not heartbeat_cancel.is_set():
+                    await asyncio.sleep(30)
+                    if heartbeat_cancel.is_set():
+                        break
+                    await publish(scan_id, "matrix_heartbeat", {
+                        "message": "Matrix phase running (mining surface, LLM generation)...",
+                    })
+            except asyncio.CancelledError:
+                pass
+
+        heartbeat_task = asyncio.create_task(_heartbeat())
         try:
             surface = await asyncio.wait_for(
                 mine_web_surface(base, timeout=float(os.environ.get("VAPT_MATRIX_RECON_TIMEOUT", "25"))),
@@ -795,6 +812,9 @@ class AIOrchestrator:
         outcome["suspicious"] = sum(
             1 for e in outcome["entries"] if e.get("probe", {}).get("suspicious")
         )
+        heartbeat_cancel.set()
+        if heartbeat_task:
+            await asyncio.wait([heartbeat_task], timeout=2)
         return outcome
 
     def _matrix_probe_finding(

@@ -166,13 +166,15 @@ class MatrixAgent:
         providers: List[Tuple[str, Callable[[List[Dict[str, str]]], Awaitable[Any]]]] = []
         from app.core.config import settings
 
-        # For the LLM-assisted analysis (matrix) phase, NVIDIA (deepseek-v4)
-        # is PRIMARY when a key exists - it produces sharper JSON payload
-        # matrices - with Ollama qwen3 as the local fallback.
+        # For the LLM-assisted analysis (matrix) phase, Ollama (qwen3) is
+        # PRIMARY when configured (LLM_PROVIDER != nvidia) - the local model
+        # is fast and never rate-limits - with NVIDIA NIM as the secondary
+        # backup for sharper payload matrices.
         if settings.LLM_PROVIDER in ("auto", "ollama", "nvidia"):
+            if settings.LLM_PROVIDER != "nvidia":
+                providers.append(("Ollama", self._ollama_llm))
             if settings.NVIDIA_API_KEY:
                 providers.append(("NVIDIA", self._nvidia_llm))
-            providers.append(("Ollama", self._ollama_llm))
 
         # Serialize this whole provider chain against the agent loop's LLM
         # turns - concurrent scans/agents rate-limit the NIM endpoint and
